@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ChibiCharacter2D.gd" id="1_script"]
+[ext_resource type="SpriteFrames" path="res://resources/sprite_frames/miduo_chibi_64.tres" id="2_frames"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_80"]
+size = Vector2(80, 80)
+
+[node name="miduo_chibi_64" type="CharacterBody2D"]
+script = ExtResource("1_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+texture_filter = 1
+sprite_frames = ExtResource("2_frames")
+animation = &"idle_breath__east"
+autoplay = "idle_breath__east"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_80")
