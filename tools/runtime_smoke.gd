@@ -1,9 +1,6 @@
 extends SceneTree
 
-const CombatCharacterScript := preload("res://godot/scripts/combat_character.gd")
-
-var arena_center := Vector2(320, 205)
-var arena_radius := Vector2(280, 125)
+const PlaygroundScene := preload("res://godot/scenes/Playground.tscn")
 
 
 func _init() -> void:
@@ -11,9 +8,17 @@ func _init() -> void:
 
 
 func _run() -> void:
-	var punch_ok: bool = await _run_move_hit_smoke("basic_punch", 8)
-	var kick_ok: bool = await _run_move_hit_smoke("basic_kick", 10)
-	if punch_ok and kick_ok:
+	var playground: Node = PlaygroundScene.instantiate()
+	root.add_child(playground)
+	await process_frame
+	await physics_frame
+
+	var punch_ok: bool = await _run_move_hit_smoke(playground, "basic_punch", 8)
+	var kick_ok: bool = await _run_move_hit_smoke(playground, "basic_kick", 10)
+	var lethal_ok: bool = await _run_lethal_smoke(playground)
+	var non_goal_ok: bool = await _run_non_goal_attack_lockout_smoke(playground)
+	var ai_ok: bool = await _run_ai_stress_smoke(playground)
+	if punch_ok and kick_ok and lethal_ok and non_goal_ok and ai_ok:
 		print("runtime_smoke=PASS")
 		quit(0)
 	else:
@@ -21,40 +26,78 @@ func _run() -> void:
 		quit(1)
 
 
-func _run_move_hit_smoke(move_id: String, expected_damage: int) -> bool:
-	var attacker: Node2D = CombatCharacterScript.new()
-	var target: Node2D = CombatCharacterScript.new()
-	root.add_child(attacker)
-	root.add_child(target)
-	await process_frame
+func _run_move_hit_smoke(playground: Node, move_id: String, expected_damage: int) -> bool:
+	playground.player.reset_runtime(Vector2(245, 245))
+	playground.dummy.reset_runtime(_target_position_for(move_id))
+	playground.player.request_attack(move_id)
 
-	attacker.instance_id = "smoke_attacker"
-	target.instance_id = "smoke_target"
-	attacker.position = Vector2(245, 245)
-	target.position = Vector2(282, 245)
-	attacker.is_test_dummy = true
-	target.is_test_dummy = true
-
-	attacker.state_machine.request_action(move_id)
+	var saw_attack := false
+	var saw_hurt := false
 	for i in 45:
-		attacker.tick_character(1.0 / 60.0, arena_center, arena_radius)
-		target.tick_character(1.0 / 60.0, arena_center, arena_radius)
-		_process_hits(attacker, target)
+		await physics_frame
+		if playground.player.state_machine.current_state == "attack":
+			saw_attack = true
+		if playground.dummy.state_machine.current_state == "hurt":
+			saw_hurt = true
 
-	var expected_hp: int = target.max_hp - expected_damage
-	var did_hit_once: bool = target.current_hp == expected_hp
-	attacker.queue_free()
-	target.queue_free()
-	return did_hit_once
+	var expected_hp: int = playground.dummy.max_hp - expected_damage
+	return saw_attack and saw_hurt and playground.dummy.current_hp == expected_hp
 
 
-func _process_hits(attacker: Node2D, target: Node2D) -> void:
-	for hitbox in attacker.active_hitboxes_world():
-		var window_index := int(hitbox["window_index"])
-		if not attacker.move_executor.can_hit_target(target.instance_id, window_index):
-			continue
-		for hurtbox in target.hurtboxes_world():
-			if Rect2(hitbox["rect"]).intersects(Rect2(hurtbox["rect"])):
-				target.take_hit(int(hitbox["damage"]), str(hitbox["hitbox_id"]), attacker.instance_id)
-				attacker.move_executor.mark_target_hit(target.instance_id, window_index)
-				break
+func _run_lethal_smoke(playground: Node) -> bool:
+	playground.player.reset_runtime(Vector2(245, 245))
+	playground.dummy.reset_runtime(_target_position_for("basic_kick"))
+	playground.dummy.current_hp = 10
+	playground.player.request_attack("basic_kick")
+	for i in 45:
+		await physics_frame
+	return playground.dummy.current_hp == 0 and playground.dummy.state_machine.current_state == "dead"
+
+
+func _run_non_goal_attack_lockout_smoke(playground: Node) -> bool:
+	playground.player.reset_runtime(Vector2(245, 245))
+	playground.dummy.reset_runtime(_target_position_for("basic_punch"))
+	playground.player.state_machine.request_action("dash")
+	var dash_blocked: bool = not playground.player.request_attack("basic_punch")
+	for i in 20:
+		await physics_frame
+
+	playground.player.reset_runtime(Vector2(245, 245))
+	playground.dummy.reset_runtime(_target_position_for("basic_kick"))
+	playground.player.state_machine.request_action("jump")
+	var jump_blocked: bool = not playground.player.request_attack("basic_kick")
+	for i in 30:
+		await physics_frame
+	return dash_blocked and jump_blocked
+
+
+func _run_ai_stress_smoke(playground: Node) -> bool:
+	playground.player.reset_runtime(Vector2(245, 245))
+	playground.dummy.reset_runtime(Vector2(405, 245))
+	playground.player.control_mode = "ai"
+	var valid_states := {
+		"idle": true,
+		"walk": true,
+		"dash": true,
+		"jump": true,
+		"attack": true,
+		"hurt": true,
+		"dead": true,
+	}
+	for i in 10800:
+		playground._tick_combat(1.0 / 60.0)
+		if not valid_states.has(playground.player.state_machine.current_state):
+			return false
+		if playground.player.state_machine.current_state == "attack" and not playground.player.move_executor.is_executing():
+			return false
+		if playground.player.position.distance_to(playground.arena_center) > 700.0:
+			return false
+	playground.player.control_mode = "manual"
+	return true
+
+
+func _target_position_for(move_id: String) -> Vector2:
+	# Places the dummy's upper/lower hurtboxes inside the named move's first active hitbox.
+	if move_id == "basic_kick":
+		return Vector2(282, 245)
+	return Vector2(282, 245)

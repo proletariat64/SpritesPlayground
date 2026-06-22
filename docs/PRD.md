@@ -213,9 +213,90 @@ Godot should first import generated results, not directly own the generation bac
 
 Later, Godot may call the Python generator from a GUI button.
 
-## 8. Open Questions
+## 8. MVP Data Contracts
 
-- Exact JSON vs Godot Resource format for profiles and moves.
-- Exact local origin definition for all character-local boxes.
-- Exact dash and jump durations.
-- Whether combat gray template should be generated from PixelLab or drawn as placeholder first.
+MVP runtime data is represented as explicit GDScript dictionaries returned by
+dedicated data scripts:
+
+```text
+godot/scripts/character_template.gd
+godot/scripts/move_library.gd
+```
+
+This is the selected MVP format. JSON and `.tres` Resources remain possible later
+serialization targets, but they are not open questions for G1.
+
+### CharacterTemplate
+
+`CharacterTemplate.combat_gray_s64()` returns:
+
+```text
+template_id: String
+sprite_size_class: String
+frame_size: int
+max_hp: int
+hurtbox_profile: Dictionary[String, Rect2]
+foot_collision_profile: Dictionary
+move_templates: Dictionary[String, MoveTemplate]
+```
+
+Required MVP profile keys:
+
+```text
+hurtbox_profile:
+  hurt_head: Rect2
+  hurt_upper_body: Rect2
+  hurt_lower_body: Rect2
+
+foot_collision_profile:
+  center: Vector2
+  radius: Vector2
+```
+
+All box rects are character-local, with the character origin at the foot-center
+ground point.
+
+### MoveTemplate
+
+`MoveLibrary.combat_gray_s64_moves()` returns move templates keyed by move id:
+
+```text
+move_id: String
+fps: int
+total_frames: int
+hitbox_windows: Array[Dictionary]
+```
+
+Each hitbox window uses integer combat frames:
+
+```text
+from_frame: int
+to_frame: int
+hitbox_id: String
+damage: int
+rect: Rect2
+```
+
+MVP moves:
+
+```text
+basic_punch -> hit_fist_1
+basic_kick -> hit_leg_1
+```
+
+Hitboxes are only defined by move templates. Hurtboxes are only defined by
+character templates.
+
+## 9. Resolved MVP Decisions
+
+- Data format for G1: GDScript dictionary contracts in `character_template.gd`
+  and `move_library.gd`.
+- Character-local origin: foot-center ground point.
+- Dash duration: `0.18` seconds at the fixed physics tick.
+- Jump duration: `0.42` seconds, visual/action-only, no platform physics.
+- `combat_gray_s64` uses placeholder drawn geometry for MVP.
+
+## 10. Open Questions
+
+- Whether later persistence should use JSON, `.tres` Resources, or both.
+- Whether later combat templates should be generated from PixelLab or edited from placeholders.

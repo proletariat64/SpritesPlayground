@@ -3,6 +3,7 @@ class_name CombatCharacter
 
 const MoveExecutorScript := preload("res://godot/scripts/move_executor.gd")
 const StateMachineScript := preload("res://godot/scripts/combat_state_machine.gd")
+const CharacterTemplateScript := preload("res://godot/scripts/character_template.gd")
 
 var template_id: String = "combat_gray_s64"
 var instance_id: String = "character"
@@ -13,16 +14,9 @@ var current_hp: int = 100
 var control_mode: String = "manual"
 var debug_boxes_visible: bool = true
 var is_test_dummy: bool = false
-
-var hurtbox_profile: Dictionary = {
-	"hurt_head": Rect2(-12, -64, 24, 18),
-	"hurt_upper_body": Rect2(-16, -46, 32, 24),
-	"hurt_lower_body": Rect2(-14, -22, 28, 22),
-}
-var foot_collision_profile: Dictionary = {
-	"center": Vector2(0, -4),
-	"radius": Vector2(18, 8),
-}
+var template: Dictionary = {}
+var hurtbox_profile: Dictionary = {}
+var foot_collision_profile: Dictionary = {}
 
 var move_executor: Node
 var state_machine: Node
@@ -35,11 +29,12 @@ var _rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
-	_rng.randomize()
+	_rng.seed = hash(instance_id)
+	_load_template()
 	move_executor = MoveExecutorScript.new()
 	move_executor.name = "move_executor"
 	add_child(move_executor)
-	move_executor.configure(_combat_gray_move_templates())
+	move_executor.configure(template["move_templates"])
 
 	state_machine = StateMachineScript.new()
 	state_machine.name = "state_machine"
@@ -47,6 +42,17 @@ func _ready() -> void:
 	state_machine.configure(move_executor)
 
 	queue_redraw()
+
+
+func _load_template() -> void:
+	template = CharacterTemplateScript.combat_gray_s64()
+	template_id = str(template["template_id"])
+	sprite_size_class = str(template["sprite_size_class"])
+	frame_size = int(template["frame_size"])
+	max_hp = int(template["max_hp"])
+	current_hp = max_hp
+	hurtbox_profile = template["hurtbox_profile"].duplicate(true)
+	foot_collision_profile = template["foot_collision_profile"].duplicate(true)
 
 
 func tick_character(delta: float, arena_center: Vector2, arena_radius: Vector2) -> void:
@@ -85,28 +91,12 @@ func reset_runtime(new_position: Vector2) -> void:
 	position = new_position
 	current_hp = max_hp
 	_flash_time = 0.0
-	move_executor.cancel()
-	state_machine.current_state = StateMachineScript.STATE_IDLE
-	state_machine.current_move = ""
-	state_machine.visual_jump_offset = 0.0
-	state_machine.state_elapsed = 0.0
+	state_machine.reset_to_idle()
 	queue_redraw()
 
 
 func active_hitboxes_world() -> Array:
-	var entries: Array = []
-	for local_entry in move_executor.active_hitboxes_local():
-		var local_rect: Rect2 = local_entry["rect"]
-		if state_machine.facing < 0:
-			local_rect.position.x = -local_rect.position.x - local_rect.size.x
-		local_rect.position.y += state_machine.visual_jump_offset
-		entries.append({
-			"window_index": int(local_entry["window_index"]),
-			"hitbox_id": str(local_entry["hitbox_id"]),
-			"damage": int(local_entry["damage"]),
-			"rect": Rect2(global_position + local_rect.position, local_rect.size),
-		})
-	return entries
+	return move_executor.active_hitboxes_world(global_position, state_machine.facing, state_machine.visual_jump_offset)
 
 
 func hurtboxes_world() -> Array:
@@ -148,9 +138,15 @@ func _apply_manual_actions() -> void:
 	if Input.is_action_just_pressed("jump"):
 		state_machine.request_action("jump")
 	if Input.is_action_just_pressed("basic_punch"):
-		state_machine.request_action("basic_punch")
+		request_attack("basic_punch")
 	if Input.is_action_just_pressed("basic_kick"):
-		state_machine.request_action("basic_kick")
+		request_attack("basic_kick")
+
+
+func request_attack(move_id: String) -> bool:
+	if not state_machine.can_start_attack():
+		return false
+	return move_executor.start_attack_intent(move_id)
 
 
 func _tick_ai(delta: float) -> Vector2:
@@ -171,9 +167,9 @@ func _tick_ai(delta: float) -> Vector2:
 		3:
 			state_machine.request_action("jump")
 		4:
-			state_machine.request_action("basic_punch")
+			request_attack("basic_punch")
 		5:
-			state_machine.request_action("basic_kick")
+			request_attack("basic_kick")
 	return _ai_vector
 
 
@@ -186,39 +182,6 @@ func _clamp_foot_to_arena(arena_center: Vector2, arena_radius: Vector2) -> void:
 	normalized = normalized.normalized()
 	var clamped_foot := arena_center + Vector2(normalized.x * arena_radius.x, normalized.y * arena_radius.y)
 	position += clamped_foot - foot
-
-
-func _combat_gray_move_templates() -> Dictionary:
-	return {
-		"basic_punch": {
-			"move_id": "basic_punch",
-			"fps": 12.0,
-			"duration": 0.45,
-			"hitbox_windows": [
-				{
-					"from": 0.12,
-					"to": 0.20,
-					"hitbox_id": "hit_fist_1",
-					"damage": 8,
-					"rect": Rect2(12, -48, 24, 14),
-				},
-			],
-		},
-		"basic_kick": {
-			"move_id": "basic_kick",
-			"fps": 12.0,
-			"duration": 0.55,
-			"hitbox_windows": [
-				{
-					"from": 0.20,
-					"to": 0.32,
-					"hitbox_id": "hit_leg_1",
-					"damage": 10,
-					"rect": Rect2(10, -26, 34, 14),
-				},
-			],
-		},
-	}
 
 
 func _draw() -> void:
@@ -244,11 +207,9 @@ func _draw() -> void:
 		draw_rect(rect, Color(0.1, 0.55, 1.0, 0.18), true)
 		draw_rect(rect, Color(0.1, 0.55, 1.0), false, 1.0)
 
-	for hitbox in move_executor.active_hitboxes_local():
+	for hitbox in active_hitboxes_world():
 		var hit_rect: Rect2 = hitbox["rect"]
-		if state_machine.facing < 0:
-			hit_rect.position.x = -hit_rect.position.x - hit_rect.size.x
-		hit_rect.position.y += jump_y
+		hit_rect.position -= global_position
 		draw_rect(hit_rect, Color(1.0, 0.18, 0.08, 0.26), true)
 		draw_rect(hit_rect, Color(1.0, 0.18, 0.08), false, 1.0)
 

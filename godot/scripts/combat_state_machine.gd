@@ -15,6 +15,7 @@ var velocity: Vector2 = Vector2.ZERO
 var visual_jump_offset: float = 0.0
 var state_elapsed: float = 0.0
 var facing: int = 1
+var locked_attack_facing: int = 1
 
 var walk_speed: float = 95.0
 var dash_speed: float = 240.0
@@ -28,6 +29,7 @@ var _move_executor: Node
 
 func configure(move_executor: Node) -> void:
 	_move_executor = move_executor
+	_move_executor.move_started.connect(_on_move_started)
 	_move_executor.move_finished.connect(_on_move_finished)
 
 
@@ -36,7 +38,7 @@ func request_action(action_id: String) -> bool:
 		return false
 	if current_state == STATE_HURT:
 		return false
-	if current_state == STATE_ATTACK and _move_executor.is_executing():
+	if current_state == STATE_ATTACK:
 		return false
 
 	match action_id:
@@ -46,12 +48,19 @@ func request_action(action_id: String) -> bool:
 		STATE_JUMP:
 			_enter_state(STATE_JUMP)
 			return true
-		"basic_punch", "basic_kick":
-			if _move_executor.start_move(action_id):
-				current_move = action_id
-				_enter_state(STATE_ATTACK)
-				return true
 	return false
+
+
+func can_start_attack() -> bool:
+	return current_state in [STATE_IDLE, STATE_WALK]
+
+
+func reset_to_idle() -> void:
+	_move_executor.cancel()
+	velocity = Vector2.ZERO
+	visual_jump_offset = 0.0
+	current_move = STATE_IDLE
+	_enter_state(STATE_IDLE)
 
 
 func enter_hurt() -> void:
@@ -74,17 +83,19 @@ func tick(delta: float, input_vector: Vector2) -> void:
 	velocity = Vector2.ZERO
 	state_elapsed += delta
 
-	if input_vector.x < -0.05:
-		facing = -1
-	elif input_vector.x > 0.05:
-		facing = 1
+	if current_state != STATE_ATTACK:
+		if input_vector.x < -0.05:
+			facing = -1
+		elif input_vector.x > 0.05:
+			facing = 1
 
 	match current_state:
 		STATE_DEAD:
 			visual_jump_offset = 0.0
 			return
 		STATE_ATTACK:
-			_move_executor.tick(delta)
+			facing = locked_attack_facing
+			_move_executor.tick()
 			visual_jump_offset = 0.0
 			return
 		STATE_HURT:
@@ -143,3 +154,11 @@ func _on_move_finished(_move_id: String) -> void:
 	if current_state == STATE_ATTACK:
 		current_move = ""
 		_enter_state(STATE_IDLE)
+
+
+func _on_move_started(move_id: String) -> void:
+	if current_state == STATE_DEAD or current_state == STATE_HURT:
+		return
+	locked_attack_facing = facing
+	current_move = move_id
+	_enter_state(STATE_ATTACK)

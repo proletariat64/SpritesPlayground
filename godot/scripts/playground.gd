@@ -1,6 +1,7 @@
 extends Node2D
 
 const CombatCharacterScript := preload("res://godot/scripts/combat_character.gd")
+const COMBAT_TICK_RATE := 60
 
 var arena_center := Vector2(320, 205)
 var arena_radius := Vector2(280, 125)
@@ -12,6 +13,7 @@ var _ai_started_at_msec: int = 0
 
 
 func _ready() -> void:
+	Engine.physics_ticks_per_second = COMBAT_TICK_RATE
 	_ensure_input_actions()
 	player = _spawn_character("combat_gray_s64", "player_1", Vector2(245, 245), false)
 	dummy = _spawn_character("combat_gray_s64", "test_dummy_1", Vector2(405, 245), true)
@@ -19,7 +21,17 @@ func _ready() -> void:
 	_ai_started_at_msec = Time.get_ticks_msec()
 
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
+	_update_debug_gui()
+	queue_redraw()
+
+
+func _physics_process(delta: float) -> void:
+	_process_input()
+	_tick_combat(delta)
+
+
+func _process_input() -> void:
 	if Input.is_action_just_pressed("toggle_ai"):
 		player.control_mode = "ai" if player.control_mode == "manual" else "manual"
 		_ai_started_at_msec = Time.get_ticks_msec()
@@ -32,12 +44,12 @@ func _process(delta: float) -> void:
 		player.control_mode = "manual"
 		_ai_started_at_msec = Time.get_ticks_msec()
 
+
+func _tick_combat(delta: float) -> void:
 	player.tick_character(delta, arena_center, arena_radius)
 	dummy.tick_character(delta, arena_center, arena_radius)
 	_process_hits(player, dummy)
 	_process_hits(dummy, player)
-	_update_debug_gui()
-	queue_redraw()
 
 
 func _spawn_character(template_id: String, instance_id: String, spawn_position: Vector2, test_dummy: bool) -> Node2D:
