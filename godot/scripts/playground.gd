@@ -90,6 +90,7 @@ func _build_debug_gui() -> void:
 	debug_label = Label.new()
 	debug_label.name = "runtime_status"
 	debug_label.position = Vector2(8, 8)
+	debug_label.add_theme_font_size_override("font_size", 8)
 	debug_label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.95))
 	debug_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0))
 	debug_label.add_theme_constant_override("shadow_offset_x", 1)
