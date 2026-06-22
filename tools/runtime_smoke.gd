@@ -1,6 +1,7 @@
 extends SceneTree
 
 const PlaygroundScene := preload("res://godot/scenes/Playground.tscn")
+const CreatorDataStoreScript := preload("res://godot/scripts/creator_data_store.gd")
 
 
 func _init() -> void:
@@ -18,7 +19,8 @@ func _run() -> void:
 	var lethal_ok: bool = await _run_lethal_smoke(playground)
 	var non_goal_ok: bool = await _run_non_goal_attack_lockout_smoke(playground)
 	var ai_ok: bool = await _run_ai_stress_smoke(playground)
-	if punch_ok and kick_ok and lethal_ok and non_goal_ok and ai_ok:
+	var creator_ok: bool = await _run_creator_lab_smoke(playground)
+	if punch_ok and kick_ok and lethal_ok and non_goal_ok and ai_ok and creator_ok:
 		print("runtime_smoke=PASS")
 		quit(0)
 	else:
@@ -94,6 +96,73 @@ func _run_ai_stress_smoke(playground: Node) -> bool:
 			return false
 	playground.player.control_mode = "manual"
 	return true
+
+
+func _run_creator_lab_smoke(playground: Node) -> bool:
+	var panel: Node = playground.creator_lab
+	if panel == null:
+		return false
+
+	var original_punch := CreatorDataStoreScript.load_move_json("basic_punch").duplicate(true)
+	var copy_id := "combat_gray_s64_smoke_copy"
+	var copy_path := CreatorDataStoreScript.template_path(copy_id)
+	if FileAccess.file_exists(copy_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(copy_path))
+
+	panel._load_template("combat_gray_s64")
+	panel.create_editable_copy(copy_id)
+	if str(panel.template_json["template_id"]) != copy_id:
+		_restore_creator_smoke(original_punch, copy_path)
+		return false
+
+	panel.selected_hurtbox = "hurt_head"
+	panel.template_json["hurtboxes"]["hurt_head"]["x"] = -11
+	panel.template_json["foot_collision"]["radius"]["x"] = 19
+	panel.template_json["sprite_set_id"] = "blue_dummy_s64"
+	panel.sprite_set_json = CreatorDataStoreScript.load_sprite_set_json("blue_dummy_s64")
+	panel.move_json["frame_count"] = 28
+	panel.move_json["active_start_frame"] = 8
+	panel.move_json["active_end_frame"] = 13
+	panel.move_json["hitboxes"][0]["frame_start"] = 8
+	panel.move_json["hitboxes"][0]["frame_end"] = 13
+	panel.move_json["hitboxes"][0]["rect"]["x"] = 13
+	panel._save_all()
+
+	var reloaded_template := CreatorDataStoreScript.load_template_json(copy_id)
+	var reloaded_move := CreatorDataStoreScript.load_move_json("basic_punch")
+	var exact_ok := JSON.stringify(panel.template_json, "\t", true) == JSON.stringify(reloaded_template, "\t", true)
+	exact_ok = exact_ok and JSON.stringify(panel.move_json, "\t", true) == JSON.stringify(reloaded_move, "\t", true)
+	var wardrobe_ok: bool = panel._missing_animations().has("basic_punch")
+	var apply_ok: bool = playground.player.template_id == copy_id and playground.player.sprite_set_id == "blue_dummy_s64"
+	var toggle_ok: bool = _run_creator_toggle_smoke(playground)
+
+	playground.player.reset_runtime(Vector2(245, 245))
+	playground.dummy.reset_runtime(Vector2(282, 245))
+	playground.player.request_attack("basic_punch")
+	for i in 45:
+		await physics_frame
+	var runtime_ok: bool = playground.dummy.current_hp < playground.dummy.max_hp
+
+	_restore_creator_smoke(original_punch, copy_path)
+	if not (exact_ok and wardrobe_ok and apply_ok and toggle_ok and runtime_ok):
+		print("creator_lab_smoke exact_ok=%s wardrobe_ok=%s apply_ok=%s toggle_ok=%s runtime_ok=%s" % [exact_ok, wardrobe_ok, apply_ok, toggle_ok, runtime_ok])
+	return exact_ok and wardrobe_ok and apply_ok and toggle_ok and runtime_ok
+
+
+func _run_creator_toggle_smoke(playground: Node) -> bool:
+	playground.creator_lab.visible = true
+	var action_bound: bool = InputMap.has_action("toggle_creator_lab")
+	playground.toggle_creator_lab()
+	var hidden: bool = not playground.creator_lab.visible
+	playground.toggle_creator_lab()
+	var visible_again: bool = playground.creator_lab.visible
+	return action_bound and hidden and visible_again
+
+
+func _restore_creator_smoke(original_punch: Dictionary, copy_path: String) -> void:
+	CreatorDataStoreScript.save_move_json(original_punch)
+	if FileAccess.file_exists(copy_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(copy_path))
 
 
 func _target_position_for(move_id: String) -> Vector2:

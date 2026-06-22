@@ -1,35 +1,15 @@
 extends Resource
 class_name MoveLibrary
 
+const CreatorDataStoreScript := preload("res://godot/scripts/creator_data_store.gd")
+
 
 static func combat_gray_s64_moves() -> Dictionary:
 	return {
-		"basic_punch": {
-			"move_id": "basic_punch",
-			"fps": 60,
-			"total_frames": 27,
-			"hitbox_windows": [
-				{
-					"from_frame": 7,
-					"to_frame": 12,
-					"hitbox_id": "hit_fist_1",
-					"damage": 8,
-					"rect": Rect2(12, -48, 24, 14),
-				},
-			],
-		},
-		"basic_kick": {
-			"move_id": "basic_kick",
-			"fps": 60,
-			"total_frames": 33,
-			"hitbox_windows": [
-				{
-					"from_frame": 12,
-					"to_frame": 19,
-					"hitbox_id": "hit_leg_1",
-					"damage": 10,
-					"rect": Rect2(10, -26, 34, 14),
-				},
-			],
-		},
+		"basic_punch": load_move("basic_punch"),
+		"basic_kick": load_move("basic_kick"),
 	}
+
+
+static func load_move(move_id: String) -> Dictionary:
+	return CreatorDataStoreScript.move_json_to_runtime(CreatorDataStoreScript.load_move_json(move_id))
