@@ -8,6 +8,7 @@ const CharacterTemplateScript := preload("res://godot/scripts/character_template
 var template_id: String = "combat_gray_s64"
 var instance_id: String = "character"
 var sprite_size_class: String = "s64"
+var sprite_set_id: String = "gray_dummy_s64"
 var frame_size: int = 80
 var max_hp: int = 100
 var current_hp: int = 100
@@ -45,14 +46,41 @@ func _ready() -> void:
 
 
 func _load_template() -> void:
-	template = CharacterTemplateScript.combat_gray_s64()
-	template_id = str(template["template_id"])
-	sprite_size_class = str(template["sprite_size_class"])
-	frame_size = int(template["frame_size"])
-	max_hp = int(template["max_hp"])
+	template = CharacterTemplateScript.load_template(template_id)
+	_apply_template_data(template)
+
+
+func apply_template_id(next_template_id: String) -> void:
+	template_id = next_template_id
+	_load_template()
+	if move_executor != null:
+		move_executor.configure(template["move_templates"])
+	if state_machine != null:
+		state_machine.reset_to_idle()
 	current_hp = max_hp
-	hurtbox_profile = template["hurtbox_profile"].duplicate(true)
-	foot_collision_profile = template["foot_collision_profile"].duplicate(true)
+	queue_redraw()
+
+
+func apply_runtime_template(runtime_template: Dictionary) -> void:
+	template = runtime_template.duplicate(true)
+	_apply_template_data(template)
+	if move_executor != null:
+		move_executor.configure(template["move_templates"])
+	if state_machine != null:
+		state_machine.reset_to_idle()
+	current_hp = max_hp
+	queue_redraw()
+
+
+func _apply_template_data(runtime_template: Dictionary) -> void:
+	template_id = str(runtime_template["template_id"])
+	sprite_size_class = str(runtime_template["sprite_size_class"])
+	sprite_set_id = str(runtime_template.get("sprite_set_id", ""))
+	frame_size = int(runtime_template["frame_size"])
+	max_hp = int(runtime_template["max_hp"])
+	current_hp = max_hp
+	hurtbox_profile = runtime_template["hurtbox_profile"].duplicate(true)
+	foot_collision_profile = runtime_template["foot_collision_profile"].duplicate(true)
 
 
 func tick_character(delta: float, arena_center: Vector2, arena_radius: Vector2) -> void:
@@ -119,6 +147,7 @@ func debug_summary() -> Dictionary:
 	return {
 		"template_id": template_id,
 		"instance_id": instance_id,
+		"sprite_set_id": sprite_set_id,
 		"state": state_machine.current_state,
 		"move": state_machine.current_move,
 		"frame": state_machine.current_frame(),

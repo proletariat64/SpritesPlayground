@@ -1,0 +1,39 @@
+{
+	"animations": {
+		"basic_punch": {
+			"frames": 27,
+			"path": "placeholder://gray_dummy_s64/basic_punch"
+		},
+		"dash": {
+			"frames": 8,
+			"path": "placeholder://gray_dummy_s64/dash"
+		},
+		"dead": {
+			"frames": 8,
+			"path": "placeholder://gray_dummy_s64/dead"
+		},
+		"hurt": {
+			"frames": 8,
+			"path": "placeholder://gray_dummy_s64/hurt"
+		},
+		"idle": {
+			"frames": 8,
+			"path": "placeholder://gray_dummy_s64/idle"
+		},
+		"jump": {
+			"frames": 8,
+			"path": "placeholder://gray_dummy_s64/jump"
+		},
+		"walk": {
+			"frames": 8,
+			"path": "placeholder://gray_dummy_s64/walk"
+		}
+	},
+	"frame_size": 80,
+	"missing_animations": [
+		"basic_kick"
+	],
+	"schema_version": 1,
+	"sprite_set_id": "gray_dummy_s64",
+	"template_size_class": "s64"
+}

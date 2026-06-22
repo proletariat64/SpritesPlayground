@@ -1,0 +1,31 @@
+{
+	"active_end_frame": 12.0,
+	"active_start_frame": 7.0,
+	"animation_name": "basic_punch",
+	"cooldown": 0.0,
+	"damage": 8.0,
+	"frame_count": 27.0,
+	"hitboxes": [
+		{
+			"frame_end": 12.0,
+			"frame_start": 7.0,
+			"name": "hit_fist_1",
+			"rect": {
+				"h": 14.0,
+				"w": 24.0,
+				"x": 12.0,
+				"y": -48.0
+			}
+		}
+	],
+	"hitstop": 0.0,
+	"knockback": {
+		"x": 0.0,
+		"y": 0.0
+	},
+	"move_id": "basic_punch",
+	"move_type": "attack",
+	"recovery_frames": 14.0,
+	"schema_version": 1.0,
+	"startup_frames": 7.0
+}

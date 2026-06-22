@@ -1,6 +1,7 @@
 extends Node2D
 
 const CombatCharacterScript := preload("res://godot/scripts/combat_character.gd")
+const CreatorLabPanelScript := preload("res://godot/scripts/creator_lab_panel.gd")
 const COMBAT_TICK_RATE := 60
 
 var arena_center := Vector2(320, 205)
@@ -9,6 +10,7 @@ var arena_radius := Vector2(280, 125)
 var player: Node2D
 var dummy: Node2D
 var debug_label: Label
+var creator_lab: PanelContainer
 var _ai_started_at_msec: int = 0
 
 
@@ -18,6 +20,7 @@ func _ready() -> void:
 	player = _spawn_character("combat_gray_s64", "player_1", Vector2(245, 245), false)
 	dummy = _spawn_character("combat_gray_s64", "test_dummy_1", Vector2(405, 245), true)
 	_build_debug_gui()
+	_build_creator_lab()
 	_ai_started_at_msec = Time.get_ticks_msec()
 
 
@@ -38,6 +41,8 @@ func _process_input() -> void:
 	if Input.is_action_just_pressed("toggle_boxes"):
 		player.debug_boxes_visible = not player.debug_boxes_visible
 		dummy.debug_boxes_visible = player.debug_boxes_visible
+	if Input.is_action_just_pressed("toggle_creator_lab") and creator_lab != null:
+		toggle_creator_lab()
 	if Input.is_action_just_pressed("reset_playground"):
 		player.reset_runtime(Vector2(245, 245))
 		dummy.reset_runtime(Vector2(405, 245))
@@ -50,6 +55,11 @@ func _tick_combat(delta: float) -> void:
 	dummy.tick_character(delta, arena_center, arena_radius)
 	_process_hits(player, dummy)
 	_process_hits(dummy, player)
+
+
+func toggle_creator_lab() -> void:
+	if creator_lab != null:
+		creator_lab.visible = not creator_lab.visible
 
 
 func _spawn_character(template_id: String, instance_id: String, spawn_position: Vector2, test_dummy: bool) -> Node2D:
@@ -99,6 +109,13 @@ func _build_debug_gui() -> void:
 	_update_debug_gui()
 
 
+func _build_creator_lab() -> void:
+	creator_lab = CreatorLabPanelScript.new()
+	creator_lab.name = "creator_lab_v1"
+	add_child(creator_lab)
+	creator_lab.setup(player)
+
+
 func _update_debug_gui() -> void:
 	var p: Dictionary = player.debug_summary()
 	var d: Dictionary = dummy.debug_summary()
@@ -110,7 +127,7 @@ func _update_debug_gui() -> void:
 		"template=%s  instance=%s  mode=%s  ai_time=%.1fs" % [p["template_id"], p["instance_id"], p["mode"], ai_seconds],
 		"state=%s  move=%s  frame=%s  hp=%s  active_hitboxes=%s" % [p["state"], p["move"], p["frame"], p["hp"], p["active_hitboxes"]],
 		"dummy_state=%s  dummy_hp=%s" % [d["state"], d["hp"]],
-		"boxes=%s  controls=wasd/arrows move, j punch, k kick, shift dash, space jump, tab ai, b boxes, r reset" % boxes_status,
+		"boxes=%s  controls=wasd/arrows move, j punch, k kick, shift dash, space jump, tab ai, b boxes, c creator, r reset" % boxes_status,
 	])
 
 
@@ -139,6 +156,7 @@ func _ensure_input_actions() -> void:
 	_bind_key_action("basic_kick", [KEY_K])
 	_bind_key_action("toggle_ai", [KEY_TAB])
 	_bind_key_action("toggle_boxes", [KEY_B])
+	_bind_key_action("toggle_creator_lab", [KEY_C])
 	_bind_key_action("reset_playground", [KEY_R])
 
 
