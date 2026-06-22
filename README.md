@@ -1,121 +1,94 @@
 # SpritesPlayground
 
-SpritesPlayground is the standalone Godot sprite asset playground for Miduo Holiday. It exists to organize, preview, debug, and validate pixel-art character animation resources before clean assets are moved into the game project.
+SpritesPlayground is a Godot-side development lab for **Miduo Character Combat Lab**.
 
-## Current Actors
+This repository is no longer a verification dump for generated sprite resources. It has been reset into a clean project skeleton for designing and implementing a limited, template-based pixel character playground.
 
-- `dad_chibi_64`
-- `mama_chibi_64`
-- `miduo_chibi_64`
+## Product Purpose
 
-Each actor is imported from its own `sprites/chibi_64/<actor_id>/manifest.json`. The aggregate `export_manifest.json` is not used because it is incomplete.
+SpritesPlayground exists to validate pixel character templates before they enter the real game project.
 
-## Sprite Contract
+It should help answer:
 
-```text
-base viewport: 640x360 px
-default window: 1280x720 px
-fullscreen target: 1920x1080 px
-aspect ratio: 16:9
-stretch mode: viewport / keep
-startup window mode: fullscreen
-Esc behavior: return to 1280x720 windowed mode
-visual sprite intent: 64x64 px
-Godot animation frame: 80x80 px
-debug UI cell: 80x80 px
-physical PNG source: unchanged 120/132/136 px canvases
-default direction: east
-default action: idle_breath
-rendering: nearest neighbor
-```
+- Does the sprite template match the supported size class?
+- Do base actions play correctly?
+- Do attack moves activate the correct hitboxes at the correct frames?
+- Do hurtboxes, hitboxes, and the foot collision ellipse match the sprite?
+- Can AI/manual control run the character without state-machine failures?
+- Can future PixelLab-generated assets be imported and validated safely?
 
-The importer does not rewrite source PNGs. It builds centered `AtlasTexture` frames with an `80x80` region inside each source PNG:
+## Current Product Direction
 
-```text
-region.x = (source_width - 80) / 2
-region.y = (source_height - 80) / 2
-region.size = 80x80
-```
+The product is a **limited customizable character template system**, not a free-form game engine.
 
-## Godot Resources
+Core rules:
 
-Generated resources are committed under:
+- Fixed sprite size classes: `s48`, `s64`, `s80`, `s96`.
+- Character templates are built by **composition profiles**, not deep inheritance.
+- Base gray templates are locked and cannot be directly edited.
+- Hurtboxes belong to character body profiles.
+- Hitboxes belong to move templates.
+- Hitboxes use character-local coordinates, not body anchors or bones.
+- First MVP supports HP only; no stamina, mana, weapons, or projectile system.
+
+## Repository Status
+
+Previous verification work has been archived on branch:
 
 ```text
-resources/sprite_frames/dad_chibi_64.tres
-resources/sprite_frames/mama_chibi_64.tres
-resources/sprite_frames/miduo_chibi_64.tres
+archive/verification-work-2026-06-22
 ```
 
-Each `SpriteFrames` resource contains 119 manifest action-direction animations named as:
+Downloadable archive URL:
 
 ```text
-<action>__<direction>
+https://github.com/proletariat64/SpritesPlayground/archive/refs/heads/archive/verification-work-2026-06-22.zip
 ```
 
-Examples:
+## Skeleton Layout
 
 ```text
-idle_breath__east
-walk_loop__southwest
-jab__west
+SpritesPlayground/
+├── README.md
+├── project.godot
+├── docs/
+│   ├── PRD.md
+│   ├── PRODUCT_SCOPE.md
+│   ├── DEVELOPMENT.md
+│   ├── NAMING.md
+│   └── ARCHITECTURE_DECISIONS.md
+├── godot/
+│   ├── scenes/
+│   ├── scripts/
+│   └── resources/
+├── tools/
+│   └── pixellab_generator/
+├── generated_assets/
+└── archive/
+    └── README.md
 ```
 
-Resource metadata includes:
+## MVP Focus
 
-- `actor_id`
-- `visual_sprite_intent`
-- `godot_frame_size`
-- `debug_cell_size`
-- `source_png_size`
-- `animation_separator`
-- `action_names`
-
-## Animation State
-
-The viewer models animation state as three small fields:
+The first working MVP should prove this loop:
 
 ```text
-current_actor_id
-current_action
-current_direction
+combat gray s64 template
+→ manual movement / AI stress mode
+→ dash / jump / basic punch / basic kick
+→ hitbox-hurtbox collision
+→ HP damage and hit flash
+→ debug GUI shows state, move, frame, hitbox, hurtbox, and HP
 ```
 
-It does not create gameplay state names like `walk_southwest` or `run_north`.
+## What This Repo Does Not Do Yet
 
-Resolution order:
+- No formal game stages.
+- No weapon system.
+- No projectile system.
+- No stamina or mana system.
+- No full combo system.
+- No full wardrobe/dress-up system.
+- No full PixelLab integration inside Godot yet.
 
-1. Use exact `<action>__<direction>` when present.
-2. For west-like directions, use `<action>__west` when present.
-3. For west-like directions, use `<action>__east` with horizontal flip when no west animation exists.
-4. Otherwise use the first animation available for that action and warn through Godot.
-
-Looping is enabled for actions ending in `_loop`, plus `idle_breath` and `fight_idle`. Other actions play once.
-
-## Viewer
-
-Open the project and press `Open SpritesPlayground` from the main menu.
-
-The viewer provides:
-
-- actor buttons for dad, mama, and miduo
-- an action list for the 34 manifest actions
-- eight direction controls
-- looping preview cells for every action
-- debug text showing actor, action, direction, frame, source PNG size, and `80x80` Godot frame size
-
-## Regenerate And Verify
-
-Run the importer:
-
-```bash
-godot --headless --path . --script tools/import_sprite_frames.gd
-```
-
-Run the smoke test:
-
-```bash
-godot --headless --path . --script tools/smoke_sprites_playground.gd
-```
-
-The smoke test verifies that all three `SpriteFrames` resources are present, each resource has 119 animations, manifest frame counts match, every frame is an `AtlasTexture` with an `80x80` region, scenes instantiate headlessly, and default state resolution works.
+See `docs/PRD.md` and GitHub issues for current scope and development acceptance criteria.

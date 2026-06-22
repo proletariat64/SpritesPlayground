@@ -1,39 +1,20 @@
-; Engine configuration file.
-; It's best edited using the editor UI and not directly,
-; since the parameters that go here are not all obvious.
-;
-; Format:
-;   [section] ; section goes between []
-;   param=value ; assign values to parameters
+; Godot project skeleton for SpritesPlayground
+; Implementation scenes/scripts are intentionally not present yet.
 
 config_version=5
 
 [application]
-
 config/name="SpritesPlayground"
-run/main_scene="res://scenes/MainMenu.tscn"
-config/features=PackedStringArray("4.6", "Forward Plus")
-config/icon="res://icon.svg"
-
-[autoload]
-
-WindowModeController="*res://scripts/WindowModeController.gd"
+run/main_scene="res://godot/scenes/Playground.tscn"
+config/features=PackedStringArray("4.3")
 
 [display]
-
 window/size/viewport_width=640
 window/size/viewport_height=360
-window/size/mode=3
 window/size/window_width_override=1280
 window/size/window_height_override=720
-window/stretch/mode="viewport"
+window/stretch/mode="canvas_items"
 window/stretch/aspect="keep"
 
-[physics]
-
-3d/physics_engine="Jolt Physics"
-
 [rendering]
-
 textures/canvas_textures/default_texture_filter=0
-rendering_device/driver.windows="d3d12"

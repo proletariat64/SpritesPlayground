@@ -1,3 +1,28 @@
-# Godot 4+ specific ignores
+# Godot
 .godot/
-/android/
+.import/
+export.cfg
+export_presets.cfg
+
+# Generated / temporary assets
+/tmp/
+*.tmp
+*.cache
+
+# Local secrets
+.env
+.env.*
+*.key
+*.pem
+
+# Python tools
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
