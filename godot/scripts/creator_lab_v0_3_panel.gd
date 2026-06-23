@@ -250,9 +250,16 @@ func runtime_summary() -> Dictionary:
 
 
 func _build_ui() -> void:
-	custom_minimum_size = Vector2(320, 346)
+	custom_minimum_size = Vector2(300, 336)
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.055, 0.065, 0.075, 0.96)
+	panel_style.border_color = Color(0.26, 0.34, 0.42, 1.0)
+	panel_style.set_border_width_all(1)
+	panel_style.set_content_margin_all(6)
+	add_theme_stylebox_override("panel", panel_style)
+
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 2)
+	root.add_theme_constant_override("separation", 3)
 	add_child(root)
 
 	var title := Label.new()
@@ -262,19 +269,24 @@ func _build_ui() -> void:
 	root.add_child(title)
 
 	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 3)
 	root.add_child(top)
 	template_select = OptionButton.new()
-	_style_control(template_select, 120, 18)
+	_style_control(template_select, 130, 18)
 	template_select.item_selected.connect(_on_template_selected)
 	top.add_child(template_select)
-	top.add_child(_button("Copy", _on_copy_pressed))
 	top.add_child(_button("Save", _on_save_pressed))
-	top.add_child(_button("Reload", _on_reload_pressed))
 	top.add_child(_button("Check", _on_check_pressed))
-	top.add_child(_button("Exact", _on_exact_pressed))
+
+	var tools := HBoxContainer.new()
+	tools.add_theme_constant_override("separation", 3)
+	root.add_child(tools)
+	tools.add_child(_button("Copy", _on_copy_pressed))
+	tools.add_child(_button("Reload", _on_reload_pressed))
+	tools.add_child(_button("Exact", _on_exact_pressed))
 
 	var tabs := TabContainer.new()
-	tabs.custom_minimum_size = Vector2(312, 258)
+	tabs.custom_minimum_size = Vector2(288, 242)
 	tabs.add_theme_font_size_override("font_size", 8)
 	root.add_child(tabs)
 	_build_template_tab(tabs)

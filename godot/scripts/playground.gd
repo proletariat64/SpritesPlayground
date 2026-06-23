@@ -126,9 +126,17 @@ func _build_debug_gui() -> void:
 
 
 func _build_creator_lab() -> void:
+	var layer := CanvasLayer.new()
+	layer.name = "creator_lab_layer"
+	layer.layer = 20
+	add_child(layer)
+
 	creator_lab = CreatorLabV03PanelScript.new()
 	creator_lab.name = "creator_lab_v0_3"
-	add_child(creator_lab)
+	creator_lab.position = Vector2(332, 12)
+	creator_lab.size = Vector2(300, 336)
+	creator_lab.visible = false
+	layer.add_child(creator_lab)
 	creator_lab.setup()
 
 
