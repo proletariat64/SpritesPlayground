@@ -9,7 +9,7 @@ var arena_radius := Vector2(280, 125)
 
 var player: Node2D
 var dummy: Node2D
-var debug_label: Label
+var debug_label: RichTextLabel
 var creator_lab: PanelContainer
 var _ai_started_at_msec: int = 0
 
@@ -35,6 +35,8 @@ func _physics_process(delta: float) -> void:
 
 
 func _process_input() -> void:
+	if _manual_gameplay_input_active():
+		get_viewport().gui_release_focus()
 	if Input.is_action_just_pressed("toggle_ai"):
 		player.control_mode = "ai" if player.control_mode == "manual" else "manual"
 		_ai_started_at_msec = Time.get_ticks_msec()
@@ -48,6 +50,19 @@ func _process_input() -> void:
 		dummy.reset_runtime(Vector2(405, 245))
 		player.control_mode = "manual"
 		_ai_started_at_msec = Time.get_ticks_msec()
+
+
+func _manual_gameplay_input_active() -> bool:
+	return (
+		Input.is_action_pressed("move_left")
+		or Input.is_action_pressed("move_right")
+		or Input.is_action_pressed("move_up")
+		or Input.is_action_pressed("move_down")
+		or Input.is_action_just_pressed("dash")
+		or Input.is_action_just_pressed("jump")
+		or Input.is_action_just_pressed("basic_punch")
+		or Input.is_action_just_pressed("basic_kick")
+	)
 
 
 func _tick_combat(delta: float) -> void:
@@ -97,14 +112,15 @@ func _build_debug_gui() -> void:
 	layer.name = "debug_gui"
 	add_child(layer)
 
-	debug_label = Label.new()
+	debug_label = RichTextLabel.new()
 	debug_label.name = "runtime_status"
 	debug_label.position = Vector2(8, 8)
+	debug_label.custom_minimum_size = Vector2(320, 44)
+	debug_label.bbcode_enabled = true
+	debug_label.fit_content = true
 	debug_label.add_theme_font_size_override("font_size", 8)
-	debug_label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.95))
-	debug_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0))
-	debug_label.add_theme_constant_override("shadow_offset_x", 1)
-	debug_label.add_theme_constant_override("shadow_offset_y", 1)
+	debug_label.add_theme_font_size_override("normal_font_size", 8)
+	debug_label.add_theme_color_override("default_color", Color(0.9, 0.93, 0.95))
 	layer.add_child(debug_label)
 	_update_debug_gui()
 
@@ -124,10 +140,9 @@ func _update_debug_gui() -> void:
 		ai_seconds = float(Time.get_ticks_msec() - _ai_started_at_msec) / 1000.0
 	var boxes_status := "on" if player.debug_boxes_visible else "off"
 	debug_label.text = "\n".join([
-		"template=%s  instance=%s  mode=%s  ai_time=%.1fs" % [p["template_id"], p["instance_id"], p["mode"], ai_seconds],
-		"state=%s  move=%s  frame=%s  hp=%s  active_hitboxes=%s" % [p["state"], p["move"], p["frame"], p["hp"], p["active_hitboxes"]],
-		"dummy_state=%s  dummy_hp=%s" % [d["state"], d["hp"]],
-		"boxes=%s  controls=wasd/arrows move, j punch, k kick, shift dash, space jump, tab ai, b boxes, c creator, r reset" % boxes_status,
+		"[color=#86d7ff]P[/color] %s %s f:%s hit:%s" % [p["state"], p["hp"], p["frame"], p["active_hitboxes"]],
+		"[color=#ff9aa2]D[/color] %s %s  [color=#ffd166]%s[/color] box:%s" % [d["state"], d["hp"], p["mode"].substr(0, 3), boxes_status],
+		"[color=#c7d2fe]wasd[/color] move  j/k atk  sh dash  sp jump  tab ai  b box  c lab  r reset",
 	])
 
 

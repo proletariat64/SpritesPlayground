@@ -31,17 +31,20 @@ func setup(target_player: Node2D) -> void:
 
 func _build_ui() -> void:
 	custom_minimum_size = Vector2(300, 340)
-	position = Vector2(332, 8)
+	size = Vector2(300, 340)
+	position = Vector2(334, 6)
+	clip_contents = true
 
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 5)
+	root.add_theme_constant_override("separation", 2)
 	add_child(root)
 
 	var title_row := HBoxContainer.new()
 	root.add_child(title_row)
 	var title := Label.new()
 	title.text = "Creator Lab v1"
-	title.add_theme_font_size_override("font_size", 10)
+	title.add_theme_font_size_override("font_size", 8)
+	title.add_theme_color_override("font_color", Color(0.53, 0.84, 1.0))
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_row.add_child(title)
 	title_row.add_child(_button("Hide", _on_hide_pressed))
@@ -49,55 +52,85 @@ func _build_ui() -> void:
 	var template_row := HBoxContainer.new()
 	root.add_child(template_row)
 	template_select = OptionButton.new()
-	template_select.custom_minimum_size = Vector2(150, 24)
+	_style_compact_control(template_select, 132, 18)
 	template_select.item_selected.connect(_on_template_selected)
 	template_row.add_child(template_select)
 	template_row.add_child(_button("Copy", _on_copy_template_pressed))
 	template_row.add_child(_button("Apply", _apply_to_playground))
 
-	root.add_child(_section_label("Box Editor"))
+	var tabs := TabContainer.new()
+	tabs.custom_minimum_size = Vector2(292, 238)
+	tabs.add_theme_font_size_override("font_size", 8)
+	root.add_child(tabs)
+
+	var box_tab := VBoxContainer.new()
+	box_tab.name = "Box"
+	box_tab.add_theme_constant_override("separation", 2)
+	tabs.add_child(box_tab)
+
+	var move_tab := VBoxContainer.new()
+	move_tab.name = "Move"
+	move_tab.add_theme_constant_override("separation", 2)
+	tabs.add_child(move_tab)
+
+	var wardrobe_tab := VBoxContainer.new()
+	wardrobe_tab.name = "Wardrobe"
+	wardrobe_tab.add_theme_constant_override("separation", 2)
+	tabs.add_child(wardrobe_tab)
+
+	box_tab.add_child(_section_label("Box Editor"))
 	hurtbox_select = OptionButton.new()
 	for id in ["hurt_head", "hurt_upper_body", "hurt_lower_body"]:
 		hurtbox_select.add_item(id)
+	_style_compact_control(hurtbox_select, 154, 18)
 	hurtbox_select.item_selected.connect(_on_hurtbox_selected)
-	root.add_child(hurtbox_select)
-	hurt_spins = _add_rect_editor(root, "hurt", _on_hurtbox_spin_changed)
-	foot_spins = _add_ellipse_editor(root, _on_foot_spin_changed)
+	box_tab.add_child(hurtbox_select)
+	hurt_spins = _add_rect_editor(box_tab, "hurt", _on_hurtbox_spin_changed)
+	foot_spins = _add_ellipse_editor(box_tab, _on_foot_spin_changed)
 
-	root.add_child(_section_label("Move Lab"))
+	move_tab.add_child(_section_label("Move Lab"))
 	move_select = OptionButton.new()
 	for id in ["basic_punch", "basic_kick"]:
 		move_select.add_item(id)
+	_style_compact_control(move_select, 154, 18)
 	move_select.item_selected.connect(_on_move_selected)
-	root.add_child(move_select)
-	move_spins = _add_move_editor(root, _on_move_spin_changed)
-	hitbox_spins = _add_rect_editor(root, "hitbox", _on_hitbox_spin_changed)
+	move_tab.add_child(move_select)
+	move_spins = _add_move_editor(move_tab, _on_move_spin_changed)
+	move_tab.add_child(_section_label("Hitbox"))
+	hitbox_spins = _add_rect_editor(move_tab, "hitbox", _on_hitbox_spin_changed)
 
-	root.add_child(_section_label("Wardrobe"))
+	wardrobe_tab.add_child(_section_label("Wardrobe"))
 	sprite_set_select = OptionButton.new()
+	_style_compact_control(sprite_set_select, 154, 18)
 	sprite_set_select.item_selected.connect(_on_sprite_set_selected)
-	root.add_child(sprite_set_select)
+	wardrobe_tab.add_child(sprite_set_select)
 	missing_label = Label.new()
 	missing_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	missing_label.add_theme_font_size_override("font_size", 8)
-	root.add_child(missing_label)
-	root.add_child(_button("Generate Missing Animation", _on_generate_stub_pressed))
+	missing_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.42))
+	wardrobe_tab.add_child(missing_label)
+	wardrobe_tab.add_child(_button("Gen Missing", _on_generate_stub_pressed))
 
 	var save_row := HBoxContainer.new()
 	root.add_child(save_row)
+	save_row.add_theme_constant_override("separation", 2)
 	save_row.add_child(_button("Save", _on_save_pressed))
 	save_row.add_child(_button("Reload", _on_reload_pressed))
-	save_row.add_child(_button("Save+Reload Check", _on_save_reload_check_pressed))
+	save_row.add_child(_button("Check", _on_save_reload_check_pressed))
 
 	status_label = Label.new()
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status_label.add_theme_font_size_override("font_size", 8)
+	status_label.add_theme_color_override("font_color", Color(0.67, 0.92, 0.74))
 	root.add_child(status_label)
 
 
 func _button(text: String, callback: Callable) -> Button:
 	var button := Button.new()
 	button.text = text
+	button.custom_minimum_size = Vector2(0, 18)
+	button.add_theme_font_size_override("font_size", 8)
+	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(callback)
 	return button
 
@@ -105,47 +138,129 @@ func _button(text: String, callback: Callable) -> Button:
 func _section_label(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
-	label.add_theme_font_size_override("font_size", 9)
+	label.add_theme_font_size_override("font_size", 8)
+	label.add_theme_color_override("font_color", Color(0.66, 0.78, 1.0))
 	return label
 
 
 func _add_rect_editor(parent: VBoxContainer, prefix: String, callback: Callable) -> Dictionary:
 	var spins := {}
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 4)
+	grid.add_theme_constant_override("v_separation", 1)
+	parent.add_child(grid)
 	for field in ["x", "y", "w", "h"]:
-		spins[field] = _add_spin_row(parent, "%s_%s" % [prefix, field], -160, 160, callback)
+		spins[field] = _add_spin_cell(grid, "%s_%s" % [prefix, field], -160, 160, callback)
 	return spins
 
 
 func _add_ellipse_editor(parent: VBoxContainer, callback: Callable) -> Dictionary:
 	var spins := {}
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 4)
+	grid.add_theme_constant_override("v_separation", 1)
+	parent.add_child(grid)
 	for field in ["center_x", "center_y", "radius_x", "radius_y"]:
-		spins[field] = _add_spin_row(parent, "foot_%s" % field, -160, 160, callback)
+		spins[field] = _add_spin_cell(grid, "foot_%s" % field, -160, 160, callback)
 	return spins
 
 
 func _add_move_editor(parent: VBoxContainer, callback: Callable) -> Dictionary:
 	var spins := {}
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 4)
+	grid.add_theme_constant_override("v_separation", 1)
+	parent.add_child(grid)
 	for field in ["frame_count", "startup_frames", "active_start_frame", "active_end_frame", "recovery_frames", "damage"]:
-		spins[field] = _add_spin_row(parent, field, 0, 180, callback)
+		spins[field] = _add_spin_cell(grid, field, 0, 180, callback)
 	return spins
 
 
-func _add_spin_row(parent: VBoxContainer, label_text: String, min_value: float, max_value: float, callback: Callable) -> SpinBox:
-	var row := HBoxContainer.new()
-	parent.add_child(row)
+func _add_spin_cell(parent: GridContainer, label_text: String, min_value: float, max_value: float, callback: Callable) -> LineEdit:
 	var label := Label.new()
-	label.text = label_text
-	label.custom_minimum_size = Vector2(118, 18)
+	label.text = _compact_label(label_text)
+	label.custom_minimum_size = Vector2(52, 16)
 	label.add_theme_font_size_override("font_size", 8)
-	row.add_child(label)
-	var spin := SpinBox.new()
-	spin.min_value = min_value
-	spin.max_value = max_value
-	spin.step = 1
-	spin.custom_minimum_size = Vector2(72, 20)
-	spin.value_changed.connect(callback)
-	row.add_child(spin)
-	return spin
+	label.add_theme_color_override("font_color", _label_color(label_text))
+	parent.add_child(label)
+	var input := LineEdit.new()
+	input.set_meta("min_value", min_value)
+	input.set_meta("max_value", max_value)
+	input.alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	input.select_all_on_focus = true
+	input.flat = true
+	_style_compact_control(input, 42, 16)
+	input.text_submitted.connect(func(_text: String) -> void:
+		_commit_number_field(input, callback)
+	)
+	input.focus_exited.connect(func() -> void:
+		_commit_number_field(input, callback)
+	)
+	parent.add_child(input)
+	return input
+
+
+func _style_compact_control(control: Control, width: int, height: int) -> void:
+	control.custom_minimum_size = Vector2(width, height)
+	control.add_theme_font_size_override("font_size", 8)
+	if not (control is LineEdit):
+		control.focus_mode = Control.FOCUS_NONE
+
+
+func _commit_number_field(input: LineEdit, callback: Callable) -> void:
+	_set_number_value(input, _number_value(input))
+	input.release_focus()
+	callback.call(0.0)
+
+
+func _set_number_value(input: LineEdit, value: float) -> void:
+	var min_value := float(input.get_meta("min_value", -INF))
+	var max_value := float(input.get_meta("max_value", INF))
+	var clamped := clampf(value, min_value, max_value)
+	input.text = str(int(clamped)) if is_equal_approx(clamped, roundf(clamped)) else str(clamped)
+
+
+func _number_value(input: LineEdit) -> float:
+	if not input.text.is_valid_float():
+		return 0.0
+	return float(input.text)
+
+
+func _compact_label(label_text: String) -> String:
+	var labels := {
+		"hurt_x": "Hurt X",
+		"hurt_y": "Hurt Y",
+		"hurt_w": "Hurt W",
+		"hurt_h": "Hurt H",
+		"hitbox_x": "Hit X",
+		"hitbox_y": "Hit Y",
+		"hitbox_w": "Hit W",
+		"hitbox_h": "Hit H",
+		"foot_center_x": "Foot CX",
+		"foot_center_y": "Foot CY",
+		"foot_radius_x": "Foot RX",
+		"foot_radius_y": "Foot RY",
+		"frame_count": "Frames",
+		"startup_frames": "Start",
+		"active_start_frame": "Act From",
+		"active_end_frame": "Act To",
+		"recovery_frames": "Recover",
+		"damage": "Damage",
+	}
+	return str(labels.get(label_text, label_text))
+
+
+func _label_color(label_text: String) -> Color:
+	if label_text.begins_with("hurt"):
+		return Color(0.9, 0.65, 1.0)
+	if label_text.begins_with("hitbox"):
+		return Color(1.0, 0.67, 0.53)
+	if label_text.begins_with("foot"):
+		return Color(0.55, 0.88, 0.68)
+	return Color(0.9, 0.93, 0.95)
 
 
 func _load_template(template_id: String) -> void:
@@ -181,21 +296,21 @@ func _refresh_sprite_set_options() -> void:
 func _refresh_fields() -> void:
 	var hurt: Dictionary = template_json["hurtboxes"][selected_hurtbox]
 	for field in ["x", "y", "w", "h"]:
-		hurt_spins[field].set_value_no_signal(float(hurt[field]))
+		_set_number_value(hurt_spins[field], float(hurt[field]))
 
 	var foot: Dictionary = template_json["foot_collision"]
-	foot_spins["center_x"].set_value_no_signal(float(foot["center"]["x"]))
-	foot_spins["center_y"].set_value_no_signal(float(foot["center"]["y"]))
-	foot_spins["radius_x"].set_value_no_signal(float(foot["radius"]["x"]))
-	foot_spins["radius_y"].set_value_no_signal(float(foot["radius"]["y"]))
+	_set_number_value(foot_spins["center_x"], float(foot["center"]["x"]))
+	_set_number_value(foot_spins["center_y"], float(foot["center"]["y"]))
+	_set_number_value(foot_spins["radius_x"], float(foot["radius"]["x"]))
+	_set_number_value(foot_spins["radius_y"], float(foot["radius"]["y"]))
 
 	for field in move_spins.keys():
-		move_spins[field].set_value_no_signal(float(move_json.get(field, 0)))
+		_set_number_value(move_spins[field], float(move_json.get(field, 0)))
 
 	var hitbox: Dictionary = move_json["hitboxes"][0]
 	var rect: Dictionary = hitbox["rect"]
 	for field in ["x", "y", "w", "h"]:
-		hitbox_spins[field].set_value_no_signal(float(rect[field]))
+		_set_number_value(hitbox_spins[field], float(rect[field]))
 	_update_missing_label()
 
 
@@ -225,21 +340,21 @@ func _on_sprite_set_selected(index: int) -> void:
 func _on_hurtbox_spin_changed(_value: float) -> void:
 	var hurt: Dictionary = template_json["hurtboxes"][selected_hurtbox]
 	for field in ["x", "y", "w", "h"]:
-		hurt[field] = hurt_spins[field].value
+		hurt[field] = _number_value(hurt_spins[field])
 	_apply_to_playground()
 
 
 func _on_foot_spin_changed(_value: float) -> void:
-	template_json["foot_collision"]["center"]["x"] = foot_spins["center_x"].value
-	template_json["foot_collision"]["center"]["y"] = foot_spins["center_y"].value
-	template_json["foot_collision"]["radius"]["x"] = maxf(1.0, foot_spins["radius_x"].value)
-	template_json["foot_collision"]["radius"]["y"] = maxf(1.0, foot_spins["radius_y"].value)
+	template_json["foot_collision"]["center"]["x"] = _number_value(foot_spins["center_x"])
+	template_json["foot_collision"]["center"]["y"] = _number_value(foot_spins["center_y"])
+	template_json["foot_collision"]["radius"]["x"] = maxf(1.0, _number_value(foot_spins["radius_x"]))
+	template_json["foot_collision"]["radius"]["y"] = maxf(1.0, _number_value(foot_spins["radius_y"]))
 	_apply_to_playground()
 
 
 func _on_move_spin_changed(_value: float) -> void:
 	for field in move_spins.keys():
-		move_json[field] = int(move_spins[field].value)
+		move_json[field] = int(_number_value(move_spins[field]))
 	move_json["hitboxes"][0]["frame_start"] = int(move_json["active_start_frame"])
 	move_json["hitboxes"][0]["frame_end"] = int(move_json["active_end_frame"])
 	_refresh_fields()
@@ -248,7 +363,7 @@ func _on_move_spin_changed(_value: float) -> void:
 func _on_hitbox_spin_changed(_value: float) -> void:
 	var rect: Dictionary = move_json["hitboxes"][0]["rect"]
 	for field in ["x", "y", "w", "h"]:
-		rect[field] = hitbox_spins[field].value
+		rect[field] = _number_value(hitbox_spins[field])
 
 
 func _on_copy_template_pressed() -> void:
@@ -334,7 +449,7 @@ func _on_generate_stub_pressed() -> void:
 
 func _update_missing_label() -> void:
 	var missing := _missing_animations()
-	missing_label.text = "sprite_set=%s\nmissing=%s" % [
+	missing_label.text = "set:%s  miss:%s" % [
 		str(sprite_set_json.get("sprite_set_id", "")),
 		", ".join(missing) if missing.size() > 0 else "none",
 	]
