@@ -14,39 +14,39 @@
 	"equipped_moves": [],
 	"foot_collision": {
 		"center": {
-			"x": 0,
-			"y": -4
+			"x": 0.0,
+			"y": -4.0
 		},
 		"radius": {
-			"x": 18,
-			"y": 8
+			"x": 18.0,
+			"y": 8.0
 		}
 	},
-	"frame_size": 80,
+	"frame_size": 80.0,
 	"hurtboxes": {
 		"hurt_head": {
-			"h": 18,
-			"w": 24,
-			"x": -12,
-			"y": -64
+			"h": 18.0,
+			"w": 24.0,
+			"x": -12.0,
+			"y": -64.0
 		},
 		"hurt_lower_body": {
-			"h": 22,
-			"w": 28,
-			"x": -14,
-			"y": -22
+			"h": 22.0,
+			"w": 28.0,
+			"x": -14.0,
+			"y": -22.0
 		},
 		"hurt_upper_body": {
-			"h": 24,
-			"w": 32,
-			"x": -16,
-			"y": -46
+			"h": 24.0,
+			"w": 32.0,
+			"x": -16.0,
+			"y": -46.0
 		}
 	},
 	"lock_state": "editable",
-	"max_hp": 100,
-	"schema_version": 1,
-	"sprite_set_id": "gray_dummy_s64",
+	"max_hp": 100.0,
+	"schema_version": 1.0,
+	"sprite_set_id": "blue_dummy_s64",
 	"sprite_size_class": "s64",
 	"template_id": "combat_gray_s64",
 	"validation_status": "draft"
