@@ -1,0 +1,90 @@
+{
+	"animation_clips": {
+		"basic_punch": {
+			"clip_id": "basic_punch",
+			"frame_sequence_ref": "basic_punch",
+			"loop": false
+		},
+		"dash": {
+			"clip_id": "dash",
+			"frame_sequence_ref": "dash",
+			"loop": false
+		},
+		"hurt": {
+			"clip_id": "hurt",
+			"frame_sequence_ref": "hurt",
+			"loop": false
+		},
+		"idle": {
+			"clip_id": "idle",
+			"frame_sequence_ref": "idle",
+			"loop": true
+		},
+		"jump": {
+			"clip_id": "jump",
+			"frame_sequence_ref": "jump",
+			"loop": false
+		},
+		"walk": {
+			"clip_id": "walk",
+			"frame_sequence_ref": "walk",
+			"loop": true
+		}
+	},
+	"frame_sequences": {
+		"basic_punch": [
+			"placeholder://combat_gray_s64/basic_punch/frame_000.png",
+			"placeholder://combat_gray_s64/basic_punch/frame_001.png",
+			"placeholder://combat_gray_s64/basic_punch/frame_002.png",
+			"placeholder://combat_gray_s64/basic_punch/frame_003.png",
+			"placeholder://combat_gray_s64/basic_punch/frame_004.png",
+			"placeholder://combat_gray_s64/basic_punch/frame_005.png",
+			"placeholder://combat_gray_s64/basic_punch/frame_006.png",
+			"placeholder://combat_gray_s64/basic_punch/frame_007.png"
+		],
+		"dash": [
+			"placeholder://combat_gray_s64/dash/frame_000.png",
+			"placeholder://combat_gray_s64/dash/frame_001.png",
+			"placeholder://combat_gray_s64/dash/frame_002.png",
+			"placeholder://combat_gray_s64/dash/frame_003.png"
+		],
+		"hurt": [
+			"placeholder://combat_gray_s64/hurt/frame_000.png",
+			"placeholder://combat_gray_s64/hurt/frame_001.png",
+			"placeholder://combat_gray_s64/hurt/frame_002.png",
+			"placeholder://combat_gray_s64/hurt/frame_003.png"
+		],
+		"idle": [
+			"placeholder://combat_gray_s64/idle/frame_000.png",
+			"placeholder://combat_gray_s64/idle/frame_001.png",
+			"placeholder://combat_gray_s64/idle/frame_002.png",
+			"placeholder://combat_gray_s64/idle/frame_003.png"
+		],
+		"jump": [
+			"placeholder://combat_gray_s64/jump/frame_000.png",
+			"placeholder://combat_gray_s64/jump/frame_001.png",
+			"placeholder://combat_gray_s64/jump/frame_002.png",
+			"placeholder://combat_gray_s64/jump/frame_003.png",
+			"placeholder://combat_gray_s64/jump/frame_004.png",
+			"placeholder://combat_gray_s64/jump/frame_005.png"
+		],
+		"walk": [
+			"placeholder://combat_gray_s64/walk/frame_000.png",
+			"placeholder://combat_gray_s64/walk/frame_001.png",
+			"placeholder://combat_gray_s64/walk/frame_002.png",
+			"placeholder://combat_gray_s64/walk/frame_003.png",
+			"placeholder://combat_gray_s64/walk/frame_004.png",
+			"placeholder://combat_gray_s64/walk/frame_005.png"
+		]
+	},
+	"required_moves_mapping": {
+		"basic_punch": "basic_punch",
+		"dash": "dash",
+		"hurt": "hurt",
+		"idle": "idle",
+		"jump": "jump",
+		"walk": "walk"
+	},
+	"schema_version": "0.3",
+	"sprite_set_id": "combat_gray_s64"
+}
