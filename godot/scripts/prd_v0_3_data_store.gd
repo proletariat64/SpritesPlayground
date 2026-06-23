@@ -301,10 +301,15 @@ static func _validate_event_payload(move_id: String, index: int, event: Dictiona
 			errors.append_array(_validate_exact_keys(payload, {"hitbox_id": true}, "move %s events[%d].payload" % [move_id, index]))
 			if not payload.has("hitbox_id"):
 				errors.append("move %s events[%d] missing hitbox_id" % [move_id, index])
+			elif not str(payload["hitbox_id"]).begins_with("hit_"):
+				errors.append("move %s events[%d] hitbox_id must start with hit_" % [move_id, index])
 		"set_velocity":
 			errors.append_array(_validate_exact_keys(payload, {"x": true, "y": true}, "move %s events[%d].payload" % [move_id, index]))
 			if not payload.has("x") or not payload.has("y"):
 				errors.append("move %s events[%d] missing velocity x/y" % [move_id, index])
+			else:
+				errors.append_array(_validate_number(payload["x"], "move %s events[%d].payload.x" % [move_id, index]))
+				errors.append_array(_validate_number(payload["y"], "move %s events[%d].payload.y" % [move_id, index]))
 		"change_state_context":
 			errors.append_array(_validate_exact_keys(payload, {"state": true}, "move %s events[%d].payload" % [move_id, index]))
 			if not payload.has("state"):
@@ -315,6 +320,11 @@ static func _validate_event_payload(move_id: String, index: int, event: Dictiona
 			errors.append_array(_validate_exact_keys(payload, {"frames": true}, "move %s events[%d].payload" % [move_id, index]))
 			if not payload.has("frames"):
 				errors.append("move %s events[%d] missing hitstop frames" % [move_id, index])
+			else:
+				errors.append_array(_validate_integer(payload["frames"], "move %s events[%d].payload.frames" % [move_id, index]))
+				var frames := int(payload["frames"])
+				if frames < 0 or frames > 60:
+					errors.append("move %s events[%d].payload.frames must be 0..60" % [move_id, index])
 	return errors
 
 
@@ -346,6 +356,20 @@ static func _validate_vector(data: Dictionary, label: String, positive: bool) ->
 		elif positive and float(data[field]) <= 0.0:
 			errors.append("%s.%s must be > 0" % [label, field])
 	return errors
+
+
+static func _validate_number(value, label: String) -> Array:
+	if typeof(value) in [TYPE_INT, TYPE_FLOAT]:
+		return []
+	return ["%s must be a number" % label]
+
+
+static func _validate_integer(value, label: String) -> Array:
+	if typeof(value) == TYPE_INT:
+		return []
+	if typeof(value) == TYPE_FLOAT and is_equal_approx(float(value), roundf(float(value))):
+		return []
+	return ["%s must be an integer" % label]
 
 
 static func _is_snake_id(value: String) -> bool:

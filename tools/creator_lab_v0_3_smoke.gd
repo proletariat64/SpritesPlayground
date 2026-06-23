@@ -42,6 +42,22 @@ func _run() -> void:
 		{"frame": 3, "event_type": "enable_hitbox", "payload": {"hitbox_id": "hit_fist_1", "extra": "bad"}},
 	])
 	errors.append_array(_expect(not panel.validate_current().is_empty(), "validation rejects extra payload keys"))
+	panel.set_move_events([
+		{"frame": 3, "event_type": "enable_hitbox", "payload": {"hitbox_id": "bad"}},
+	])
+	errors.append_array(_expect(not panel.validate_current().is_empty(), "validation rejects malformed hitbox_id"))
+	panel.set_move_events([
+		{"frame": 3, "event_type": "apply_hitstop", "payload": {"frames": "bad"}},
+	])
+	errors.append_array(_expect(not panel.validate_current().is_empty(), "validation rejects non-integer hitstop frames"))
+	panel.set_move_events([
+		{"frame": 3, "event_type": "apply_hitstop", "payload": {"frames": 999}},
+	])
+	errors.append_array(_expect(not panel.validate_current().is_empty(), "validation rejects out-of-range hitstop frames"))
+	panel.set_move_events([
+		{"frame": 3, "event_type": "set_velocity", "payload": {"x": "bad", "y": 0}},
+	])
+	errors.append_array(_expect(not panel.validate_current().is_empty(), "validation rejects non-numeric velocity"))
 	panel.set_move_events(original_events)
 
 	var clips: Dictionary = panel.sprite_set_json["animation_clips"]
