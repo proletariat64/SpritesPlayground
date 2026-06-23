@@ -255,6 +255,12 @@ func _build_ui() -> void:
 	root.add_theme_constant_override("separation", 2)
 	add_child(root)
 
+	var title := Label.new()
+	title.text = "Creator Lab v0.3"
+	title.add_theme_font_size_override("font_size", 10)
+	title.add_theme_color_override("font_color", Color(0.72, 0.86, 1.0))
+	root.add_child(title)
+
 	var top := HBoxContainer.new()
 	root.add_child(top)
 	template_select = OptionButton.new()
