@@ -1,7 +1,7 @@
 extends Node2D
 
 const CombatCharacterScript := preload("res://godot/scripts/combat_character.gd")
-const CreatorLabPanelScript := preload("res://godot/scripts/creator_lab_panel.gd")
+const CreatorLabV03PanelScript := preload("res://godot/scripts/creator_lab_v0_3_panel.gd")
 const COMBAT_TICK_RATE := 60
 
 var arena_center := Vector2(320, 205)
@@ -126,10 +126,10 @@ func _build_debug_gui() -> void:
 
 
 func _build_creator_lab() -> void:
-	creator_lab = CreatorLabPanelScript.new()
-	creator_lab.name = "creator_lab_v1"
+	creator_lab = CreatorLabV03PanelScript.new()
+	creator_lab.name = "creator_lab_v0_3"
 	add_child(creator_lab)
-	creator_lab.setup(player)
+	creator_lab.setup()
 
 
 func _update_debug_gui() -> void:
@@ -142,7 +142,7 @@ func _update_debug_gui() -> void:
 	debug_label.text = "\n".join([
 		"[color=#86d7ff]P[/color] %s %s f:%s hit:%s" % [p["state"], p["hp"], p["frame"], p["active_hitboxes"]],
 		"[color=#ff9aa2]D[/color] %s %s  [color=#ffd166]%s[/color] box:%s" % [d["state"], d["hp"], p["mode"].substr(0, 3), boxes_status],
-		"[color=#c7d2fe]wasd[/color] move  j/k atk  sh dash  sp jump  tab ai  b box  c lab  r reset",
+		"[color=#c7d2fe]wasd[/color] move  j/k atk  sh dash  sp jump  tab ai  b box  c lab v0.3  r reset",
 	])
 
 
