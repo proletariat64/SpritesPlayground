@@ -1,0 +1,25 @@
+{
+	"active_window": {
+		"end_frame": 5,
+		"start_frame": 0
+	},
+	"damage": 0,
+	"events": [
+		{
+			"event_type": "set_velocity",
+			"frame": 0,
+			"payload": {
+				"x": 55,
+				"y": 0
+			}
+		}
+	],
+	"frame_count": 6,
+	"hitboxes": [],
+	"hitstop_frames": 0,
+	"move_id": "walk",
+	"move_type": "locomotion",
+	"multi_hit": false,
+	"schema_version": "0.3",
+	"state_context_override": "walk"
+}

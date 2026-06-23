@@ -1,0 +1,44 @@
+{
+  "schema_version": "0.3",
+  "template_id": "combat_gray_s64",
+  "sprite_set_ref": "combat_gray_s64",
+  "hurtboxes": {
+    "hurt_head": {
+      "x": -12,
+      "y": -64,
+      "w": 24,
+      "h": 18
+    },
+    "hurt_upper_body": {
+      "x": -16,
+      "y": -46,
+      "w": 32,
+      "h": 24
+    },
+    "hurt_lower_body": {
+      "x": -14,
+      "y": -22,
+      "w": 28,
+      "h": 22
+    }
+  },
+  "foot_collision": {
+    "center": {
+      "x": 0,
+      "y": -4
+    },
+    "radius": {
+      "x": 18,
+      "y": 8
+    }
+  },
+  "hp": 100,
+  "equipped_moves": [
+    "idle",
+    "walk",
+    "dash",
+    "jump",
+    "basic_punch",
+    "hurt"
+  ]
+}

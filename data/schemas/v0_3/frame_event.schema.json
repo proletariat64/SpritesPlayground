@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spritesplayground.local/schemas/v0_3/frame_event.schema.json",
+  "title": "FrameEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "propertyNames": {
+    "not": {
+      "enum": [
+        "action",
+        "actions",
+        "attack",
+        "base_action_set",
+        "base_actions",
+        "base_attack_moves",
+        "cooldown_seconds",
+        "seconds",
+        "seconds",
+        "duration_seconds"
+      ]
+    }
+  },
+  "required": [
+    "frame",
+    "event_type",
+    "payload"
+  ],
+  "properties": {
+    "frame": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "enable_hitbox",
+        "disable_hitbox",
+        "play_sound",
+        "spawn_visual",
+        "set_velocity",
+        "apply_hitstop",
+        "change_state_context"
+      ]
+    },
+    "payload": {
+      "type": "object"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "enable_hitbox"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/hitbox_payload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "disable_hitbox"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/hitbox_payload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "set_velocity"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/velocity_payload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "change_state_context"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/state_payload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "apply_hitstop"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/hitstop_payload"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "hitbox_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hitbox_id"
+      ],
+      "properties": {
+        "hitbox_id": {
+          "type": "string",
+          "pattern": "^hit_[a-z0-9_]+$"
+        }
+      }
+    },
+    "velocity_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      }
+    },
+    "state_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state"
+      ],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "idle",
+            "walk",
+            "dash",
+            "jump",
+            "hurt",
+            "dead"
+          ]
+        }
+      }
+    },
+    "hitstop_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frames"
+      ],
+      "properties": {
+        "frames": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spritesplayground.local/schemas/v0_3/move_template.schema.json",
+  "title": "MoveTemplate",
+  "type": "object",
+  "additionalProperties": false,
+  "propertyNames": {
+    "not": {
+      "enum": [
+        "action",
+        "actions",
+        "attack",
+        "base_action_set",
+        "base_actions",
+        "base_attack_moves",
+        "cooldown_seconds",
+        "duration_seconds",
+        "seconds"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "move_id",
+    "move_type",
+    "frame_count",
+    "active_window",
+    "damage",
+    "hitstop_frames",
+    "hitboxes",
+    "multi_hit",
+    "events"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.3"
+    },
+    "move_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "not": {
+        "enum": [
+          "walk_start",
+          "walk_stop",
+          "run_start",
+          "run_stop"
+        ]
+      }
+    },
+    "move_type": {
+      "type": "string",
+      "enum": [
+        "locomotion",
+        "combat",
+        "reaction",
+        "utility"
+      ]
+    },
+    "state_context_override": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "walk",
+        "dash",
+        "jump",
+        "hurt",
+        "dead"
+      ]
+    },
+    "frame_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "active_window": {
+      "$ref": "#/$defs/frame_window"
+    },
+    "damage": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "hitstop_frames": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 60
+    },
+    "hitboxes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/hitbox"
+      }
+    },
+    "multi_hit": {
+      "type": "boolean"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "https://spritesplayground.local/schemas/v0_3/frame_event.schema.json"
+      }
+    }
+  },
+  "$defs": {
+    "frame_window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start_frame",
+        "end_frame"
+      ],
+      "properties": {
+        "start_frame": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_frame": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "rect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y",
+        "w",
+        "h"
+      ],
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "w": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "h": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "hitbox": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hitbox_id",
+        "active_window",
+        "rect"
+      ],
+      "properties": {
+        "hitbox_id": {
+          "type": "string",
+          "pattern": "^hit_[a-z0-9_]+$"
+        },
+        "active_window": {
+          "$ref": "#/$defs/frame_window"
+        },
+        "rect": {
+          "$ref": "#/$defs/rect"
+        }
+      }
+    }
+  }
+}
