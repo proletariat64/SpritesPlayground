@@ -101,6 +101,17 @@ def validate_references() -> list[str]:
         if missing_clips:
             errors.append(f"sprite_set {sprite_set_ref}: missing animation_clips {missing_clips}")
 
+        missing_sequences = sorted(
+            sequence_id
+            for sequence_id in (
+                str(clip.get("frame_sequence_ref", ""))
+                for clip in sprite_sets[sprite_set_ref]["animation_clips"].values()
+            )
+            if sequence_id not in sprite_sets[sprite_set_ref]["frame_sequences"]
+        )
+        if missing_sequences:
+            errors.append(f"sprite_set {sprite_set_ref}: missing frame_sequences {missing_sequences}")
+
     return errors
 
 
@@ -160,6 +171,16 @@ def validate_negative_contract_rejection(registry: Registry) -> list[str]:
     bad_payload["events"][0]["payload"] = {}
     if not list(Draft202012Validator(move_schema, registry=registry).iter_errors(bad_payload)):
         errors.append("negative payload schema check did not reject missing hitbox_id")
+
+    bad_payload_extra = deepcopy(move)
+    bad_payload_extra["events"][0]["payload"]["extra"] = True
+    if not list(Draft202012Validator(move_schema, registry=registry).iter_errors(bad_payload_extra)):
+        errors.append("negative payload schema check did not reject extra payload key")
+
+    bad_event_type = deepcopy(move)
+    bad_event_type["events"][0]["event_type"] = "play_sound"
+    if not list(Draft202012Validator(move_schema, registry=registry).iter_errors(bad_event_type)):
+        errors.append("negative event schema check did not reject unsupported event_type")
 
     bad_idle = deepcopy(character)
     bad_idle["equipped_moves"] = ["walk"]

@@ -14,7 +14,6 @@ var hitstop_frames: int = 0
 var velocity: Vector2 = Vector2.ZERO
 
 var _enabled_hitboxes := {}
-var _hit_windows := {}
 
 
 func load_template(template_id: String) -> Array:
@@ -41,7 +40,6 @@ func start_move(move_id: String) -> Array:
 	hitstop_frames = 0
 	velocity = Vector2.ZERO
 	_enabled_hitboxes.clear()
-	_hit_windows.clear()
 	if move.has("state_context_override"):
 		current_state = str(move["state_context_override"])
 	else:
@@ -136,10 +134,6 @@ func _apply_event(event: Dictionary) -> void:
 			current_state = str(payload.get("state", current_state))
 		"apply_hitstop":
 			hitstop_frames = int(payload.get("frames", current_move_data().get("hitstop_frames", DEFAULT_HITSTOP_FRAMES)))
-		"play_sound":
-			pass
-		"spawn_visual":
-			pass
 
 
 func _state_for_move(move: Dictionary) -> String:

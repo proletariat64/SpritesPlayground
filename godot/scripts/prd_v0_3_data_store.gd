@@ -15,6 +15,13 @@ const FORBIDDEN_KEYS := {
 	"duration_seconds": true,
 	"seconds": true,
 }
+const SUPPORTED_EVENT_TYPES := {
+	"enable_hitbox": true,
+	"disable_hitbox": true,
+	"set_velocity": true,
+	"change_state_context": true,
+	"apply_hitstop": true,
+}
 
 
 static func template_path(template_id: String) -> String:
@@ -97,6 +104,8 @@ static func validate_runtime_bundle(bundle: Dictionary) -> Array:
 	errors.append_array(_scan_forbidden_keys(template, "template"))
 	errors.append_array(_scan_forbidden_keys(sprite_set, "sprite_set"))
 	errors.append_array(_scan_forbidden_keys(moves, "moves"))
+	errors.append_array(_validate_template_contract(template))
+	errors.append_array(_validate_sprite_set_contract(sprite_set))
 	if not template.get("equipped_moves", []).has("idle"):
 		errors.append("template must equip idle move")
 	for move_id in moves.keys():
@@ -115,6 +124,11 @@ static func validate_runtime_bundle(bundle: Dictionary) -> Array:
 		var sequence_id := str(clips[clip_id].get("frame_sequence_ref", ""))
 		if not sequences.has(sequence_id):
 			errors.append("missing frame sequence %s" % sequence_id)
+	for clip_id in clips.keys():
+		var clip: Dictionary = clips[clip_id]
+		var sequence_ref := str(clip.get("frame_sequence_ref", ""))
+		if not sequences.has(sequence_ref):
+			errors.append("animation clip %s missing frame sequence %s" % [clip_id, sequence_ref])
 	return errors
 
 
@@ -136,6 +150,33 @@ static func _scan_forbidden_keys(value, path: String) -> Array:
 
 static func _validate_move(move_id: String, move: Dictionary) -> Array:
 	var errors: Array = []
+	errors.append_array(_validate_exact_keys(
+		move,
+		{
+			"schema_version": true,
+			"move_id": true,
+			"move_type": true,
+			"state_context_override": true,
+			"frame_count": true,
+			"active_window": true,
+			"damage": true,
+			"hitstop_frames": true,
+			"hitboxes": true,
+			"multi_hit": true,
+			"events": true,
+		},
+		"move %s" % move_id
+	))
+	if str(move.get("schema_version", "")) != "0.3":
+		errors.append("move %s schema_version must be 0.3" % move_id)
+	if str(move.get("move_id", "")) != move_id:
+		errors.append("move %s move_id must match file/reference id" % move_id)
+	if not _is_snake_id(str(move.get("move_id", ""))):
+		errors.append("move %s move_id must be lowercase snake_case" % move_id)
+	if not ["locomotion", "combat", "reaction", "utility"].has(str(move.get("move_type", ""))):
+		errors.append("move %s move_type is unsupported" % move_id)
+	if move.has("state_context_override") and not ["idle", "walk", "dash", "jump", "hurt", "dead"].has(str(move["state_context_override"])):
+		errors.append("move %s state_context_override is unsupported" % move_id)
 	var frame_count := int(move.get("frame_count", 0))
 	if frame_count < 1:
 		errors.append("move %s frame_count must be >= 1" % move_id)
@@ -143,9 +184,22 @@ static func _validate_move(move_id: String, move: Dictionary) -> Array:
 	errors.append_array(_validate_frame_window(move_id, "active_window", move.get("active_window", {}), frame_count))
 	for i in move.get("hitboxes", []).size():
 		var hitbox: Dictionary = move["hitboxes"][i]
+		errors.append_array(_validate_exact_keys(
+			hitbox,
+			{"hitbox_id": true, "active_window": true, "rect": true},
+			"move %s hitboxes[%d]" % [move_id, i]
+		))
+		if not str(hitbox.get("hitbox_id", "")).begins_with("hit_"):
+			errors.append("move %s hitboxes[%d].hitbox_id must start with hit_" % [move_id, i])
 		errors.append_array(_validate_frame_window(move_id, "hitboxes[%d].active_window" % i, hitbox.get("active_window", {}), frame_count))
+		errors.append_array(_validate_rect(hitbox.get("rect", {}), "move %s hitboxes[%d].rect" % [move_id, i]))
 	for i in move.get("events", []).size():
 		var event: Dictionary = move["events"][i]
+		errors.append_array(_validate_exact_keys(
+			event,
+			{"frame": true, "event_type": true, "payload": true},
+			"move %s events[%d]" % [move_id, i]
+		))
 		var frame := int(event.get("frame", -1))
 		if frame < 0 or frame >= frame_count:
 			errors.append("move %s events[%d].frame must be within frame_count" % [move_id, i])
@@ -153,8 +207,76 @@ static func _validate_move(move_id: String, move: Dictionary) -> Array:
 	return errors
 
 
+static func _validate_template_contract(template: Dictionary) -> Array:
+	var errors: Array = []
+	errors.append_array(_validate_exact_keys(
+		template,
+		{
+			"schema_version": true,
+			"template_id": true,
+			"sprite_set_ref": true,
+			"hurtboxes": true,
+			"foot_collision": true,
+			"hp": true,
+			"equipped_moves": true,
+		},
+		"template"
+	))
+	if str(template.get("schema_version", "")) != "0.3":
+		errors.append("template schema_version must be 0.3")
+	if not _is_snake_id(str(template.get("template_id", ""))):
+		errors.append("template_id must be lowercase snake_case")
+	if not _is_snake_id(str(template.get("sprite_set_ref", ""))):
+		errors.append("sprite_set_ref must be lowercase snake_case")
+	if int(template.get("hp", 0)) < 1:
+		errors.append("template hp must be >= 1")
+	for hurtbox_id in template.get("hurtboxes", {}).keys():
+		if not str(hurtbox_id).begins_with("hurt_"):
+			errors.append("hurtbox id %s must start with hurt_" % hurtbox_id)
+		errors.append_array(_validate_rect(template["hurtboxes"][hurtbox_id], "hurtbox %s" % hurtbox_id))
+	var foot: Dictionary = template.get("foot_collision", {})
+	errors.append_array(_validate_exact_keys(foot, {"center": true, "radius": true}, "foot_collision"))
+	errors.append_array(_validate_vector(foot.get("center", {}), "foot_collision.center", false))
+	errors.append_array(_validate_vector(foot.get("radius", {}), "foot_collision.radius", true))
+	for move_id in template.get("equipped_moves", []):
+		if not _is_snake_id(str(move_id)):
+			errors.append("equipped move %s must be lowercase snake_case" % move_id)
+	return errors
+
+
+static func _validate_sprite_set_contract(sprite_set: Dictionary) -> Array:
+	var errors: Array = []
+	errors.append_array(_validate_exact_keys(
+		sprite_set,
+		{
+			"schema_version": true,
+			"sprite_set_id": true,
+			"animation_clips": true,
+			"frame_sequences": true,
+			"required_moves_mapping": true,
+		},
+		"sprite_set"
+	))
+	if str(sprite_set.get("schema_version", "")) != "0.3":
+		errors.append("sprite_set schema_version must be 0.3")
+	if not _is_snake_id(str(sprite_set.get("sprite_set_id", ""))):
+		errors.append("sprite_set_id must be lowercase snake_case")
+	var clips: Dictionary = sprite_set.get("animation_clips", {})
+	for clip_id in clips.keys():
+		var clip: Dictionary = clips[clip_id]
+		errors.append_array(_validate_exact_keys(
+			clip,
+			{"clip_id": true, "frame_sequence_ref": true, "loop": true},
+			"sprite_set.animation_clips.%s" % clip_id
+		))
+		if str(clip.get("clip_id", "")) != str(clip_id):
+			errors.append("animation clip %s clip_id must match key" % clip_id)
+	return errors
+
+
 static func _validate_frame_window(move_id: String, label: String, window: Dictionary, frame_count: int) -> Array:
 	var errors: Array = []
+	errors.append_array(_validate_exact_keys(window, {"start_frame": true, "end_frame": true}, "move %s %s" % [move_id, label]))
 	if not window.has("start_frame") or not window.has("end_frame"):
 		errors.append("move %s %s must include start_frame and end_frame" % [move_id, label])
 		return errors
@@ -171,20 +293,67 @@ static func _validate_event_payload(move_id: String, index: int, event: Dictiona
 	var errors: Array = []
 	var event_type := str(event.get("event_type", ""))
 	var payload: Dictionary = event.get("payload", {})
+	if not SUPPORTED_EVENT_TYPES.has(event_type):
+		errors.append("move %s events[%d] unsupported event_type %s" % [move_id, index, event_type])
+		return errors
 	match event_type:
 		"enable_hitbox", "disable_hitbox":
+			errors.append_array(_validate_exact_keys(payload, {"hitbox_id": true}, "move %s events[%d].payload" % [move_id, index]))
 			if not payload.has("hitbox_id"):
 				errors.append("move %s events[%d] missing hitbox_id" % [move_id, index])
 		"set_velocity":
+			errors.append_array(_validate_exact_keys(payload, {"x": true, "y": true}, "move %s events[%d].payload" % [move_id, index]))
 			if not payload.has("x") or not payload.has("y"):
 				errors.append("move %s events[%d] missing velocity x/y" % [move_id, index])
 		"change_state_context":
+			errors.append_array(_validate_exact_keys(payload, {"state": true}, "move %s events[%d].payload" % [move_id, index]))
 			if not payload.has("state"):
 				errors.append("move %s events[%d] missing state" % [move_id, index])
+			elif not ["idle", "walk", "dash", "jump", "hurt", "dead"].has(str(payload["state"])):
+				errors.append("move %s events[%d] state is unsupported" % [move_id, index])
 		"apply_hitstop":
+			errors.append_array(_validate_exact_keys(payload, {"frames": true}, "move %s events[%d].payload" % [move_id, index]))
 			if not payload.has("frames"):
 				errors.append("move %s events[%d] missing hitstop frames" % [move_id, index])
 	return errors
+
+
+static func _validate_exact_keys(data: Dictionary, allowed: Dictionary, label: String) -> Array:
+	var errors: Array = []
+	for key in data.keys():
+		if not allowed.has(str(key)):
+			errors.append("%s has unsupported key %s" % [label, key])
+	return errors
+
+
+static func _validate_rect(data: Dictionary, label: String) -> Array:
+	var errors := _validate_exact_keys(data, {"x": true, "y": true, "w": true, "h": true}, label)
+	for field in ["x", "y", "w", "h"]:
+		if not data.has(field):
+			errors.append("%s missing %s" % [label, field])
+	if data.has("w") and float(data["w"]) <= 0.0:
+		errors.append("%s.w must be > 0" % label)
+	if data.has("h") and float(data["h"]) <= 0.0:
+		errors.append("%s.h must be > 0" % label)
+	return errors
+
+
+static func _validate_vector(data: Dictionary, label: String, positive: bool) -> Array:
+	var errors := _validate_exact_keys(data, {"x": true, "y": true}, label)
+	for field in ["x", "y"]:
+		if not data.has(field):
+			errors.append("%s missing %s" % [label, field])
+		elif positive and float(data[field]) <= 0.0:
+			errors.append("%s.%s must be > 0" % [label, field])
+	return errors
+
+
+static func _is_snake_id(value: String) -> bool:
+	if value.is_empty():
+		return false
+	var expression := RegEx.new()
+	expression.compile("^[a-z][a-z0-9_]*$")
+	return expression.search(value) != null
 
 
 static func _read_json(path: String) -> Dictionary:

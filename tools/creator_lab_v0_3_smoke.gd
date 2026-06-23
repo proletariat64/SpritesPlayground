@@ -31,6 +31,25 @@ func _run() -> void:
 	errors.append_array(_expect(str(panel.template_json["template_id"]) == copy_id, "copy template id"))
 	errors.append_array(_expect(str(DataStore.load_template("combat_gray_s64")["template_id"]) == str(original["template_id"]), "copy does not mutate original"))
 
+	panel.select_move("basic_punch")
+	var original_events: Array = panel.selected_move_json()["events"].duplicate(true)
+	panel.set_move_events([
+		{"frame": 1, "event_type": "play_sound", "payload": {"sound_id": "bad"}},
+	])
+	errors.append_array(_expect(not panel.validate_current().is_empty(), "validation rejects unsupported event_type"))
+	errors.append_array(_expect(not panel.save_reload_exact(), "save/reload refuses unsupported event_type"))
+	panel.set_move_events([
+		{"frame": 3, "event_type": "enable_hitbox", "payload": {"hitbox_id": "hit_fist_1", "extra": "bad"}},
+	])
+	errors.append_array(_expect(not panel.validate_current().is_empty(), "validation rejects extra payload keys"))
+	panel.set_move_events(original_events)
+
+	var clips: Dictionary = panel.sprite_set_json["animation_clips"]
+	var original_ref := str(clips["idle"]["frame_sequence_ref"])
+	clips["idle"]["frame_sequence_ref"] = "missing_sequence"
+	errors.append_array(_expect(not panel.validate_current().is_empty(), "validation rejects bad animation clip sequence"))
+	clips["idle"]["frame_sequence_ref"] = original_ref
+
 	panel.set_hp(111)
 	panel.select_move("basic_punch")
 	panel.set_move_scalar("move_type", "combat")

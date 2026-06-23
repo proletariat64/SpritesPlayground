@@ -15,7 +15,6 @@
         "base_attack_moves",
         "cooldown_seconds",
         "seconds",
-        "seconds",
         "duration_seconds"
       ]
     }
@@ -35,8 +34,6 @@
       "enum": [
         "enable_hitbox",
         "disable_hitbox",
-        "play_sound",
-        "spawn_visual",
         "set_velocity",
         "apply_hitstop",
         "change_state_context"
