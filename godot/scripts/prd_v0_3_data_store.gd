@@ -189,8 +189,8 @@ static func _validate_move(move_id: String, move: Dictionary) -> Array:
 			{"hitbox_id": true, "active_window": true, "rect": true},
 			"move %s hitboxes[%d]" % [move_id, i]
 		))
-		if not str(hitbox.get("hitbox_id", "")).begins_with("hit_"):
-			errors.append("move %s hitboxes[%d].hitbox_id must start with hit_" % [move_id, i])
+		if not _is_hitbox_id(str(hitbox.get("hitbox_id", ""))):
+			errors.append("move %s hitboxes[%d].hitbox_id must match ^hit_[a-z0-9_]+$" % [move_id, i])
 		errors.append_array(_validate_frame_window(move_id, "hitboxes[%d].active_window" % i, hitbox.get("active_window", {}), frame_count))
 		errors.append_array(_validate_rect(hitbox.get("rect", {}), "move %s hitboxes[%d].rect" % [move_id, i]))
 	for i in move.get("events", []).size():
@@ -301,8 +301,8 @@ static func _validate_event_payload(move_id: String, index: int, event: Dictiona
 			errors.append_array(_validate_exact_keys(payload, {"hitbox_id": true}, "move %s events[%d].payload" % [move_id, index]))
 			if not payload.has("hitbox_id"):
 				errors.append("move %s events[%d] missing hitbox_id" % [move_id, index])
-			elif not str(payload["hitbox_id"]).begins_with("hit_"):
-				errors.append("move %s events[%d] hitbox_id must start with hit_" % [move_id, index])
+			elif not _is_hitbox_id(str(payload["hitbox_id"])):
+				errors.append("move %s events[%d] hitbox_id must match ^hit_[a-z0-9_]+$" % [move_id, index])
 		"set_velocity":
 			errors.append_array(_validate_exact_keys(payload, {"x": true, "y": true}, "move %s events[%d].payload" % [move_id, index]))
 			if not payload.has("x") or not payload.has("y"):
@@ -377,6 +377,12 @@ static func _is_snake_id(value: String) -> bool:
 		return false
 	var expression := RegEx.new()
 	expression.compile("^[a-z][a-z0-9_]*$")
+	return expression.search(value) != null
+
+
+static func _is_hitbox_id(value: String) -> bool:
+	var expression := RegEx.new()
+	expression.compile("^hit_[a-z0-9_]+$")
 	return expression.search(value) != null
 
 

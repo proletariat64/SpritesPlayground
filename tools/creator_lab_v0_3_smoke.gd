@@ -47,6 +47,10 @@ func _run() -> void:
 	])
 	errors.append_array(_expect(not panel.validate_current().is_empty(), "validation rejects malformed hitbox_id"))
 	panel.set_move_events([
+		{"frame": 3, "event_type": "enable_hitbox", "payload": {"hitbox_id": "hit_BAD"}},
+	])
+	errors.append_array(_expect(not panel.validate_current().is_empty(), "validation rejects uppercase hitbox_id"))
+	panel.set_move_events([
 		{"frame": 3, "event_type": "apply_hitstop", "payload": {"frames": "bad"}},
 	])
 	errors.append_array(_expect(not panel.validate_current().is_empty(), "validation rejects non-integer hitstop frames"))
