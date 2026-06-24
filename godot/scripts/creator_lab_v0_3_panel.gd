@@ -46,7 +46,9 @@ var hitbox_inputs := {}
 var events_text: TextEdit
 var current_nav: String = "character_template"
 var current_hurtbox_id: String = "hurt_head"
+var current_move_section: String = "summary"
 var nav_keys: Array = []
+var move_section_list: ItemList
 
 
 func setup() -> void:
@@ -267,7 +269,7 @@ func runtime_summary() -> Dictionary:
 
 
 func _build_ui() -> void:
-	custom_minimum_size = Vector2(508, 336)
+	custom_minimum_size = Vector2(480, 336)
 	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.055, 0.065, 0.075, 0.96)
 	panel_style.border_color = Color(0.26, 0.34, 0.42, 1.0)
@@ -298,42 +300,41 @@ func _build_ui() -> void:
 	var tools := HBoxContainer.new()
 	tools.add_theme_constant_override("separation", 3)
 	root.add_child(tools)
-	tools.add_child(_button("Copy", _on_copy_pressed))
 	tools.add_child(_button("Reload", _on_reload_pressed))
 	tools.add_child(_button("Roundtrip", _on_exact_pressed))
 
 	var main := HBoxContainer.new()
-	main.custom_minimum_size = Vector2(494, 242)
+	main.custom_minimum_size = Vector2(466, 242)
 	main.add_theme_constant_override("separation", 4)
 	root.add_child(main)
 
 	var nav_box := VBoxContainer.new()
-	nav_box.custom_minimum_size = Vector2(112, 238)
+	nav_box.custom_minimum_size = Vector2(96, 238)
 	nav_box.add_theme_constant_override("separation", 2)
 	main.add_child(nav_box)
 	nav_box.add_child(_label("1 Choose", COLOR_CHARACTER))
 	navigation_list = ItemList.new()
-	navigation_list.custom_minimum_size = Vector2(112, 216)
+	navigation_list.custom_minimum_size = Vector2(96, 216)
 	navigation_list.add_theme_font_size_override("font_size", 8)
 	navigation_list.item_selected.connect(_on_navigation_selected)
 	nav_box.add_child(navigation_list)
 
 	var values_scroll := ScrollContainer.new()
-	values_scroll.custom_minimum_size = Vector2(164, 238)
+	values_scroll.custom_minimum_size = Vector2(132, 238)
 	values_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	main.add_child(values_scroll)
 	values_panel = VBoxContainer.new()
-	values_panel.custom_minimum_size = Vector2(152, 0)
+	values_panel.custom_minimum_size = Vector2(120, 0)
 	values_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	values_panel.add_theme_constant_override("separation", 2)
 	values_scroll.add_child(values_panel)
 
 	var detail_scroll := ScrollContainer.new()
-	detail_scroll.custom_minimum_size = Vector2(208, 238)
+	detail_scroll.custom_minimum_size = Vector2(230, 238)
 	detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	main.add_child(detail_scroll)
 	detail_panel = VBoxContainer.new()
-	detail_panel.custom_minimum_size = Vector2(196, 0)
+	detail_panel.custom_minimum_size = Vector2(218, 0)
 	detail_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	detail_panel.add_theme_constant_override("separation", 2)
 	detail_scroll.add_child(detail_panel)
@@ -349,22 +350,23 @@ func _refresh_navigation() -> void:
 		return
 	navigation_list.clear()
 	nav_keys.clear()
-	_add_nav_item("Character / Template", "character_template")
-	_add_nav_item("Character / Hurtboxes", "character_hurtboxes")
-	_add_nav_item("Character / Foot Collision", "character_foot")
-	_add_nav_item("Character / Equipped", "character_moves")
+	_add_nav_item("Template", "character_template")
+	_add_nav_item("Hurtboxes", "character_hurtboxes")
+	_add_nav_item("Foot", "character_foot")
+	_add_nav_item("Moves", "character_moves")
 	for move_id in template_json.get("equipped_moves", []):
 		_add_nav_item("Move / %s" % str(move_id), "move:%s" % str(move_id))
-	_add_nav_item("Wardrobe / Mapping", "wardrobe_mapping")
-	_add_nav_item("Wardrobe / Clips", "wardrobe_clips")
-	_add_nav_item("Wardrobe / Sequences", "wardrobe_sequences")
-	_add_nav_item("Runtime / Preview", "runtime_preview")
+	_add_nav_item("Wardrobe Map", "wardrobe_mapping")
+	_add_nav_item("Wardrobe Clips", "wardrobe_clips")
+	_add_nav_item("Wardrobe Frames", "wardrobe_sequences")
+	_add_nav_item("Runtime", "runtime_preview")
 	var selected_index := nav_keys.find(current_nav)
 	if selected_index < 0:
 		current_nav = "character_template"
 		selected_index = 0
 	if selected_index >= 0:
 		navigation_list.select(selected_index)
+		navigation_list.ensure_current_is_visible()
 
 
 func _add_nav_item(text: String, key: String) -> void:
@@ -385,6 +387,7 @@ func _refresh_three_panel() -> void:
 			selected_move = move_id
 		else:
 			current_nav = "character_template"
+	_refresh_navigation()
 	_build_values_panel()
 	_build_detail_panel()
 	_refresh_runtime_label()
@@ -410,6 +413,7 @@ func _reset_editor_refs() -> void:
 	hitbox_inputs = {}
 	events_text = null
 	runtime_label = null
+	move_section_list = null
 
 
 func _build_values_panel() -> void:
@@ -450,12 +454,7 @@ func _build_values_panel() -> void:
 			_add_value("active boxes", str(summary.get("active_hitbox_count", 0)))
 		_:
 			if current_nav.begins_with("move:") and moves_json.has(selected_move):
-				var move := selected_move_json()
-				_add_value("move_id", str(move.get("move_id", selected_move)))
-				_add_value("type", str(move.get("move_type", "")))
-				_add_value("frames", str(move.get("frame_count", 0)))
-				_add_value("hitboxes", str(move.get("hitboxes", []).size()))
-				_add_value("events", str(move.get("events", []).size()))
+				_build_move_values_panel()
 
 
 func _build_detail_panel() -> void:
@@ -497,6 +496,7 @@ func _build_template_detail(parent: VBoxContainer) -> void:
 			move_select.select(move_select.item_count - 1)
 	move_select.item_selected.connect(_on_move_selected)
 	parent.add_child(move_select)
+	parent.add_child(_button("Duplicate", _on_copy_pressed, 70))
 
 
 func _build_hurtbox_detail(parent: VBoxContainer) -> void:
@@ -547,27 +547,94 @@ func _build_equipped_moves_detail(parent: VBoxContainer) -> void:
 
 func _build_move_detail(parent: VBoxContainer) -> void:
 	var move := selected_move_json()
-	parent.add_child(_label("Move data - timing, damage, hitbox, events", COLOR_MOVE))
+	match current_move_section:
+		"timing":
+			_build_move_timing_detail(parent, move)
+		"damage":
+			_build_move_damage_detail(parent, move)
+		"hitbox":
+			_build_move_hitbox_detail(parent, move)
+		"events":
+			_build_move_events_detail(parent, move)
+		_:
+			_build_move_summary_detail(parent, move)
+
+
+func _build_move_values_panel() -> void:
+	var move := selected_move_json()
+	_add_value("id", str(move.get("move_id", selected_move)))
+	_add_value("type", str(move.get("move_type", "")))
+	_add_value("frames", str(move.get("frame_count", 0)))
+	_add_value("hitboxes", str(move.get("hitboxes", []).size()))
+	_add_value("events", str(move.get("events", []).size()))
+	values_panel.add_child(_label("Component", COLOR_MOVE))
+	move_section_list = ItemList.new()
+	move_section_list.custom_minimum_size = Vector2(120, 104)
+	move_section_list.add_theme_font_size_override("font_size", 8)
+	move_section_list.item_selected.connect(_on_move_section_selected)
+	for row in [
+		["Summary", "summary"],
+		["Timing", "timing"],
+		["Damage", "damage"],
+		["Hitbox", "hitbox"],
+		["Events", "events"],
+	]:
+		move_section_list.add_item(str(row[0]))
+		move_section_list.set_item_metadata(move_section_list.item_count - 1, str(row[1]))
+		move_section_list.set_item_custom_fg_color(move_section_list.item_count - 1, COLOR_MOVE)
+	var index := _move_section_index(current_move_section)
+	if index < 0:
+		current_move_section = "summary"
+		index = 0
+	move_section_list.select(index)
+	move_section_list.ensure_current_is_visible()
+	values_panel.add_child(move_section_list)
+
+
+func _build_move_summary_detail(parent: VBoxContainer, move: Dictionary) -> void:
+	parent.add_child(_label("Move summary", COLOR_MOVE))
+	parent.add_child(_label("move type"))
 	move_type_input = OptionButton.new()
 	for id in ["utility", "locomotion", "combat", "reaction"]:
 		move_type_input.add_item(id)
 	move_type_input.item_selected.connect(_on_move_type_selected)
-	_style_control(move_type_input, 120, 18)
+	_style_control(move_type_input, 188, 18)
 	_select_option(move_type_input, str(move.get("move_type", "")))
 	parent.add_child(move_type_input)
-
+	parent.add_child(_label("state context"))
 	state_context_input = OptionButton.new()
 	for id in ["", "idle", "walk", "dash", "jump", "hurt", "dead"]:
 		state_context_input.add_item(id)
 	state_context_input.item_selected.connect(_on_state_context_selected)
-	_style_control(state_context_input, 120, 18)
+	_style_control(state_context_input, 188, 18)
 	_select_option(state_context_input, str(move.get("state_context_override", "")))
 	parent.add_child(state_context_input)
+	multi_hit_input = CheckBox.new()
+	multi_hit_input.text = "multi_hit"
+	multi_hit_input.button_pressed = bool(move.get("multi_hit", false))
+	multi_hit_input.toggled.connect(_on_multi_hit_toggled)
+	multi_hit_input.add_theme_font_size_override("font_size", 8)
+	parent.add_child(multi_hit_input)
+	parent.add_child(_hint_label("Use middle panel for Timing, Hitbox, Events."))
 
+
+func _build_move_timing_detail(parent: VBoxContainer, move: Dictionary) -> void:
+	parent.add_child(_label("Timing", COLOR_MOVE))
 	for row in [
 		["frames", "frame_count_input", _on_frame_count_submitted, int(move.get("frame_count", 0))],
 		["start", "active_start_input", _on_active_start_submitted, int(move.get("active_window", {}).get("start_frame", 0))],
 		["end", "active_end_input", _on_active_end_submitted, int(move.get("active_window", {}).get("end_frame", 0))],
+	]:
+		parent.add_child(_label(str(row[0])))
+		var input := _line_edit(row[2])
+		input.text = str(row[3])
+		set(str(row[1]), input)
+		parent.add_child(input)
+
+
+func _build_move_damage_detail(parent: VBoxContainer, move: Dictionary) -> void:
+	parent.add_child(_label("Damage", COLOR_MOVE))
+	for row in [
 		["damage", "damage_input", _on_damage_submitted, int(move.get("damage", 0))],
 		["hitstop", "hitstop_input", _on_hitstop_submitted, int(move.get("hitstop_frames", 0))],
 	]:
@@ -576,14 +643,11 @@ func _build_move_detail(parent: VBoxContainer) -> void:
 		input.text = str(row[3])
 		set(str(row[1]), input)
 		parent.add_child(input)
-	multi_hit_input = CheckBox.new()
-	multi_hit_input.text = "multi_hit - allow multiple hits"
-	multi_hit_input.button_pressed = bool(move.get("multi_hit", false))
-	multi_hit_input.toggled.connect(_on_multi_hit_toggled)
-	multi_hit_input.add_theme_font_size_override("font_size", 8)
-	parent.add_child(multi_hit_input)
+	parent.add_child(_hint_label("Hitstop freezes movement, animation, and hitboxes."))
 
-	parent.add_child(_label("Hitbox - where this move can hit", COLOR_MOVE))
+
+func _build_move_hitbox_detail(parent: VBoxContainer, move: Dictionary) -> void:
+	parent.add_child(_label("Hitbox", COLOR_MOVE))
 	hitbox_id_input = _line_edit(_on_box_fields_submitted)
 	parent.add_child(hitbox_id_input)
 	hitbox_inputs = _add_input_grid(parent, ["start_frame", "end_frame", "x", "y", "w", "h"], _on_box_fields_submitted)
@@ -604,13 +668,15 @@ func _build_move_detail(parent: VBoxContainer) -> void:
 		hitbox_id_input.text = "hit_fist_1"
 		_set_inputs(hitbox_inputs, {"start_frame": 0, "end_frame": 0, "x": 0, "y": 0, "w": 1, "h": 1})
 
+
+func _build_move_events_detail(parent: VBoxContainer, move: Dictionary) -> void:
 	parent.add_child(_label("Frame events JSON", COLOR_MOVE))
 	events_text = TextEdit.new()
-	events_text.custom_minimum_size = Vector2(188, 54)
+	events_text.custom_minimum_size = Vector2(188, 102)
 	events_text.add_theme_font_size_override("font_size", 8)
 	events_text.text = JSON.stringify(move.get("events", []), "\t", true)
 	parent.add_child(events_text)
-	parent.add_child(_button("Apply Events", _on_events_apply_pressed))
+	parent.add_child(_button("Apply", _on_events_apply_pressed, 58))
 
 
 func _build_wardrobe_detail(parent: VBoxContainer) -> void:
@@ -627,7 +693,7 @@ func _build_wardrobe_detail(parent: VBoxContainer) -> void:
 	parent.add_child(_label("missing move mapping: %s" % str(coverage["missing_mapping"].size())))
 	parent.add_child(_label("missing animation clips: %s" % str(coverage["missing_clips"].size())))
 	parent.add_child(_label("missing frame sequences: %s" % str(coverage["missing_sequences"].size())))
-	parent.add_child(_button("Validate", _on_check_pressed))
+	parent.add_child(_button("Validate", _on_check_pressed, 64))
 
 
 func _build_runtime_detail(parent: VBoxContainer) -> void:
@@ -864,10 +930,10 @@ func _rect_json(rect: Dictionary) -> Dictionary:
 	}
 
 
-func _button(text: String, callback: Callable) -> Button:
+func _button(text: String, callback: Callable, width: int = 0) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(0, 18)
+	button.custom_minimum_size = Vector2(width, 18)
 	button.add_theme_font_size_override("font_size", 8)
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(callback)
@@ -892,12 +958,21 @@ func _add_input_grid(parent: VBoxContainer, fields: Array, callback: Callable) -
 	grid.add_theme_constant_override("v_separation", 1)
 	parent.add_child(grid)
 	for field in fields:
-		grid.add_child(_label(str(field)))
+		grid.add_child(_label(_field_label(str(field))))
 		var input := _line_edit(callback)
 		_style_control(input, 42, 16)
 		grid.add_child(input)
 		inputs[str(field)] = input
 	return inputs
+
+
+func _field_label(field: String) -> String:
+	match field:
+		"start_frame":
+			return "start"
+		"end_frame":
+			return "end"
+	return field
 
 
 func _label(text: String, color: Color = COLOR_LABEL) -> Label:
@@ -943,8 +1018,49 @@ func _style_control(control: Control, width: int, height: int) -> void:
 		control.add_theme_font_size_override("font_size", 8)
 		control.add_theme_font_size_override("popup_font_size", 8)
 		control.add_theme_constant_override("h_separation", 4)
+		_style_option_popup(control)
 	if not (control is LineEdit):
 		control.focus_mode = Control.FOCUS_NONE
+
+
+func _style_option_popup(option: OptionButton) -> void:
+	var popup := option.get_popup()
+	if popup == null:
+		return
+	popup.add_theme_font_size_override("font_size", 8)
+	popup.add_theme_constant_override("v_separation", 0)
+	popup.add_theme_constant_override("item_start_padding", 2)
+	popup.add_theme_constant_override("item_end_padding", 2)
+	var blank_icon := _blank_popup_icon()
+	for icon_name in ["checked", "unchecked", "radio_checked", "radio_unchecked"]:
+		popup.add_theme_icon_override(icon_name, blank_icon)
+
+
+func _blank_popup_icon() -> Texture2D:
+	var image := Image.create(1, 1, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0, 0, 0, 0))
+	return ImageTexture.create_from_image(image)
+
+
+func _move_section_index(section: String) -> int:
+	for i in 5:
+		match i:
+			0:
+				if section == "summary":
+					return i
+			1:
+				if section == "timing":
+					return i
+			2:
+				if section == "damage":
+					return i
+			3:
+				if section == "hitbox":
+					return i
+			4:
+				if section == "events":
+					return i
+	return -1
 
 
 func _select_option(option: OptionButton, value: String) -> void:
@@ -994,6 +1110,13 @@ func _on_navigation_selected(index: int) -> void:
 	_refresh_fields()
 
 
+func _on_move_section_selected(index: int) -> void:
+	if move_section_list == null or index < 0 or index >= move_section_list.item_count:
+		return
+	current_move_section = str(move_section_list.get_item_metadata(index))
+	_refresh_fields()
+
+
 func _on_move_selected(index: int) -> void:
 	select_move(move_select.get_item_text(index))
 
@@ -1023,24 +1146,30 @@ func _on_exact_pressed() -> void:
 
 
 func _on_sprite_ref_submitted() -> void:
+	if sprite_ref_input == null:
+		return
 	set_sprite_set_ref(sprite_ref_input.text)
 
 
 func _on_hp_submitted() -> void:
-	if hp_input.text.is_valid_int():
+	if hp_input != null and hp_input.text.is_valid_int():
 		set_hp(int(hp_input.text))
 
 
 func _on_move_type_selected(index: int) -> void:
+	if move_type_input == null:
+		return
 	set_move_scalar("move_type", move_type_input.get_item_text(index))
 
 
 func _on_state_context_selected(index: int) -> void:
+	if state_context_input == null:
+		return
 	set_move_scalar("state_context_override", state_context_input.get_item_text(index))
 
 
 func _on_frame_count_submitted() -> void:
-	if frame_count_input.text.is_valid_int():
+	if frame_count_input != null and frame_count_input.text.is_valid_int():
 		set_move_scalar("frame_count", int(frame_count_input.text))
 
 
@@ -1053,17 +1182,19 @@ func _on_active_end_submitted() -> void:
 
 
 func _update_active_window_from_inputs() -> void:
+	if active_start_input == null or active_end_input == null:
+		return
 	if active_start_input.text.is_valid_int() and active_end_input.text.is_valid_int():
 		set_move_active_window(int(active_start_input.text), int(active_end_input.text))
 
 
 func _on_damage_submitted() -> void:
-	if damage_input.text.is_valid_int():
+	if damage_input != null and damage_input.text.is_valid_int():
 		set_move_scalar("damage", int(damage_input.text))
 
 
 func _on_hitstop_submitted() -> void:
-	if hitstop_input.text.is_valid_int():
+	if hitstop_input != null and hitstop_input.text.is_valid_int():
 		set_move_scalar("hitstop_frames", int(hitstop_input.text))
 
 
@@ -1122,19 +1253,24 @@ func _on_events_apply_pressed() -> void:
 		_set_status("events JSON invalid")
 		return
 	set_move_events(json.data)
+	_set_status("events applied")
 
 
 func _on_runtime_start_pressed() -> void:
 	runtime_start_selected_move()
+	_set_status("runtime start %s" % selected_move)
 
 
 func _on_runtime_one_pressed() -> void:
 	runtime_advance_frame(1)
+	_set_status("runtime +1 frame")
 
 
 func _on_runtime_four_pressed() -> void:
 	runtime_advance_frame(4)
+	_set_status("runtime +4 frames")
 
 
 func _on_runtime_idle_pressed() -> void:
 	runtime_reset_idle()
+	_set_status("runtime idle")

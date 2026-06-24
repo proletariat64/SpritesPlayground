@@ -97,6 +97,7 @@ func _run() -> void:
 	panel.foot_inputs["radius_y"].text = "9"
 	panel._on_box_fields_submitted()
 	panel.current_nav = "move:basic_punch"
+	panel.current_move_section = "hitbox"
 	panel._refresh_fields()
 	panel.hitbox_id_input.text = "hit_fist_1"
 	panel.hitbox_inputs["start_frame"].text = "2"
@@ -106,6 +107,8 @@ func _run() -> void:
 	panel.hitbox_inputs["w"].text = "25"
 	panel.hitbox_inputs["h"].text = "15"
 	panel._on_box_fields_submitted()
+	panel.current_move_section = "events"
+	panel._refresh_fields()
 	panel.events_text.text = JSON.stringify([
 		{"frame": 2, "event_type": "enable_hitbox", "payload": {"hitbox_id": "hit_fist_1"}},
 		{"frame": 6, "event_type": "disable_hitbox", "payload": {"hitbox_id": "hit_fist_1"}},
