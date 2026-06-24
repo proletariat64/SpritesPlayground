@@ -21,6 +21,7 @@ func _ready() -> void:
 	dummy = _spawn_character("combat_gray_s64", "test_dummy_1", Vector2(405, 245), true)
 	_build_debug_gui()
 	_build_creator_lab()
+	call_deferred("_focus_gameplay_input")
 	_ai_started_at_msec = Time.get_ticks_msec()
 
 
@@ -75,6 +76,15 @@ func _tick_combat(delta: float) -> void:
 func toggle_creator_lab() -> void:
 	if creator_lab != null:
 		creator_lab.visible = not creator_lab.visible
+		if not creator_lab.visible:
+			_focus_gameplay_input()
+
+
+func _focus_gameplay_input() -> void:
+	get_viewport().gui_release_focus()
+	var window := get_window()
+	if window != null:
+		window.grab_focus()
 
 
 func _spawn_character(template_id: String, instance_id: String, spawn_position: Vector2, test_dummy: bool) -> Node2D:
@@ -120,6 +130,8 @@ func _build_debug_gui() -> void:
 	debug_label.position = Vector2(8, 8)
 	debug_label.custom_minimum_size = Vector2(320, 44)
 	debug_label.bbcode_enabled = true
+	debug_label.focus_mode = Control.FOCUS_NONE
+	debug_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	debug_label.fit_content = true
 	debug_label.add_theme_font_size_override("font_size", 8)
 	debug_label.add_theme_font_size_override("normal_font_size", 8)

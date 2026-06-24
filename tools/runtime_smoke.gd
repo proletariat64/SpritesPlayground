@@ -20,7 +20,8 @@ func _run() -> void:
 	var non_goal_ok: bool = await _run_non_goal_attack_lockout_smoke(playground)
 	var ai_ok: bool = await _run_ai_stress_smoke(playground)
 	var creator_ok: bool = await _run_creator_lab_smoke(playground)
-	if punch_ok and kick_ok and lethal_ok and non_goal_ok and ai_ok and creator_ok:
+	var focus_ok: bool = _run_input_focus_smoke(playground)
+	if punch_ok and kick_ok and lethal_ok and non_goal_ok and ai_ok and creator_ok and focus_ok:
 		print("runtime_smoke=PASS")
 		quit(0)
 	else:
@@ -170,9 +171,15 @@ func _run_creator_toggle_smoke(playground: Node) -> bool:
 	var action_bound: bool = InputMap.has_action("toggle_creator_lab")
 	playground.toggle_creator_lab()
 	var hidden: bool = not playground.creator_lab.visible
+	var focus_released: bool = playground.get_viewport().gui_get_focus_owner() == null
 	playground.toggle_creator_lab()
 	var visible_again: bool = playground.creator_lab.visible
-	return action_bound and hidden and visible_again
+	return action_bound and hidden and focus_released and visible_again
+
+
+func _run_input_focus_smoke(playground: Node) -> bool:
+	playground._focus_gameplay_input()
+	return playground.get_viewport().gui_get_focus_owner() == null
 
 
 func _restore_creator_smoke(original_punch: Dictionary, copy_path: String) -> void:
