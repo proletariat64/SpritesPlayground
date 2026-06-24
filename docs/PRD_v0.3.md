@@ -313,6 +313,57 @@ Modules:
 - AI stress test.
 - Debug visualization.
 
+### 9.6 Creator Lab UI Layout Rule
+
+Creator Lab uses a fixed three-panel editor model for schema-backed data.
+
+```text
++----------------+----------------------+----------------------------+
+| 1st layer      | 2nd layer            | 3rd layer                  |
+| Navigation     | Values / list        | Detail editor / preview    |
++----------------+----------------------+----------------------------+
+```
+
+Panel roles:
+
+- 1st layer selects the domain and object.
+- 2nd layer shows direct values or component lists for the selected object.
+- 3rd layer edits exactly one selected component and shows local preview or validation.
+
+Allowed first-layer domains:
+
+```text
+Character
+Moves
+Wardrobe
+Runtime
+```
+
+Examples:
+
+```text
+Character -> Hurtboxes -> hurt_head detail
+Character -> Foot Collision -> center/radius detail
+Moves -> basic_punch -> hit_fist_1 detail
+Moves -> basic_punch -> frame event detail
+Wardrobe -> animation_clips -> clip detail
+Runtime -> selected move -> frame preview detail
+```
+
+Frozen UI boundary:
+
+- No fourth panel.
+- No recursive editor inside the detail panel.
+- No hidden subsystem editor.
+- No tab/page may mix unrelated schema ownership without visible grouping.
+- Hurtbox, foot collision, and hitbox may appear in one Box workflow only if their ownership is explicit:
+
+```text
+Hurtbox = character receives hit
+Foot collision = movement / ground anchor
+Hitbox = move attacks
+```
+
 ## 10. Data Model
 
 This section is the frozen data contract for v0.3.

@@ -16,6 +16,10 @@ func _run() -> void:
 
 	var errors: Array = []
 	errors.append_array(_expect(str(panel.template_json["template_id"]) == "combat_gray_s64", "panel loads combat_gray_s64"))
+	errors.append_array(_expect(panel.navigation_list != null, "three-panel navigation exists"))
+	errors.append_array(_expect(panel.values_panel != null, "three-panel values panel exists"))
+	errors.append_array(_expect(panel.detail_panel != null, "three-panel detail panel exists"))
+	errors.append_array(_expect(panel.navigation_list.item_count >= 10, "navigation exposes domains and objects"))
 	errors.append_array(_expect(panel.validate_current().is_empty(), "initial panel data validates"))
 	var valid_sprite_ref := str(panel.template_json["sprite_set_ref"])
 	panel.template_json["sprite_set_ref"] = "missing_sprite_set"
@@ -78,14 +82,23 @@ func _run() -> void:
 	panel.set_move_scalar("damage", 9)
 	panel.set_move_scalar("hitstop_frames", 4)
 	panel.set_move_scalar("multi_hit", true)
+	panel.current_nav = "character_hurtboxes"
+	panel._refresh_fields()
 	panel.hurt_inputs["x"].text = "-10"
 	panel.hurt_inputs["y"].text = "-63"
 	panel.hurt_inputs["w"].text = "25"
 	panel.hurt_inputs["h"].text = "19"
+	panel._on_box_fields_submitted()
+	panel.current_nav = "character_foot"
+	panel._refresh_fields()
 	panel.foot_inputs["center_x"].text = "1"
 	panel.foot_inputs["center_y"].text = "-5"
 	panel.foot_inputs["radius_x"].text = "19"
 	panel.foot_inputs["radius_y"].text = "9"
+	panel._on_box_fields_submitted()
+	panel.current_nav = "move:basic_punch"
+	panel.current_move_section = "hitbox"
+	panel._refresh_fields()
 	panel.hitbox_id_input.text = "hit_fist_1"
 	panel.hitbox_inputs["start_frame"].text = "2"
 	panel.hitbox_inputs["end_frame"].text = "6"
@@ -94,6 +107,8 @@ func _run() -> void:
 	panel.hitbox_inputs["w"].text = "25"
 	panel.hitbox_inputs["h"].text = "15"
 	panel._on_box_fields_submitted()
+	panel.current_move_section = "events"
+	panel._refresh_fields()
 	panel.events_text.text = JSON.stringify([
 		{"frame": 2, "event_type": "enable_hitbox", "payload": {"hitbox_id": "hit_fist_1"}},
 		{"frame": 6, "event_type": "disable_hitbox", "payload": {"hitbox_id": "hit_fist_1"}},

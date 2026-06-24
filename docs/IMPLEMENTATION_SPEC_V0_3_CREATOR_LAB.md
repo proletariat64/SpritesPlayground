@@ -216,23 +216,61 @@ Create `CreatorLabV03Panel`.
 Minimum UI:
 
 ```text
-top row: template select / copy / save / reload / validate
-tabs: Template / Box / Move / Wardrobe / Runtime
+top row: template select / copy / save / reload / validate / roundtrip
+main area: fixed 3-panel editor
 status row: validation result
 ```
 
 The panel should be compact and tool-like, matching the current playground style.
+
+3-panel contract:
+
+```text
+left: domain/object navigation
+middle: values or component list
+right: selected component detail + preview
+```
+
+Rules:
+
+- The left panel selects from Character, Moves, Wardrobe, and Runtime.
+- The middle panel shows the selected object's scalar values or component list.
+- The right panel edits exactly one selected component.
+- Do not add a fourth panel.
+- Do not add recursive nested editors.
+- Do not hide schema ownership. Character-owned data, Move-owned data, and SpriteSet-owned data must be visually grouped.
+- `Roundtrip` is the UI label for the save/reload exactness check.
 
 ### Phase 3: Field Editors
 
 Implement editors in this order:
 
 1. Template fields.
-2. Hurtboxes and foot collision.
-3. Move scalar fields.
-4. Hitbox rect and active window.
-5. Frame events.
-6. SpriteSet mapping coverage.
+2. Character-owned hurtboxes.
+3. Character-owned foot collision.
+4. Move scalar fields.
+5. Move-owned hitbox rect and active window.
+6. Frame events.
+7. SpriteSet mapping coverage.
+
+Box workflow grouping:
+
+```text
+Hurtbox = character receives hit
+Foot collision = movement / ground anchor
+Hitbox = move attacks
+```
+
+The UI may keep these under one Box workflow, but the three categories must not appear as unexplained peers. Their ownership and preview color must be explicit.
+
+Foot collision implementation meaning:
+
+```text
+CharacterTemplate.foot_collision.center
+CharacterTemplate.foot_collision.radius
+```
+
+This is the movement/ground-contact ellipse. Editing it must not resize the sprite body.
 
 ### Phase 4: Runtime Preview
 

@@ -20,7 +20,8 @@ func _run() -> void:
 	var non_goal_ok: bool = await _run_non_goal_attack_lockout_smoke(playground)
 	var ai_ok: bool = await _run_ai_stress_smoke(playground)
 	var creator_ok: bool = await _run_creator_lab_smoke(playground)
-	if punch_ok and kick_ok and lethal_ok and non_goal_ok and ai_ok and creator_ok:
+	var focus_ok: bool = _run_input_focus_smoke(playground)
+	if punch_ok and kick_ok and lethal_ok and non_goal_ok and ai_ok and creator_ok and focus_ok:
 		print("runtime_smoke=PASS")
 		quit(0)
 	else:
@@ -35,15 +36,27 @@ func _run_move_hit_smoke(playground: Node, move_id: String, expected_damage: int
 
 	var saw_attack := false
 	var saw_hurt := false
+	var resolved_hurtbox := ""
+	var contact_hurtboxes: Array = []
 	for i in 45:
 		await physics_frame
 		if playground.player.state_machine.current_state == "attack":
 			saw_attack = true
 		if playground.dummy.state_machine.current_state == "hurt":
 			saw_hurt = true
+		if resolved_hurtbox.is_empty():
+			var summary: Dictionary = playground.dummy.debug_summary()
+			resolved_hurtbox = str(summary["last_hit_hurtbox"])
+			contact_hurtboxes = summary["contact_hurtboxes"]
 
 	var expected_hp: int = playground.dummy.max_hp - expected_damage
-	return saw_attack and saw_hurt and playground.dummy.current_hp == expected_hp
+	return (
+		saw_attack
+		and saw_hurt
+		and playground.dummy.current_hp == expected_hp
+		and resolved_hurtbox.begins_with("hurt_")
+		and contact_hurtboxes.has(resolved_hurtbox)
+	)
 
 
 func _run_lethal_smoke(playground: Node) -> bool:
@@ -158,9 +171,15 @@ func _run_creator_toggle_smoke(playground: Node) -> bool:
 	var action_bound: bool = InputMap.has_action("toggle_creator_lab")
 	playground.toggle_creator_lab()
 	var hidden: bool = not playground.creator_lab.visible
+	var focus_released: bool = playground.get_viewport().gui_get_focus_owner() == null
 	playground.toggle_creator_lab()
 	var visible_again: bool = playground.creator_lab.visible
-	return action_bound and hidden and visible_again
+	return action_bound and hidden and focus_released and visible_again
+
+
+func _run_input_focus_smoke(playground: Node) -> bool:
+	playground._focus_gameplay_input()
+	return playground.get_viewport().gui_get_focus_owner() == null
 
 
 func _restore_creator_smoke(original_punch: Dictionary, copy_path: String) -> void:
