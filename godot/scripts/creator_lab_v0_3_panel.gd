@@ -15,6 +15,9 @@ var move_select: OptionButton
 var sprite_set_select: OptionButton
 var status_label: Label
 var runtime_label: Label
+var navigation_list: ItemList
+var values_panel: VBoxContainer
+var detail_panel: VBoxContainer
 var hp_input: LineEdit
 var sprite_ref_input: LineEdit
 var move_type_input: OptionButton
@@ -31,6 +34,9 @@ var foot_inputs := {}
 var hitbox_id_input: LineEdit
 var hitbox_inputs := {}
 var events_text: TextEdit
+var current_nav: String = "character_template"
+var current_hurtbox_id: String = "hurt_head"
+var nav_keys: Array = []
 
 
 func setup() -> void:
@@ -155,6 +161,7 @@ func set_foot_collision(center: Dictionary, radius: Dictionary) -> void:
 func select_move(move_id: String) -> void:
 	if moves_json.has(move_id):
 		selected_move = move_id
+		current_nav = "move:%s" % move_id
 	_refresh_options()
 	_refresh_fields()
 
@@ -250,7 +257,7 @@ func runtime_summary() -> Dictionary:
 
 
 func _build_ui() -> void:
-	custom_minimum_size = Vector2(300, 336)
+	custom_minimum_size = Vector2(608, 336)
 	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.055, 0.065, 0.075, 0.96)
 	panel_style.border_color = Color(0.26, 0.34, 0.42, 1.0)
@@ -285,20 +292,360 @@ func _build_ui() -> void:
 	tools.add_child(_button("Reload", _on_reload_pressed))
 	tools.add_child(_button("Roundtrip", _on_exact_pressed))
 
-	var tabs := TabContainer.new()
-	tabs.custom_minimum_size = Vector2(288, 242)
-	tabs.add_theme_font_size_override("font_size", 8)
-	root.add_child(tabs)
-	_build_template_tab(tabs)
-	_build_box_tab(tabs)
-	_build_move_tab(tabs)
-	_build_wardrobe_tab(tabs)
-	_build_runtime_tab(tabs)
+	var main := HBoxContainer.new()
+	main.custom_minimum_size = Vector2(594, 242)
+	main.add_theme_constant_override("separation", 4)
+	root.add_child(main)
+
+	var nav_box := VBoxContainer.new()
+	nav_box.custom_minimum_size = Vector2(126, 238)
+	nav_box.add_theme_constant_override("separation", 2)
+	main.add_child(nav_box)
+	nav_box.add_child(_label("1 Navigation"))
+	navigation_list = ItemList.new()
+	navigation_list.custom_minimum_size = Vector2(126, 216)
+	navigation_list.add_theme_font_size_override("font_size", 8)
+	navigation_list.item_selected.connect(_on_navigation_selected)
+	nav_box.add_child(navigation_list)
+
+	var values_scroll := ScrollContainer.new()
+	values_scroll.custom_minimum_size = Vector2(190, 238)
+	values_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	main.add_child(values_scroll)
+	values_panel = VBoxContainer.new()
+	values_panel.add_theme_constant_override("separation", 2)
+	values_scroll.add_child(values_panel)
+
+	var detail_scroll := ScrollContainer.new()
+	detail_scroll.custom_minimum_size = Vector2(270, 238)
+	detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	main.add_child(detail_scroll)
+	detail_panel = VBoxContainer.new()
+	detail_panel.add_theme_constant_override("separation", 2)
+	detail_scroll.add_child(detail_panel)
 
 	status_label = Label.new()
 	status_label.add_theme_font_size_override("font_size", 8)
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(status_label)
+
+
+func _refresh_navigation() -> void:
+	if navigation_list == null:
+		return
+	navigation_list.clear()
+	nav_keys.clear()
+	_add_nav_item("Character / Template", "character_template")
+	_add_nav_item("Character / Hurtboxes", "character_hurtboxes")
+	_add_nav_item("Character / Foot Collision", "character_foot")
+	_add_nav_item("Character / Equipped", "character_moves")
+	for move_id in template_json.get("equipped_moves", []):
+		_add_nav_item("Move / %s" % str(move_id), "move:%s" % str(move_id))
+	_add_nav_item("Wardrobe / Mapping", "wardrobe_mapping")
+	_add_nav_item("Wardrobe / Clips", "wardrobe_clips")
+	_add_nav_item("Wardrobe / Sequences", "wardrobe_sequences")
+	_add_nav_item("Runtime / Preview", "runtime_preview")
+	var selected_index := nav_keys.find(current_nav)
+	if selected_index < 0:
+		current_nav = "character_template"
+		selected_index = 0
+	if selected_index >= 0:
+		navigation_list.select(selected_index)
+
+
+func _add_nav_item(text: String, key: String) -> void:
+	navigation_list.add_item(text)
+	nav_keys.append(key)
+
+
+func _refresh_three_panel() -> void:
+	if values_panel == null or detail_panel == null:
+		return
+	_reset_editor_refs()
+	_clear_children(values_panel)
+	_clear_children(detail_panel)
+	if current_nav.begins_with("move:"):
+		var move_id := current_nav.substr(5)
+		if moves_json.has(move_id):
+			selected_move = move_id
+		else:
+			current_nav = "character_template"
+	_build_values_panel()
+	_build_detail_panel()
+	_refresh_runtime_label()
+
+
+func _reset_editor_refs() -> void:
+	move_select = null
+	sprite_set_select = null
+	hp_input = null
+	sprite_ref_input = null
+	move_type_input = null
+	state_context_input = null
+	frame_count_input = null
+	active_start_input = null
+	active_end_input = null
+	damage_input = null
+	hitstop_input = null
+	multi_hit_input = null
+	hurtbox_select = null
+	hurt_inputs = {}
+	foot_inputs = {}
+	hitbox_id_input = null
+	hitbox_inputs = {}
+	events_text = null
+	runtime_label = null
+
+
+func _build_values_panel() -> void:
+	values_panel.add_child(_label("2 Values / list"))
+	match current_nav:
+		"character_template":
+			_add_value("template_id", str(template_json.get("template_id", "")))
+			_add_value("sprite_set_ref", str(template_json.get("sprite_set_ref", "")))
+			_add_value("hp", str(template_json.get("hp", "")))
+			_add_value("equipped", str(template_json.get("equipped_moves", []).size()))
+		"character_hurtboxes":
+			for hurtbox_id in template_json.get("hurtboxes", {}).keys():
+				var rect: Dictionary = template_json["hurtboxes"][hurtbox_id]
+				_add_value(str(hurtbox_id), _rect_summary(rect))
+		"character_foot":
+			var foot: Dictionary = template_json.get("foot_collision", {})
+			if not foot.is_empty():
+				_add_value("center", _xy_summary(foot.get("center", {})))
+				_add_value("radius", _xy_summary(foot.get("radius", {})))
+		"character_moves":
+			for move_id in template_json.get("equipped_moves", []):
+				_add_value(str(move_id), str(moves_json.get(str(move_id), {}).get("move_type", "")))
+		"wardrobe_mapping":
+			for move_id in sprite_set_json.get("required_moves_mapping", {}).keys():
+				_add_value(str(move_id), str(sprite_set_json["required_moves_mapping"][move_id]))
+		"wardrobe_clips":
+			for clip_id in sprite_set_json.get("animation_clips", {}).keys():
+				var clip: Dictionary = sprite_set_json["animation_clips"][clip_id]
+				_add_value(str(clip_id), "seq:%s" % str(clip.get("frame_sequence_ref", "")))
+		"wardrobe_sequences":
+			for sequence_id in sprite_set_json.get("frame_sequences", {}).keys():
+				_add_value(str(sequence_id), "%s frames" % str(sprite_set_json["frame_sequences"][sequence_id].size()))
+		"runtime_preview":
+			var summary: Dictionary = runtime.debug_summary()
+			_add_value("state", str(summary.get("current_state", "")))
+			_add_value("move", str(summary.get("current_move", "")))
+			_add_value("frame", str(summary.get("current_frame", 0)))
+			_add_value("active boxes", str(summary.get("active_hitbox_count", 0)))
+		_:
+			if current_nav.begins_with("move:") and moves_json.has(selected_move):
+				var move := selected_move_json()
+				_add_value("move_id", str(move.get("move_id", selected_move)))
+				_add_value("type", str(move.get("move_type", "")))
+				_add_value("frames", str(move.get("frame_count", 0)))
+				_add_value("hitboxes", str(move.get("hitboxes", []).size()))
+				_add_value("events", str(move.get("events", []).size()))
+
+
+func _build_detail_panel() -> void:
+	detail_panel.add_child(_label("3 Detail / preview"))
+	match current_nav:
+		"character_template":
+			_build_template_detail(detail_panel)
+		"character_hurtboxes":
+			_build_hurtbox_detail(detail_panel)
+		"character_foot":
+			_build_foot_detail(detail_panel)
+		"character_moves":
+			_build_equipped_moves_detail(detail_panel)
+		"wardrobe_mapping", "wardrobe_clips", "wardrobe_sequences":
+			_build_wardrobe_detail(detail_panel)
+		"runtime_preview":
+			_build_runtime_detail(detail_panel)
+		_:
+			if current_nav.begins_with("move:") and moves_json.has(selected_move):
+				_build_move_detail(detail_panel)
+
+
+func _build_template_detail(parent: VBoxContainer) -> void:
+	parent.add_child(_label("Character-owned configuration"))
+	parent.add_child(_label("sprite_set_ref"))
+	sprite_ref_input = _line_edit(_on_sprite_ref_submitted)
+	sprite_ref_input.text = str(template_json.get("sprite_set_ref", ""))
+	parent.add_child(sprite_ref_input)
+	parent.add_child(_label("hp"))
+	hp_input = _line_edit(_on_hp_submitted)
+	hp_input.text = str(int(template_json.get("hp", 0)))
+	parent.add_child(hp_input)
+	parent.add_child(_label("selected move"))
+	move_select = OptionButton.new()
+	_style_control(move_select, 154, 18)
+	for move_id in template_json.get("equipped_moves", []):
+		move_select.add_item(str(move_id))
+		if str(move_id) == selected_move:
+			move_select.select(move_select.item_count - 1)
+	move_select.item_selected.connect(_on_move_selected)
+	parent.add_child(move_select)
+
+
+func _build_hurtbox_detail(parent: VBoxContainer) -> void:
+	parent.add_child(_label("Hurtbox = character receives hit"))
+	hurtbox_select = OptionButton.new()
+	for id in template_json.get("hurtboxes", {}).keys():
+		hurtbox_select.add_item(str(id))
+		if str(id) == current_hurtbox_id:
+			hurtbox_select.select(hurtbox_select.item_count - 1)
+	hurtbox_select.item_selected.connect(_on_hurtbox_selected)
+	_style_control(hurtbox_select, 154, 18)
+	parent.add_child(hurtbox_select)
+	parent.add_child(_label("selected hurtbox rect"))
+	hurt_inputs = _add_input_grid(parent, ["x", "y", "w", "h"], _on_box_fields_submitted)
+	if hurtbox_select.item_count > 0:
+		var hurtbox_id := hurtbox_select.get_item_text(hurtbox_select.selected)
+		_set_inputs(hurt_inputs, template_json.get("hurtboxes", {}).get(hurtbox_id, {}))
+	parent.add_child(_label("preview: defensive geometry"))
+
+
+func _build_foot_detail(parent: VBoxContainer) -> void:
+	parent.add_child(_label("Foot collision = movement / ground anchor"))
+	parent.add_child(_label("movement ellipse center/radius"))
+	foot_inputs = _add_input_grid(parent, ["center_x", "center_y", "radius_x", "radius_y"], _on_box_fields_submitted)
+	var foot: Dictionary = template_json.get("foot_collision", {})
+	if not foot.is_empty():
+		_set_inputs(foot_inputs, {
+			"center_x": foot["center"]["x"],
+			"center_y": foot["center"]["y"],
+			"radius_x": foot["radius"]["x"],
+			"radius_y": foot["radius"]["y"],
+		})
+	parent.add_child(_label("preview: ground collision ellipse"))
+
+
+func _build_equipped_moves_detail(parent: VBoxContainer) -> void:
+	parent.add_child(_label("Equipped MoveTemplate references"))
+	move_select = OptionButton.new()
+	_style_control(move_select, 154, 18)
+	for move_id in template_json.get("equipped_moves", []):
+		move_select.add_item(str(move_id))
+		if str(move_id) == selected_move:
+			move_select.select(move_select.item_count - 1)
+	move_select.item_selected.connect(_on_move_selected)
+	parent.add_child(move_select)
+	parent.add_child(_label("selecting a move opens Move detail"))
+
+
+func _build_move_detail(parent: VBoxContainer) -> void:
+	var move := selected_move_json()
+	parent.add_child(_label("Move-owned gameplay data"))
+	move_type_input = OptionButton.new()
+	for id in ["utility", "locomotion", "combat", "reaction"]:
+		move_type_input.add_item(id)
+	move_type_input.item_selected.connect(_on_move_type_selected)
+	_style_control(move_type_input, 120, 18)
+	_select_option(move_type_input, str(move.get("move_type", "")))
+	parent.add_child(move_type_input)
+
+	state_context_input = OptionButton.new()
+	for id in ["", "idle", "walk", "dash", "jump", "hurt", "dead"]:
+		state_context_input.add_item(id)
+	state_context_input.item_selected.connect(_on_state_context_selected)
+	_style_control(state_context_input, 120, 18)
+	_select_option(state_context_input, str(move.get("state_context_override", "")))
+	parent.add_child(state_context_input)
+
+	for row in [
+		["frames", "frame_count_input", _on_frame_count_submitted, int(move.get("frame_count", 0))],
+		["start", "active_start_input", _on_active_start_submitted, int(move.get("active_window", {}).get("start_frame", 0))],
+		["end", "active_end_input", _on_active_end_submitted, int(move.get("active_window", {}).get("end_frame", 0))],
+		["damage", "damage_input", _on_damage_submitted, int(move.get("damage", 0))],
+		["hitstop", "hitstop_input", _on_hitstop_submitted, int(move.get("hitstop_frames", 0))],
+	]:
+		parent.add_child(_label(str(row[0])))
+		var input := _line_edit(row[2])
+		input.text = str(row[3])
+		set(str(row[1]), input)
+		parent.add_child(input)
+	multi_hit_input = CheckBox.new()
+	multi_hit_input.text = "multi_hit"
+	multi_hit_input.button_pressed = bool(move.get("multi_hit", false))
+	multi_hit_input.toggled.connect(_on_multi_hit_toggled)
+	multi_hit_input.add_theme_font_size_override("font_size", 8)
+	parent.add_child(multi_hit_input)
+
+	parent.add_child(_label("hitbox = move attacks"))
+	hitbox_id_input = _line_edit(_on_box_fields_submitted)
+	parent.add_child(hitbox_id_input)
+	hitbox_inputs = _add_input_grid(parent, ["start_frame", "end_frame", "x", "y", "w", "h"], _on_box_fields_submitted)
+	if not move.get("hitboxes", []).is_empty():
+		var hitbox: Dictionary = move["hitboxes"][0]
+		hitbox_id_input.text = str(hitbox["hitbox_id"])
+		var window: Dictionary = hitbox["active_window"]
+		var rect: Dictionary = hitbox["rect"]
+		_set_inputs(hitbox_inputs, {
+			"start_frame": window["start_frame"],
+			"end_frame": window["end_frame"],
+			"x": rect["x"],
+			"y": rect["y"],
+			"w": rect["w"],
+			"h": rect["h"],
+		})
+	else:
+		hitbox_id_input.text = "hit_fist_1"
+		_set_inputs(hitbox_inputs, {"start_frame": 0, "end_frame": 0, "x": 0, "y": 0, "w": 1, "h": 1})
+
+	parent.add_child(_label("events JSON"))
+	events_text = TextEdit.new()
+	events_text.custom_minimum_size = Vector2(240, 54)
+	events_text.add_theme_font_size_override("font_size", 8)
+	events_text.text = JSON.stringify(move.get("events", []), "\t", true)
+	parent.add_child(events_text)
+	parent.add_child(_button("Apply Events", _on_events_apply_pressed))
+
+
+func _build_wardrobe_detail(parent: VBoxContainer) -> void:
+	parent.add_child(_label("SpriteSet-owned animation coverage"))
+	sprite_set_select = OptionButton.new()
+	_style_control(sprite_set_select, 154, 18)
+	for id in DataStore.list_sprite_set_ids():
+		sprite_set_select.add_item(id)
+		if id == str(template_json.get("sprite_set_ref", "")):
+			sprite_set_select.select(sprite_set_select.item_count - 1)
+	sprite_set_select.item_selected.connect(_on_sprite_set_selected)
+	parent.add_child(sprite_set_select)
+	var coverage := wardrobe_coverage()
+	parent.add_child(_label("missing mapping: %s" % str(coverage["missing_mapping"].size())))
+	parent.add_child(_label("missing clips: %s" % str(coverage["missing_clips"].size())))
+	parent.add_child(_label("missing sequences: %s" % str(coverage["missing_sequences"].size())))
+	parent.add_child(_button("Validate", _on_check_pressed))
+
+
+func _build_runtime_detail(parent: VBoxContainer) -> void:
+	parent.add_child(_label("Runtime preview"))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 3)
+	parent.add_child(row)
+	row.add_child(_button("Start", _on_runtime_start_pressed))
+	row.add_child(_button("+1", _on_runtime_one_pressed))
+	row.add_child(_button("+4", _on_runtime_four_pressed))
+	row.add_child(_button("Idle", _on_runtime_idle_pressed))
+	runtime_label = Label.new()
+	runtime_label.add_theme_font_size_override("font_size", 8)
+	runtime_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	parent.add_child(runtime_label)
+
+
+func _add_value(label_text: String, value_text: String) -> void:
+	values_panel.add_child(_label("%s: %s" % [label_text, value_text]))
+
+
+func _rect_summary(rect: Dictionary) -> String:
+	return "x:%s y:%s w:%s h:%s" % [rect.get("x", 0), rect.get("y", 0), rect.get("w", 0), rect.get("h", 0)]
+
+
+func _xy_summary(value: Dictionary) -> String:
+	return "x:%s y:%s" % [value.get("x", 0), value.get("y", 0)]
+
+
+func _clear_children(node: Node) -> void:
+	for child in node.get_children():
+		node.remove_child(child)
+		child.queue_free()
 
 
 func _build_template_tab(tabs: TabContainer) -> void:
@@ -430,52 +777,11 @@ func _refresh_options() -> void:
 			sprite_set_select.add_item(id)
 			if id == str(template_json.get("sprite_set_ref", "")):
 				sprite_set_select.select(sprite_set_select.item_count - 1)
+	_refresh_navigation()
 
 
 func _refresh_fields() -> void:
-	if hp_input != null:
-		hp_input.text = str(int(template_json.get("hp", 0)))
-	if sprite_ref_input != null:
-		sprite_ref_input.text = str(template_json.get("sprite_set_ref", ""))
-	if moves_json.has(selected_move):
-		var move := selected_move_json()
-		_select_option(move_type_input, str(move.get("move_type", "")))
-		_select_option(state_context_input, str(move.get("state_context_override", "")))
-		frame_count_input.text = str(int(move.get("frame_count", 0)))
-		active_start_input.text = str(int(move.get("active_window", {}).get("start_frame", 0)))
-		active_end_input.text = str(int(move.get("active_window", {}).get("end_frame", 0)))
-		damage_input.text = str(int(move.get("damage", 0)))
-		hitstop_input.text = str(int(move.get("hitstop_frames", 0)))
-		multi_hit_input.button_pressed = bool(move.get("multi_hit", false))
-		if hurtbox_select != null:
-			var hurtbox_id := hurtbox_select.get_item_text(hurtbox_select.selected)
-			var hurt: Dictionary = template_json.get("hurtboxes", {}).get(hurtbox_id, {})
-			_set_inputs(hurt_inputs, hurt)
-		var foot: Dictionary = template_json.get("foot_collision", {})
-		if not foot.is_empty():
-			_set_inputs(foot_inputs, {
-				"center_x": foot["center"]["x"],
-				"center_y": foot["center"]["y"],
-				"radius_x": foot["radius"]["x"],
-				"radius_y": foot["radius"]["y"],
-			})
-		if not move.get("hitboxes", []).is_empty():
-			var hitbox: Dictionary = move["hitboxes"][0]
-			hitbox_id_input.text = str(hitbox["hitbox_id"])
-			var window: Dictionary = hitbox["active_window"]
-			var rect: Dictionary = hitbox["rect"]
-			_set_inputs(hitbox_inputs, {
-				"start_frame": window["start_frame"],
-				"end_frame": window["end_frame"],
-				"x": rect["x"],
-				"y": rect["y"],
-				"w": rect["w"],
-				"h": rect["h"],
-			})
-		else:
-			hitbox_id_input.text = "hit_fist_1"
-			_set_inputs(hitbox_inputs, {"start_frame": 0, "end_frame": 0, "x": 0, "y": 0, "w": 1, "h": 1})
-		events_text.text = JSON.stringify(move.get("events", []), "\t", true)
+	_refresh_three_panel()
 	_refresh_runtime()
 
 
@@ -628,6 +934,17 @@ func _on_template_selected(index: int) -> void:
 	load_template_id(template_select.get_item_text(index))
 
 
+func _on_navigation_selected(index: int) -> void:
+	if index < 0 or index >= nav_keys.size():
+		return
+	current_nav = str(nav_keys[index])
+	if current_nav.begins_with("move:"):
+		var move_id := current_nav.substr(5)
+		if moves_json.has(move_id):
+			selected_move = move_id
+	_refresh_fields()
+
+
 func _on_move_selected(index: int) -> void:
 	select_move(move_select.get_item_text(index))
 
@@ -705,35 +1022,49 @@ func _on_multi_hit_toggled(value: bool) -> void:
 	set_move_scalar("multi_hit", value)
 
 
-func _on_hurtbox_selected(_index: int) -> void:
+func _on_hurtbox_selected(index: int) -> void:
+	if hurtbox_select != null:
+		current_hurtbox_id = hurtbox_select.get_item_text(index)
 	_refresh_fields()
 
 
 func _on_box_fields_submitted() -> void:
-	if hurtbox_select == null:
-		return
-	var hurtbox_id := hurtbox_select.get_item_text(hurtbox_select.selected)
-	template_json["hurtboxes"][hurtbox_id] = _rect_json({
-		"x": _number_from(hurt_inputs, "x"),
-		"y": _number_from(hurt_inputs, "y"),
-		"w": _number_from(hurt_inputs, "w"),
-		"h": _number_from(hurt_inputs, "h"),
-	})
-	template_json["foot_collision"] = {
-		"center": {"x": _number_from(foot_inputs, "center_x"), "y": _number_from(foot_inputs, "center_y")},
-		"radius": {"x": maxf(1.0, _number_from(foot_inputs, "radius_x")), "y": maxf(1.0, _number_from(foot_inputs, "radius_y"))},
-	}
-	set_first_hitbox(
-		hitbox_id_input.text,
-		int(_number_from(hitbox_inputs, "start_frame")),
-		int(_number_from(hitbox_inputs, "end_frame")),
-		{
-			"x": _number_from(hitbox_inputs, "x"),
-			"y": _number_from(hitbox_inputs, "y"),
-			"w": _number_from(hitbox_inputs, "w"),
-			"h": _number_from(hitbox_inputs, "h"),
+	var changed := false
+	if hurtbox_select != null and not hurt_inputs.is_empty():
+		current_hurtbox_id = hurtbox_select.get_item_text(hurtbox_select.selected)
+		template_json["hurtboxes"][current_hurtbox_id] = _rect_json({
+			"x": _number_from(hurt_inputs, "x"),
+			"y": _number_from(hurt_inputs, "y"),
+			"w": _number_from(hurt_inputs, "w"),
+			"h": _number_from(hurt_inputs, "h"),
+		})
+		changed = true
+	if not foot_inputs.is_empty():
+		template_json["foot_collision"] = {
+			"center": {"x": _number_from(foot_inputs, "center_x"), "y": _number_from(foot_inputs, "center_y")},
+			"radius": {"x": maxf(1.0, _number_from(foot_inputs, "radius_x")), "y": maxf(1.0, _number_from(foot_inputs, "radius_y"))},
 		}
-	)
+		changed = true
+	if hitbox_id_input != null and not hitbox_inputs.is_empty():
+		var move := selected_move_json()
+		if move["hitboxes"].is_empty():
+			move["hitboxes"].append({})
+		move["hitboxes"][0] = {
+			"hitbox_id": hitbox_id_input.text,
+			"active_window": {
+				"start_frame": int(_number_from(hitbox_inputs, "start_frame")),
+				"end_frame": int(_number_from(hitbox_inputs, "end_frame")),
+			},
+			"rect": _rect_json({
+				"x": _number_from(hitbox_inputs, "x"),
+				"y": _number_from(hitbox_inputs, "y"),
+				"w": _number_from(hitbox_inputs, "w"),
+				"h": _number_from(hitbox_inputs, "h"),
+			}),
+		}
+		changed = true
+	if changed:
+		_refresh_fields()
 
 
 func _on_events_apply_pressed() -> void:
