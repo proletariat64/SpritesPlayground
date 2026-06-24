@@ -24,6 +24,7 @@ var state_machine: Node
 
 var _flash_time: float = 0.0
 var _hit_hurtbox_id: String = ""
+var _contact_hurtbox_ids: Dictionary = {}
 var _ai_elapsed: float = 0.0
 var _ai_decision_in: float = 0.0
 var _ai_vector: Vector2 = Vector2.ZERO
@@ -88,6 +89,7 @@ func tick_character(delta: float, arena_center: Vector2, arena_radius: Vector2) 
 	_flash_time = maxf(0.0, _flash_time - delta)
 	if _flash_time <= 0.0:
 		_hit_hurtbox_id = ""
+		_contact_hurtbox_ids.clear()
 
 	var input_vector := Vector2.ZERO
 	if current_hp <= 0:
@@ -106,12 +108,17 @@ func tick_character(delta: float, arena_center: Vector2, arena_radius: Vector2) 
 	queue_redraw()
 
 
-func take_hit(damage: int, _hitbox_id: String, _source_instance_id: String, resolved_hurtbox_id: String = "") -> void:
+func take_hit(damage: int, _hitbox_id: String, _source_instance_id: String, resolved_hurtbox_id: String = "", contact_hurtbox_ids: Array = []) -> void:
 	if current_hp <= 0:
 		return
 	current_hp = maxi(0, current_hp - damage)
 	_flash_time = 0.14
 	_hit_hurtbox_id = resolved_hurtbox_id
+	_contact_hurtbox_ids.clear()
+	for hurtbox_id in contact_hurtbox_ids:
+		_contact_hurtbox_ids[str(hurtbox_id)] = true
+	if not resolved_hurtbox_id.is_empty():
+		_contact_hurtbox_ids[resolved_hurtbox_id] = true
 	if current_hp <= 0:
 		state_machine.enter_dead()
 	else:
@@ -124,6 +131,7 @@ func reset_runtime(new_position: Vector2) -> void:
 	current_hp = max_hp
 	_flash_time = 0.0
 	_hit_hurtbox_id = ""
+	_contact_hurtbox_ids.clear()
 	state_machine.reset_to_idle()
 	queue_redraw()
 
@@ -159,6 +167,7 @@ func debug_summary() -> Dictionary:
 		"hp": "%d/%d" % [current_hp, max_hp],
 		"active_hitboxes": move_executor.active_hitboxes_local().size(),
 		"last_hit_hurtbox": _hit_hurtbox_id,
+		"contact_hurtboxes": _contact_hurtbox_ids.keys(),
 		"mode": control_mode,
 	}
 
@@ -240,9 +249,13 @@ func _draw() -> void:
 		var fill_color := Color(0.1, 0.55, 1.0, 0.18)
 		var line_color := Color(0.1, 0.55, 1.0)
 		var line_width := 1.0
+		if _flash_time > 0.0 and _contact_hurtbox_ids.has(hurtbox_id):
+			fill_color = Color(1.0, 0.92, 0.35, 0.24)
+			line_color = Color(1.0, 0.88, 0.35)
+			line_width = 1.5
 		if _flash_time > 0.0 and hurtbox_id == _hit_hurtbox_id:
-			fill_color = Color(1.0, 0.82, 0.18, 0.42)
-			line_color = Color(1.0, 0.94, 0.35)
+			fill_color = Color(1.0, 0.34, 0.12, 0.52)
+			line_color = Color(1.0, 0.18, 0.08)
 			line_width = 2.0
 		draw_rect(rect, fill_color, true)
 		draw_rect(rect, line_color, false, line_width)

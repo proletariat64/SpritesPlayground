@@ -99,12 +99,15 @@ func _process_hits(attacker: Node2D, target: Node2D) -> void:
 		if not attacker.move_executor.can_hit_target(target.instance_id, window_index):
 			continue
 		var hit_rect: Rect2 = hitbox["rect"]
+		var contact_hurtboxes: Array = []
 		for hurtbox in target.hurtboxes_world():
 			var hurt_rect: Rect2 = hurtbox["rect"]
 			if hit_rect.intersects(hurt_rect):
-				target.take_hit(int(hitbox["damage"]), str(hitbox["hitbox_id"]), attacker.instance_id, str(hurtbox["hurtbox_id"]))
-				attacker.move_executor.mark_target_hit(target.instance_id, window_index)
-				break
+				contact_hurtboxes.append(str(hurtbox["hurtbox_id"]))
+		if not contact_hurtboxes.is_empty():
+			var resolved_hurtbox_id := str(contact_hurtboxes[0])
+			target.take_hit(int(hitbox["damage"]), str(hitbox["hitbox_id"]), attacker.instance_id, resolved_hurtbox_id, contact_hurtboxes)
+			attacker.move_executor.mark_target_hit(target.instance_id, window_index)
 
 
 func _build_debug_gui() -> void:
