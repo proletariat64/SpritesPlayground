@@ -36,6 +36,14 @@ func _run() -> void:
 	errors.append_array(_expect(str(DataStore.load_template("combat_gray_s64")["template_id"]) == str(original["template_id"]), "copy does not mutate original"))
 
 	panel.select_move("basic_punch")
+	panel.current_move_section = "hitbox"
+	panel._refresh_fields()
+	var walk_nav_index: int = panel.nav_keys.find("move:walk")
+	errors.append_array(_expect(walk_nav_index >= 0, "navigation exposes walk move"))
+	panel._on_navigation_selected(walk_nav_index)
+	errors.append_array(_expect(str(panel.selected_move) == "walk", "navigation switches selected move"))
+	errors.append_array(_expect(str(panel.current_move_section) == "summary", "navigation resets move section"))
+	panel.select_move("basic_punch")
 	var original_events: Array = panel.selected_move_json()["events"].duplicate(true)
 	panel.set_move_events([
 		{"frame": 1, "event_type": "play_sound", "payload": {"sound_id": "bad"}},
@@ -84,6 +92,11 @@ func _run() -> void:
 	panel.set_move_scalar("multi_hit", true)
 	panel.current_nav = "character_hurtboxes"
 	panel._refresh_fields()
+	var original_hurt_x := float(panel.template_json["hurtboxes"][panel.current_hurtbox_id]["x"])
+	panel.hurt_inputs["x"].text = "12a"
+	panel._on_box_fields_submitted()
+	errors.append_array(_expect(str(panel.status_label.text).contains("invalid numeric input"), "hurtbox rejects invalid numeric input"))
+	errors.append_array(_expect(float(panel.template_json["hurtboxes"][panel.current_hurtbox_id]["x"]) == original_hurt_x, "invalid numeric input does not mutate hurtbox"))
 	panel.hurt_inputs["x"].text = "-10"
 	panel.hurt_inputs["y"].text = "-63"
 	panel.hurt_inputs["w"].text = "25"
@@ -99,6 +112,9 @@ func _run() -> void:
 	panel.current_nav = "move:basic_punch"
 	panel.current_move_section = "hitbox"
 	panel._refresh_fields()
+	panel.hitbox_id_input.text = "HIT_UPPER"
+	panel._on_box_fields_submitted()
+	errors.append_array(_expect(str(panel.status_label.text).contains("invalid hitbox_id"), "hitbox editor reports invalid hitbox id"))
 	panel.hitbox_id_input.text = "hit_fist_1"
 	panel.hitbox_inputs["start_frame"].text = "2"
 	panel.hitbox_inputs["end_frame"].text = "6"
@@ -109,6 +125,11 @@ func _run() -> void:
 	panel._on_box_fields_submitted()
 	panel.current_move_section = "events"
 	panel._refresh_fields()
+	panel.events_text.text = JSON.stringify([
+		{"frame": 1, "event_type": "play_sound", "payload": {"sound_id": "bad"}},
+	], "\t", true)
+	panel._on_events_apply_pressed()
+	errors.append_array(_expect(str(panel.status_label.text).contains("validation FAIL"), "events Apply validates event content"))
 	panel.events_text.text = JSON.stringify([
 		{"frame": 2, "event_type": "enable_hitbox", "payload": {"hitbox_id": "hit_fist_1"}},
 		{"frame": 6, "event_type": "disable_hitbox", "payload": {"hitbox_id": "hit_fist_1"}},

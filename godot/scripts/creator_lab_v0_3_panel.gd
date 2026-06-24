@@ -172,6 +172,8 @@ func set_foot_collision(center: Dictionary, radius: Dictionary) -> void:
 
 func select_move(move_id: String) -> void:
 	if moves_json.has(move_id):
+		if selected_move != move_id:
+			current_move_section = "summary"
 		selected_move = move_id
 		current_nav = "move:%s" % move_id
 	_refresh_options()
@@ -651,8 +653,11 @@ func _build_move_hitbox_detail(parent: VBoxContainer, move: Dictionary) -> void:
 	hitbox_id_input = _line_edit(_on_box_fields_submitted)
 	parent.add_child(hitbox_id_input)
 	hitbox_inputs = _add_input_grid(parent, ["start_frame", "end_frame", "x", "y", "w", "h"], _on_box_fields_submitted)
-	if not move.get("hitboxes", []).is_empty():
-		var hitbox: Dictionary = move["hitboxes"][0]
+	var hitboxes: Array = move.get("hitboxes", [])
+	if hitboxes.size() > 1:
+		parent.add_child(_hint_label("Editing first hitbox only; %d additional hitbox(es) remain unchanged." % (hitboxes.size() - 1)))
+	if not hitboxes.is_empty():
+		var hitbox: Dictionary = hitboxes[0]
 		hitbox_id_input.text = str(hitbox["hitbox_id"])
 		var window: Dictionary = hitbox["active_window"]
 		var rect: Dictionary = hitbox["rect"]
@@ -727,116 +732,6 @@ func _clear_children(node: Node) -> void:
 	for child in node.get_children():
 		node.remove_child(child)
 		child.queue_free()
-
-
-func _build_template_tab(tabs: TabContainer) -> void:
-	var tab := VBoxContainer.new()
-	tab.name = "Template"
-	tab.add_theme_constant_override("separation", 2)
-	tabs.add_child(tab)
-	tab.add_child(_label("sprite_set_ref"))
-	sprite_ref_input = _line_edit(_on_sprite_ref_submitted)
-	tab.add_child(sprite_ref_input)
-	tab.add_child(_label("hp"))
-	hp_input = _line_edit(_on_hp_submitted)
-	tab.add_child(hp_input)
-	tab.add_child(_label("selected move"))
-	move_select = OptionButton.new()
-	_style_control(move_select, 154, 18)
-	move_select.item_selected.connect(_on_move_selected)
-	tab.add_child(move_select)
-
-
-func _build_box_tab(tabs: TabContainer) -> void:
-	var tab := VBoxContainer.new()
-	tab.name = "Box"
-	tab.add_theme_constant_override("separation", 2)
-	tabs.add_child(tab)
-	hurtbox_select = OptionButton.new()
-	for id in ["hurt_head", "hurt_upper_body", "hurt_lower_body"]:
-		hurtbox_select.add_item(id)
-	hurtbox_select.item_selected.connect(_on_hurtbox_selected)
-	_style_control(hurtbox_select, 154, 18)
-	tab.add_child(hurtbox_select)
-	tab.add_child(_label("hurtbox"))
-	hurt_inputs = _add_input_grid(tab, ["x", "y", "w", "h"], _on_box_fields_submitted)
-	tab.add_child(_label("foot collision"))
-	foot_inputs = _add_input_grid(tab, ["center_x", "center_y", "radius_x", "radius_y"], _on_box_fields_submitted)
-	tab.add_child(_label("first hitbox"))
-	hitbox_id_input = _line_edit(_on_box_fields_submitted)
-	tab.add_child(hitbox_id_input)
-	hitbox_inputs = _add_input_grid(tab, ["start_frame", "end_frame", "x", "y", "w", "h"], _on_box_fields_submitted)
-
-
-func _build_move_tab(tabs: TabContainer) -> void:
-	var tab := VBoxContainer.new()
-	tab.name = "Move"
-	tab.add_theme_constant_override("separation", 2)
-	tabs.add_child(tab)
-	move_type_input = OptionButton.new()
-	for id in ["utility", "locomotion", "combat", "reaction"]:
-		move_type_input.add_item(id)
-	move_type_input.item_selected.connect(_on_move_type_selected)
-	_style_control(move_type_input, 120, 18)
-	tab.add_child(move_type_input)
-
-	state_context_input = OptionButton.new()
-	for id in ["", "idle", "walk", "dash", "jump", "hurt", "dead"]:
-		state_context_input.add_item(id)
-	state_context_input.item_selected.connect(_on_state_context_selected)
-	_style_control(state_context_input, 120, 18)
-	tab.add_child(state_context_input)
-
-	for row in [
-		["frames", "frame_count_input", _on_frame_count_submitted],
-		["start", "active_start_input", _on_active_start_submitted],
-		["end", "active_end_input", _on_active_end_submitted],
-		["damage", "damage_input", _on_damage_submitted],
-		["hitstop", "hitstop_input", _on_hitstop_submitted],
-	]:
-		tab.add_child(_label(str(row[0])))
-		var input := _line_edit(row[2])
-		set(str(row[1]), input)
-		tab.add_child(input)
-	multi_hit_input = CheckBox.new()
-	multi_hit_input.text = "multi_hit"
-	multi_hit_input.toggled.connect(_on_multi_hit_toggled)
-	multi_hit_input.add_theme_font_size_override("font_size", 8)
-	tab.add_child(multi_hit_input)
-	tab.add_child(_label("events JSON"))
-	events_text = TextEdit.new()
-	events_text.custom_minimum_size = Vector2(250, 54)
-	events_text.add_theme_font_size_override("font_size", 8)
-	tab.add_child(events_text)
-	tab.add_child(_button("Apply Events", _on_events_apply_pressed))
-
-
-func _build_wardrobe_tab(tabs: TabContainer) -> void:
-	var tab := VBoxContainer.new()
-	tab.name = "Wardrobe"
-	tabs.add_child(tab)
-	sprite_set_select = OptionButton.new()
-	_style_control(sprite_set_select, 154, 18)
-	sprite_set_select.item_selected.connect(_on_sprite_set_selected)
-	tab.add_child(sprite_set_select)
-	tab.add_child(_button("Validate", _on_check_pressed))
-
-
-func _build_runtime_tab(tabs: TabContainer) -> void:
-	var tab := VBoxContainer.new()
-	tab.name = "Runtime"
-	tab.add_theme_constant_override("separation", 2)
-	tabs.add_child(tab)
-	var row := HBoxContainer.new()
-	tab.add_child(row)
-	row.add_child(_button("Start", _on_runtime_start_pressed))
-	row.add_child(_button("+1", _on_runtime_one_pressed))
-	row.add_child(_button("+4", _on_runtime_four_pressed))
-	row.add_child(_button("Idle", _on_runtime_idle_pressed))
-	runtime_label = Label.new()
-	runtime_label.add_theme_font_size_override("font_size", 8)
-	runtime_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	tab.add_child(runtime_label)
 
 
 func _refresh_options() -> void:
@@ -943,11 +838,23 @@ func _button(text: String, callback: Callable, width: int = 0) -> Button:
 func _line_edit(callback: Callable) -> LineEdit:
 	var input := LineEdit.new()
 	_style_control(input, 110, 18)
+	input.set_meta("submit_handled", false)
 	input.text_submitted.connect(func(_text: String) -> void:
+		input.set_meta("submit_handled", true)
+		callback.call()
+		call_deferred("_clear_line_edit_submit_guard", input)
+	)
+	input.focus_exited.connect(func() -> void:
+		if bool(input.get_meta("submit_handled", false)):
+			return
 		callback.call()
 	)
-	input.focus_exited.connect(callback)
 	return input
+
+
+func _clear_line_edit_submit_guard(input: LineEdit) -> void:
+	if is_instance_valid(input):
+		input.set_meta("submit_handled", false)
 
 
 func _add_input_grid(parent: VBoxContainer, fields: Array, callback: Callable) -> Dictionary:
@@ -1084,6 +991,38 @@ func _number_from(inputs: Dictionary, key: String) -> float:
 	return 0.0
 
 
+func _validate_number_inputs(inputs: Dictionary, fields: Array) -> bool:
+	var invalid: Array = []
+	for field in fields:
+		var key := str(field)
+		if not inputs.has(key):
+			continue
+		var input: LineEdit = inputs[key]
+		var ok := input != null and input.text.is_valid_float()
+		_set_line_edit_valid(input, ok)
+		if not ok:
+			invalid.append(key)
+	if invalid.is_empty():
+		return true
+	_set_status("invalid numeric input: %s" % ", ".join(invalid))
+	return false
+
+
+func _set_line_edit_valid(input: LineEdit, valid: bool) -> void:
+	if input == null:
+		return
+	if valid:
+		input.remove_theme_color_override("font_color")
+	else:
+		input.add_theme_color_override("font_color", COLOR_FAIL)
+
+
+func _is_hitbox_id_valid(value: String) -> bool:
+	var expression := RegEx.new()
+	expression.compile("^hit_[a-z0-9_]+$")
+	return expression.search(value) != null
+
+
 func _set_status(text: String) -> void:
 	if status_label != null:
 		status_label.text = text
@@ -1105,8 +1044,9 @@ func _on_navigation_selected(index: int) -> void:
 	current_nav = str(nav_keys[index])
 	if current_nav.begins_with("move:"):
 		var move_id := current_nav.substr(5)
-		if moves_json.has(move_id):
+		if moves_json.has(move_id) and selected_move != move_id:
 			selected_move = move_id
+			current_move_section = "summary"
 	_refresh_fields()
 
 
@@ -1211,6 +1151,8 @@ func _on_hurtbox_selected(index: int) -> void:
 func _on_box_fields_submitted() -> void:
 	var changed := false
 	if hurtbox_select != null and not hurt_inputs.is_empty():
+		if not _validate_number_inputs(hurt_inputs, ["x", "y", "w", "h"]):
+			return
 		current_hurtbox_id = hurtbox_select.get_item_text(hurtbox_select.selected)
 		template_json["hurtboxes"][current_hurtbox_id] = _rect_json({
 			"x": _number_from(hurt_inputs, "x"),
@@ -1220,17 +1162,27 @@ func _on_box_fields_submitted() -> void:
 		})
 		changed = true
 	if not foot_inputs.is_empty():
+		if not _validate_number_inputs(foot_inputs, ["center_x", "center_y", "radius_x", "radius_y"]):
+			return
 		template_json["foot_collision"] = {
 			"center": {"x": _number_from(foot_inputs, "center_x"), "y": _number_from(foot_inputs, "center_y")},
 			"radius": {"x": maxf(1.0, _number_from(foot_inputs, "radius_x")), "y": maxf(1.0, _number_from(foot_inputs, "radius_y"))},
 		}
 		changed = true
 	if hitbox_id_input != null and not hitbox_inputs.is_empty():
+		var hitbox_id := hitbox_id_input.text.strip_edges()
+		var hitbox_id_valid := _is_hitbox_id_valid(hitbox_id)
+		_set_line_edit_valid(hitbox_id_input, hitbox_id_valid)
+		if not hitbox_id_valid:
+			_set_status("invalid hitbox_id: must match ^hit_[a-z0-9_]+$")
+			return
+		if not _validate_number_inputs(hitbox_inputs, ["start_frame", "end_frame", "x", "y", "w", "h"]):
+			return
 		var move := selected_move_json()
 		if move["hitboxes"].is_empty():
 			move["hitboxes"].append({})
 		move["hitboxes"][0] = {
-			"hitbox_id": hitbox_id_input.text,
+			"hitbox_id": hitbox_id,
 			"active_window": {
 				"start_frame": int(_number_from(hitbox_inputs, "start_frame")),
 				"end_frame": int(_number_from(hitbox_inputs, "end_frame")),
@@ -1253,7 +1205,9 @@ func _on_events_apply_pressed() -> void:
 		_set_status("events JSON invalid")
 		return
 	set_move_events(json.data)
-	_set_status("events applied")
+	var errors := validate_current()
+	if errors.is_empty():
+		_set_status("events applied")
 
 
 func _on_runtime_start_pressed() -> void:
