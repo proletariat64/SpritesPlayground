@@ -98,9 +98,9 @@ func save_reload_exact() -> bool:
 		template_json = loaded_template
 		sprite_set_json = loaded_sprite_set
 		moves_json = loaded_moves
-		_set_status("save/reload exact PASS")
+		_set_status("roundtrip PASS")
 	else:
-		_set_status("save/reload exact FAIL")
+		_set_status("roundtrip FAIL")
 	_refresh_options()
 	_refresh_fields()
 	return ok
@@ -283,7 +283,7 @@ func _build_ui() -> void:
 	root.add_child(tools)
 	tools.add_child(_button("Copy", _on_copy_pressed))
 	tools.add_child(_button("Reload", _on_reload_pressed))
-	tools.add_child(_button("Exact", _on_exact_pressed))
+	tools.add_child(_button("Roundtrip", _on_exact_pressed))
 
 	var tabs := TabContainer.new()
 	tabs.custom_minimum_size = Vector2(288, 242)
@@ -332,7 +332,7 @@ func _build_box_tab(tabs: TabContainer) -> void:
 	tab.add_child(hurtbox_select)
 	tab.add_child(_label("hurtbox"))
 	hurt_inputs = _add_input_grid(tab, ["x", "y", "w", "h"], _on_box_fields_submitted)
-	tab.add_child(_label("foot"))
+	tab.add_child(_label("foot collision"))
 	foot_inputs = _add_input_grid(tab, ["center_x", "center_y", "radius_x", "radius_y"], _on_box_fields_submitted)
 	tab.add_child(_label("first hitbox"))
 	hitbox_id_input = _line_edit(_on_box_fields_submitted)
