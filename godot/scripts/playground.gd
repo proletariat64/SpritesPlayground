@@ -102,7 +102,7 @@ func _process_hits(attacker: Node2D, target: Node2D) -> void:
 		for hurtbox in target.hurtboxes_world():
 			var hurt_rect: Rect2 = hurtbox["rect"]
 			if hit_rect.intersects(hurt_rect):
-				target.take_hit(int(hitbox["damage"]), str(hitbox["hitbox_id"]), attacker.instance_id)
+				target.take_hit(int(hitbox["damage"]), str(hitbox["hitbox_id"]), attacker.instance_id, str(hurtbox["hurtbox_id"]))
 				attacker.move_executor.mark_target_hit(target.instance_id, window_index)
 				break
 

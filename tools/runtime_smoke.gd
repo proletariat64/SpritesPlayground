@@ -35,15 +35,18 @@ func _run_move_hit_smoke(playground: Node, move_id: String, expected_damage: int
 
 	var saw_attack := false
 	var saw_hurt := false
+	var resolved_hurtbox := ""
 	for i in 45:
 		await physics_frame
 		if playground.player.state_machine.current_state == "attack":
 			saw_attack = true
 		if playground.dummy.state_machine.current_state == "hurt":
 			saw_hurt = true
+		if resolved_hurtbox.is_empty():
+			resolved_hurtbox = str(playground.dummy.debug_summary()["last_hit_hurtbox"])
 
 	var expected_hp: int = playground.dummy.max_hp - expected_damage
-	return saw_attack and saw_hurt and playground.dummy.current_hp == expected_hp
+	return saw_attack and saw_hurt and playground.dummy.current_hp == expected_hp and resolved_hurtbox.begins_with("hurt_")
 
 
 func _run_lethal_smoke(playground: Node) -> bool:
