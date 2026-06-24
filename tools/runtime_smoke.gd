@@ -20,7 +20,7 @@ func _run() -> void:
 	var non_goal_ok: bool = await _run_non_goal_attack_lockout_smoke(playground)
 	var ai_ok: bool = await _run_ai_stress_smoke(playground)
 	var creator_ok: bool = await _run_creator_lab_smoke(playground)
-	var focus_ok: bool = _run_input_focus_smoke(playground)
+	var focus_ok: bool = await _run_input_focus_smoke(playground)
 	if punch_ok and kick_ok and lethal_ok and non_goal_ok and ai_ok and creator_ok and focus_ok:
 		print("runtime_smoke=PASS")
 		quit(0)
@@ -178,8 +178,26 @@ func _run_creator_toggle_smoke(playground: Node) -> bool:
 
 
 func _run_input_focus_smoke(playground: Node) -> bool:
-	playground._focus_gameplay_input()
-	return playground.get_viewport().gui_get_focus_owner() == null
+	playground.creator_lab.visible = true
+	playground.creator_lab.current_nav = "character_template"
+	playground.creator_lab._refresh_fields()
+	await process_frame
+	var focus_target: Control = playground.creator_lab.sprite_ref_input
+	if focus_target == null:
+		print("input_focus_smoke missing sprite_ref_input")
+		return false
+	focus_target.grab_focus()
+	await process_frame
+	var focused_before: bool = playground.get_viewport().gui_get_focus_owner() == focus_target
+	playground.toggle_creator_lab()
+	await process_frame
+	var closed_focus_released: bool = not playground.creator_lab.visible and playground.get_viewport().gui_get_focus_owner() == null
+	if not (focused_before and closed_focus_released):
+		print("input_focus_smoke focused_before=%s closed_focus_released=%s" % [
+			focused_before,
+			closed_focus_released,
+		])
+	return focused_before and closed_focus_released
 
 
 func _restore_creator_smoke(original_punch: Dictionary, copy_path: String) -> void:
