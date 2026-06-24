@@ -3,6 +3,16 @@ class_name CreatorLabV03Panel
 
 const DataStore := preload("res://godot/scripts/prd_v0_3_data_store.gd")
 const Runtime := preload("res://godot/scripts/prd_v0_3_runtime.gd")
+const COLOR_TITLE := Color(0.72, 0.86, 1.0)
+const COLOR_LABEL := Color(0.82, 0.88, 0.95)
+const COLOR_HINT := Color(0.56, 0.64, 0.72)
+const COLOR_CHARACTER := Color(0.56, 0.82, 1.0)
+const COLOR_MOVE := Color(1.0, 0.78, 0.42)
+const COLOR_WARDROBE := Color(0.62, 0.88, 0.58)
+const COLOR_RUNTIME := Color(0.84, 0.72, 1.0)
+const COLOR_PASS := Color(0.42, 0.88, 0.56)
+const COLOR_FAIL := Color(1.0, 0.42, 0.36)
+const COLOR_STATUS := Color(0.72, 0.78, 0.84)
 
 var template_json: Dictionary = {}
 var sprite_set_json: Dictionary = {}
@@ -272,7 +282,7 @@ func _build_ui() -> void:
 	var title := Label.new()
 	title.text = "Creator Lab v0.3"
 	title.add_theme_font_size_override("font_size", 10)
-	title.add_theme_color_override("font_color", Color(0.72, 0.86, 1.0))
+	title.add_theme_color_override("font_color", COLOR_TITLE)
 	root.add_child(title)
 
 	var top := HBoxContainer.new()
@@ -301,7 +311,7 @@ func _build_ui() -> void:
 	nav_box.custom_minimum_size = Vector2(126, 238)
 	nav_box.add_theme_constant_override("separation", 2)
 	main.add_child(nav_box)
-	nav_box.add_child(_label("1 Navigation"))
+	nav_box.add_child(_label("1 Choose", COLOR_CHARACTER))
 	navigation_list = ItemList.new()
 	navigation_list.custom_minimum_size = Vector2(126, 216)
 	navigation_list.add_theme_font_size_override("font_size", 8)
@@ -313,6 +323,8 @@ func _build_ui() -> void:
 	values_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	main.add_child(values_scroll)
 	values_panel = VBoxContainer.new()
+	values_panel.custom_minimum_size = Vector2(178, 0)
+	values_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	values_panel.add_theme_constant_override("separation", 2)
 	values_scroll.add_child(values_panel)
 
@@ -321,6 +333,8 @@ func _build_ui() -> void:
 	detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	main.add_child(detail_scroll)
 	detail_panel = VBoxContainer.new()
+	detail_panel.custom_minimum_size = Vector2(250, 0)
+	detail_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	detail_panel.add_theme_constant_override("separation", 2)
 	detail_scroll.add_child(detail_panel)
 
@@ -355,6 +369,7 @@ func _refresh_navigation() -> void:
 
 func _add_nav_item(text: String, key: String) -> void:
 	navigation_list.add_item(text)
+	navigation_list.set_item_custom_fg_color(navigation_list.item_count - 1, _nav_color(key))
 	nav_keys.append(key)
 
 
@@ -398,7 +413,7 @@ func _reset_editor_refs() -> void:
 
 
 func _build_values_panel() -> void:
-	values_panel.add_child(_label("2 Values / list"))
+	values_panel.add_child(_label("2 Overview", _current_nav_color()))
 	match current_nav:
 		"character_template":
 			_add_value("template_id", str(template_json.get("template_id", "")))
@@ -444,7 +459,7 @@ func _build_values_panel() -> void:
 
 
 func _build_detail_panel() -> void:
-	detail_panel.add_child(_label("3 Detail / preview"))
+	detail_panel.add_child(_label("3 Edit + Preview", _current_nav_color()))
 	match current_nav:
 		"character_template":
 			_build_template_detail(detail_panel)
@@ -464,8 +479,8 @@ func _build_detail_panel() -> void:
 
 
 func _build_template_detail(parent: VBoxContainer) -> void:
-	parent.add_child(_label("Character-owned configuration"))
-	parent.add_child(_label("sprite_set_ref"))
+	parent.add_child(_label("Character data", COLOR_CHARACTER))
+	parent.add_child(_label("sprite set"))
 	sprite_ref_input = _line_edit(_on_sprite_ref_submitted)
 	sprite_ref_input.text = str(template_json.get("sprite_set_ref", ""))
 	parent.add_child(sprite_ref_input)
@@ -473,7 +488,7 @@ func _build_template_detail(parent: VBoxContainer) -> void:
 	hp_input = _line_edit(_on_hp_submitted)
 	hp_input.text = str(int(template_json.get("hp", 0)))
 	parent.add_child(hp_input)
-	parent.add_child(_label("selected move"))
+	parent.add_child(_label("current move"))
 	move_select = OptionButton.new()
 	_style_control(move_select, 154, 18)
 	for move_id in template_json.get("equipped_moves", []):
@@ -485,7 +500,7 @@ func _build_template_detail(parent: VBoxContainer) -> void:
 
 
 func _build_hurtbox_detail(parent: VBoxContainer) -> void:
-	parent.add_child(_label("Hurtbox = character receives hit"))
+	parent.add_child(_label("Hurtbox - where this character can be hit", COLOR_CHARACTER))
 	hurtbox_select = OptionButton.new()
 	for id in template_json.get("hurtboxes", {}).keys():
 		hurtbox_select.add_item(str(id))
@@ -494,17 +509,17 @@ func _build_hurtbox_detail(parent: VBoxContainer) -> void:
 	hurtbox_select.item_selected.connect(_on_hurtbox_selected)
 	_style_control(hurtbox_select, 154, 18)
 	parent.add_child(hurtbox_select)
-	parent.add_child(_label("selected hurtbox rect"))
+	parent.add_child(_label("selected hurtbox rectangle"))
 	hurt_inputs = _add_input_grid(parent, ["x", "y", "w", "h"], _on_box_fields_submitted)
 	if hurtbox_select.item_count > 0:
 		var hurtbox_id := hurtbox_select.get_item_text(hurtbox_select.selected)
 		_set_inputs(hurt_inputs, template_json.get("hurtboxes", {}).get(hurtbox_id, {}))
-	parent.add_child(_label("preview: defensive geometry"))
+	parent.add_child(_hint_label("Save/Reload refreshes runtime preview."))
 
 
 func _build_foot_detail(parent: VBoxContainer) -> void:
-	parent.add_child(_label("Foot collision = movement / ground anchor"))
-	parent.add_child(_label("movement ellipse center/radius"))
+	parent.add_child(_label("Foot collision - movement ground ellipse", COLOR_CHARACTER))
+	parent.add_child(_label("ellipse center and radius"))
 	foot_inputs = _add_input_grid(parent, ["center_x", "center_y", "radius_x", "radius_y"], _on_box_fields_submitted)
 	var foot: Dictionary = template_json.get("foot_collision", {})
 	if not foot.is_empty():
@@ -514,11 +529,11 @@ func _build_foot_detail(parent: VBoxContainer) -> void:
 			"radius_x": foot["radius"]["x"],
 			"radius_y": foot["radius"]["y"],
 		})
-	parent.add_child(_label("preview: ground collision ellipse"))
+	parent.add_child(_hint_label("Movement contact shape, not damage."))
 
 
 func _build_equipped_moves_detail(parent: VBoxContainer) -> void:
-	parent.add_child(_label("Equipped MoveTemplate references"))
+	parent.add_child(_label("Equipped moves", COLOR_CHARACTER))
 	move_select = OptionButton.new()
 	_style_control(move_select, 154, 18)
 	for move_id in template_json.get("equipped_moves", []):
@@ -527,12 +542,12 @@ func _build_equipped_moves_detail(parent: VBoxContainer) -> void:
 			move_select.select(move_select.item_count - 1)
 	move_select.item_selected.connect(_on_move_selected)
 	parent.add_child(move_select)
-	parent.add_child(_label("selecting a move opens Move detail"))
+	parent.add_child(_hint_label("Choose a move to edit gameplay data."))
 
 
 func _build_move_detail(parent: VBoxContainer) -> void:
 	var move := selected_move_json()
-	parent.add_child(_label("Move-owned gameplay data"))
+	parent.add_child(_label("Move data - timing, damage, hitbox, events", COLOR_MOVE))
 	move_type_input = OptionButton.new()
 	for id in ["utility", "locomotion", "combat", "reaction"]:
 		move_type_input.add_item(id)
@@ -562,13 +577,13 @@ func _build_move_detail(parent: VBoxContainer) -> void:
 		set(str(row[1]), input)
 		parent.add_child(input)
 	multi_hit_input = CheckBox.new()
-	multi_hit_input.text = "multi_hit"
+	multi_hit_input.text = "multi_hit - allow multiple hits"
 	multi_hit_input.button_pressed = bool(move.get("multi_hit", false))
 	multi_hit_input.toggled.connect(_on_multi_hit_toggled)
 	multi_hit_input.add_theme_font_size_override("font_size", 8)
 	parent.add_child(multi_hit_input)
 
-	parent.add_child(_label("hitbox = move attacks"))
+	parent.add_child(_label("Hitbox - where this move can hit", COLOR_MOVE))
 	hitbox_id_input = _line_edit(_on_box_fields_submitted)
 	parent.add_child(hitbox_id_input)
 	hitbox_inputs = _add_input_grid(parent, ["start_frame", "end_frame", "x", "y", "w", "h"], _on_box_fields_submitted)
@@ -589,7 +604,7 @@ func _build_move_detail(parent: VBoxContainer) -> void:
 		hitbox_id_input.text = "hit_fist_1"
 		_set_inputs(hitbox_inputs, {"start_frame": 0, "end_frame": 0, "x": 0, "y": 0, "w": 1, "h": 1})
 
-	parent.add_child(_label("events JSON"))
+	parent.add_child(_label("Frame events JSON", COLOR_MOVE))
 	events_text = TextEdit.new()
 	events_text.custom_minimum_size = Vector2(240, 54)
 	events_text.add_theme_font_size_override("font_size", 8)
@@ -599,7 +614,7 @@ func _build_move_detail(parent: VBoxContainer) -> void:
 
 
 func _build_wardrobe_detail(parent: VBoxContainer) -> void:
-	parent.add_child(_label("SpriteSet-owned animation coverage"))
+	parent.add_child(_label("Wardrobe coverage - sprite mapping", COLOR_WARDROBE))
 	sprite_set_select = OptionButton.new()
 	_style_control(sprite_set_select, 154, 18)
 	for id in DataStore.list_sprite_set_ids():
@@ -609,14 +624,14 @@ func _build_wardrobe_detail(parent: VBoxContainer) -> void:
 	sprite_set_select.item_selected.connect(_on_sprite_set_selected)
 	parent.add_child(sprite_set_select)
 	var coverage := wardrobe_coverage()
-	parent.add_child(_label("missing mapping: %s" % str(coverage["missing_mapping"].size())))
-	parent.add_child(_label("missing clips: %s" % str(coverage["missing_clips"].size())))
-	parent.add_child(_label("missing sequences: %s" % str(coverage["missing_sequences"].size())))
+	parent.add_child(_label("missing move mapping: %s" % str(coverage["missing_mapping"].size())))
+	parent.add_child(_label("missing animation clips: %s" % str(coverage["missing_clips"].size())))
+	parent.add_child(_label("missing frame sequences: %s" % str(coverage["missing_sequences"].size())))
 	parent.add_child(_button("Validate", _on_check_pressed))
 
 
 func _build_runtime_detail(parent: VBoxContainer) -> void:
-	parent.add_child(_label("Runtime preview"))
+	parent.add_child(_label("Runtime preview - frame stepper", COLOR_RUNTIME))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 3)
 	parent.add_child(row)
@@ -631,7 +646,7 @@ func _build_runtime_detail(parent: VBoxContainer) -> void:
 
 
 func _add_value(label_text: String, value_text: String) -> void:
-	values_panel.add_child(_label("%s: %s" % [label_text, value_text]))
+	values_panel.add_child(_label("%s: %s" % [label_text, value_text], COLOR_HINT))
 
 
 func _rect_summary(rect: Dictionary) -> String:
@@ -885,11 +900,40 @@ func _add_input_grid(parent: VBoxContainer, fields: Array, callback: Callable) -
 	return inputs
 
 
-func _label(text: String) -> Label:
+func _label(text: String, color: Color = COLOR_LABEL) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_font_size_override("font_size", 8)
+	label.add_theme_color_override("font_color", color)
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	return label
+
+
+func _hint_label(text: String) -> Label:
+	return _label(text, COLOR_HINT)
+
+
+func _nav_color(key: String) -> Color:
+	if key.begins_with("move:"):
+		return COLOR_MOVE
+	if key.begins_with("wardrobe"):
+		return COLOR_WARDROBE
+	if key.begins_with("runtime"):
+		return COLOR_RUNTIME
+	return COLOR_CHARACTER
+
+
+func _current_nav_color() -> Color:
+	return _nav_color(current_nav)
+
+
+func _status_color(text: String) -> Color:
+	var lower := text.to_lower()
+	if lower.contains("fail") or lower.contains("invalid") or lower.contains("missing"):
+		return COLOR_FAIL
+	if lower.contains("pass") or lower.contains("saved") or lower.contains("copied"):
+		return COLOR_PASS
+	return COLOR_STATUS
 
 
 func _style_control(control: Control, width: int, height: int) -> void:
@@ -923,6 +967,7 @@ func _number_from(inputs: Dictionary, key: String) -> float:
 func _set_status(text: String) -> void:
 	if status_label != null:
 		status_label.text = text
+		status_label.add_theme_color_override("font_color", _status_color(text))
 
 
 func _set_errors(errors: Array) -> Array:
