@@ -75,6 +75,7 @@ func _tick_combat(delta: float) -> void:
 	player.tick_character(delta, arena_center, arena_radius)
 	dummy.tick_character(delta, arena_center, arena_radius)
 	_resolve_foot_spacing()
+	_clamp_characters_to_arena()
 	_process_hits(player, dummy)
 	_process_hits(dummy, player)
 
@@ -150,6 +151,13 @@ func _resolve_foot_spacing() -> void:
 		return
 	player.position -= separation_delta * 0.5
 	dummy.position += separation_delta * 0.5
+
+
+func _clamp_characters_to_arena() -> void:
+	if player != null and player.has_method("clamp_to_arena"):
+		player.clamp_to_arena(arena_center, arena_radius)
+	if dummy != null and dummy.has_method("clamp_to_arena"):
+		dummy.clamp_to_arena(arena_center, arena_radius)
 
 
 func _build_debug_gui() -> void:

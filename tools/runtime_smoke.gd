@@ -23,7 +23,8 @@ func _run() -> void:
 	var focus_ok: bool = await _run_input_focus_smoke(playground)
 	var foot_ok: bool = await _run_foot_clamp_smoke(playground)
 	var foot_spacing_ok: bool = _run_foot_spacing_smoke(playground)
-	if punch_ok and kick_ok and lethal_ok and non_goal_ok and ai_ok and creator_ok and focus_ok and foot_ok and foot_spacing_ok:
+	var foot_spacing_wall_ok: bool = _run_foot_spacing_wall_clamp_smoke(playground)
+	if punch_ok and kick_ok and lethal_ok and non_goal_ok and ai_ok and creator_ok and focus_ok and foot_ok and foot_spacing_ok and foot_spacing_wall_ok:
 		print("runtime_smoke=PASS")
 		quit(0)
 	else:
@@ -283,6 +284,53 @@ func _run_foot_spacing_smoke(playground: Node) -> bool:
 	if not ok:
 		print("foot_spacing_smoke small=%s large=%s offset=%s" % [small_spacing, large_spacing, offset_spacing])
 	return ok
+
+
+func _run_foot_spacing_wall_clamp_smoke(playground: Node) -> bool:
+	var player: Node2D = playground.player
+	var dummy: Node2D = playground.dummy
+	var original_player_profile: Dictionary = player.foot_collision_profile.duplicate(true)
+	var original_dummy_profile: Dictionary = dummy.foot_collision_profile.duplicate(true)
+	var original_player_position: Vector2 = player.position
+	var original_dummy_position: Vector2 = dummy.position
+
+	player.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2(40, 6)}
+	dummy.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2(40, 6)}
+	var edge_x: float = playground.arena_center.x + playground.arena_radius.x - 40.0
+	player.reset_runtime(Vector2(edge_x - 2.0, playground.arena_center.y))
+	dummy.reset_runtime(Vector2(edge_x + 2.0, playground.arena_center.y))
+	playground._tick_combat(1.0 / 60.0)
+
+	var player_inside := _foot_inside_arena(playground, player)
+	var dummy_inside := _foot_inside_arena(playground, dummy)
+	var checked_player_position: Vector2 = player.position
+	var checked_dummy_position: Vector2 = dummy.position
+	player.foot_collision_profile = original_player_profile
+	dummy.foot_collision_profile = original_dummy_profile
+	player.reset_runtime(original_player_position)
+	dummy.reset_runtime(original_dummy_position)
+
+	var ok: bool = player_inside and dummy_inside
+	if not ok:
+		print("foot_spacing_wall_clamp_smoke player_inside=%s dummy_inside=%s player=%s dummy=%s" % [
+			player_inside,
+			dummy_inside,
+			checked_player_position,
+			checked_dummy_position,
+		])
+	return ok
+
+
+func _foot_inside_arena(playground: Node, character: Node2D) -> bool:
+	var foot: Vector2 = character.foot_center_world()
+	var rel: Vector2 = foot - playground.arena_center
+	var foot_radius: Vector2 = character.foot_collision_profile.get("radius", Vector2.ZERO)
+	var effective_radius := Vector2(
+		maxf(1.0, playground.arena_radius.x - foot_radius.x),
+		maxf(1.0, playground.arena_radius.y - foot_radius.y)
+	)
+	var normalized := Vector2(rel.x / effective_radius.x, rel.y / effective_radius.y)
+	return normalized.length() <= 1.001
 
 
 func _run_creator_toggle_smoke(playground: Node) -> bool:

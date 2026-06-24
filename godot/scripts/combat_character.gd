@@ -132,8 +132,12 @@ func tick_character(delta: float, arena_center: Vector2, arena_radius: Vector2) 
 
 	state_machine.tick(delta, input_vector)
 	position += state_machine.velocity * delta
-	_clamp_foot_to_arena(arena_center, arena_radius)
+	clamp_to_arena(arena_center, arena_radius)
 	queue_redraw()
+
+
+func clamp_to_arena(arena_center: Vector2, arena_radius: Vector2) -> void:
+	_clamp_foot_to_arena(arena_center, arena_radius)
 
 
 func take_hit(damage: int, _hitbox_id: String, _source_instance_id: String, resolved_hurtbox_id: String = "", contact_hurtbox_ids: Array = []) -> void:
@@ -318,6 +322,8 @@ func _v0_3_foot_to_runtime(foot: Dictionary) -> Dictionary:
 
 
 func _v0_3_move_to_runtime(move: Dictionary) -> Dictionary:
+	# ponytail: live MoveExecutor currently consumes frame count, hitbox windows, rects, and damage only.
+	# v0.3 hitstop_frames, multi_hit, events, and sprite-set frame data stay authoring-preview only until live combat consumes them.
 	var windows: Array = []
 	for hitbox in move.get("hitboxes", []):
 		var window: Dictionary = hitbox.get("active_window", {})

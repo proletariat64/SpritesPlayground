@@ -131,7 +131,8 @@ Current spec caveat: v0.4 Creator Lab edits `data/v0_3/**`, while live combat st
 v0.4.1 requirement:
 
 - Selected live player/dummy instances must be able to run edited action data from the v0.3 authoring path.
-- Editing move timing, damage, hitbox rect, hitbox active window, or sprite mapping must affect either the selected live instance immediately after apply or after a documented reload/rebind path.
+- Editing move timing, damage, hitbox rect, or hitbox active window must affect the selected live instance immediately after apply or after a documented reload/rebind path.
+- Sprite mapping, hitstop, multi-hit, and frame events remain authoring/preview data until the live combat runtime consumes them.
 - The implementation must not claim "edited data runs in Playground" if only the Creator Lab internal preview/runtime can see it.
 
 ## 4. Product Rules

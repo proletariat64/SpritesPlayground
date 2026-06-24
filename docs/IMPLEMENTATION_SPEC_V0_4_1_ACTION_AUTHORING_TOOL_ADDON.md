@@ -280,7 +280,7 @@ Preferred implementation:
 func apply_v0_3_runtime_bundle(template: Dictionary, sprite_set: Dictionary, moves: Dictionary) -> void
 ```
 
-2. Adapter maps:
+2. Adapter maps the live-runtime fields that `CombatCharacter` / `MoveExecutor` consume today:
 
 ```text
 template_id
@@ -291,11 +291,12 @@ foot_collision
 move frame_count
 move active_window
 damage
-hitstop_frames
-multi_hit
 hitboxes
-events
 ```
+
+The adapter must explicitly document that `hitstop_frames`, `multi_hit`, v0.3 frame
+`events`, and sprite-set frame data stay authoring/preview-only until the live combat
+runtime consumes those fields.
 
 3. `CreatorLabV03Panel.apply_to_bound_instance()` calls the adapter when the instance supports it.
 
@@ -308,9 +309,9 @@ Smoke requirements:
 - Apply to bound player.
 - Trigger that move in live Playground.
 - Assert active live hitbox uses the edited rect.
-- Edit damage or hitstop.
+- Edit damage.
 - Trigger hit against dummy.
-- Assert live damage or hitstop reflects edited v0.3 data.
+- Assert live damage reflects edited v0.3 data.
 
 Manual UAT:
 
@@ -344,8 +345,9 @@ preview_visible_while_editing_hurtbox
 preview_visible_while_editing_hitbox
 foot_spacing_changes_with_radius
 foot_spacing_changes_with_center_offset
+foot_spacing_wall_reclamp
 live_playground_uses_edited_v0_3_hitbox
-live_playground_uses_edited_v0_3_damage_or_hitstop
+live_playground_uses_edited_v0_3_damage
 ```
 
 GitNexus gates before code changes:
