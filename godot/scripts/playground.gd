@@ -148,8 +148,8 @@ func _build_creator_lab() -> void:
 
 	creator_lab = CreatorLabV03PanelScript.new()
 	creator_lab.name = "creator_lab_v0_3"
-	creator_lab.position = Vector2(16, 12)
-	creator_lab.size = Vector2(544, 336)
+	creator_lab.position = Vector2(116, 12)
+	creator_lab.size = Vector2(508, 336)
 	creator_lab.visible = false
 	layer.add_child(creator_lab)
 	creator_lab.setup()

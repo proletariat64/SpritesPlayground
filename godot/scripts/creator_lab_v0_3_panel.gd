@@ -267,7 +267,7 @@ func runtime_summary() -> Dictionary:
 
 
 func _build_ui() -> void:
-	custom_minimum_size = Vector2(544, 336)
+	custom_minimum_size = Vector2(508, 336)
 	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.055, 0.065, 0.075, 0.96)
 	panel_style.border_color = Color(0.26, 0.34, 0.42, 1.0)
@@ -303,7 +303,7 @@ func _build_ui() -> void:
 	tools.add_child(_button("Roundtrip", _on_exact_pressed))
 
 	var main := HBoxContainer.new()
-	main.custom_minimum_size = Vector2(530, 242)
+	main.custom_minimum_size = Vector2(494, 242)
 	main.add_theme_constant_override("separation", 4)
 	root.add_child(main)
 
@@ -329,11 +329,11 @@ func _build_ui() -> void:
 	values_scroll.add_child(values_panel)
 
 	var detail_scroll := ScrollContainer.new()
-	detail_scroll.custom_minimum_size = Vector2(244, 238)
+	detail_scroll.custom_minimum_size = Vector2(208, 238)
 	detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	main.add_child(detail_scroll)
 	detail_panel = VBoxContainer.new()
-	detail_panel.custom_minimum_size = Vector2(224, 0)
+	detail_panel.custom_minimum_size = Vector2(196, 0)
 	detail_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	detail_panel.add_theme_constant_override("separation", 2)
 	detail_scroll.add_child(detail_panel)
@@ -606,7 +606,7 @@ func _build_move_detail(parent: VBoxContainer) -> void:
 
 	parent.add_child(_label("Frame events JSON", COLOR_MOVE))
 	events_text = TextEdit.new()
-	events_text.custom_minimum_size = Vector2(220, 54)
+	events_text.custom_minimum_size = Vector2(188, 54)
 	events_text.add_theme_font_size_override("font_size", 8)
 	events_text.text = JSON.stringify(move.get("events", []), "\t", true)
 	parent.add_child(events_text)
@@ -939,6 +939,10 @@ func _status_color(text: String) -> Color:
 func _style_control(control: Control, width: int, height: int) -> void:
 	control.custom_minimum_size = Vector2(width, height)
 	control.add_theme_font_size_override("font_size", 8)
+	if control is OptionButton:
+		control.add_theme_font_size_override("font_size", 8)
+		control.add_theme_font_size_override("popup_font_size", 8)
+		control.add_theme_constant_override("h_separation", 4)
 	if not (control is LineEdit):
 		control.focus_mode = Control.FOCUS_NONE
 
