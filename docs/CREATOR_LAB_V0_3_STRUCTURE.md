@@ -39,6 +39,40 @@ Creator Lab
 └── Playground Runtime
 ```
 
+Creator Lab v0.3 must be presented through a fixed three-panel editor model:
+
+```text
++----------------+----------------------+----------------------------+
+| 1st layer      | 2nd layer            | 3rd layer                  |
+| Navigation     | Values / list        | Detail editor / preview    |
++----------------+----------------------+----------------------------+
+```
+
+Panel responsibilities:
+
+- 1st layer chooses a domain and object.
+- 2nd layer shows direct values or a component list for the selected object.
+- 3rd layer edits one selected component and shows local validation or preview.
+
+Allowed first-layer domains:
+
+```text
+Character
+Moves
+Wardrobe
+Runtime
+```
+
+The UI depth is frozen at three panels:
+
+- No fourth panel.
+- No recursive detail editor.
+- No nested editor that opens another full editor inside the 3rd layer.
+- No implicit drilldown beyond the selected component.
+- If a schema object needs deeper structure, expose it as a selectable component list in the 2nd layer, then edit one component in the 3rd layer.
+
+This rule exists to prevent infinite subdivision while still matching the tree/composition shape of the JSON schemas.
+
 ## Template Lab
 
 Purpose:
@@ -93,6 +127,39 @@ Rules:
 - Hitboxes remain move-owned.
 - Foot collision is not an attack or hurt shape.
 - Hitbox active windows are frame ranges only.
+- Foot collision means the character movement / ground-contact collision ellipse, not a sprite-size control.
+- Editing a hurtbox changes collision/debug geometry, not the visible sprite body size.
+- Editing a hitbox changes the selected Move's attack geometry, not character body geometry.
+
+Three-panel mapping:
+
+```text
+1st layer:
+Character
+  Hurtboxes
+  Foot Collision
+Moves
+  <move_id>
+    Hitboxes
+
+2nd layer:
+Hurtboxes list or values
+Foot collision center/radius values
+Move hitboxes list
+
+3rd layer:
+Selected hurtbox rect editor
+Selected foot collision ellipse editor
+Selected hitbox rect + active-frame editor
+```
+
+Visual feedback rule:
+
+- The selected component should have visible preview feedback.
+- Hurtbox preview uses defensive geometry color.
+- Foot collision preview uses ground/collision ellipse color.
+- Hitbox preview uses attack geometry color.
+- A value edit must visibly affect the selected preview before the user has to infer it from JSON.
 
 ## Move Lab
 
