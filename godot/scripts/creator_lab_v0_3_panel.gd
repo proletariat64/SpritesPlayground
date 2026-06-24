@@ -3,28 +3,62 @@ class_name CreatorLabV03Panel
 
 const DataStore := preload("res://godot/scripts/prd_v0_3_data_store.gd")
 const Runtime := preload("res://godot/scripts/prd_v0_3_runtime.gd")
+const Catalog := preload("res://godot/scripts/creator_lab_action_catalog.gd")
+const Coverage := preload("res://godot/scripts/creator_lab_action_coverage.gd")
+const ActionPreview := preload("res://godot/scripts/creator_lab_action_preview.gd")
 const COLOR_TITLE := Color(0.72, 0.86, 1.0)
 const COLOR_LABEL := Color(0.82, 0.88, 0.95)
 const COLOR_HINT := Color(0.56, 0.64, 0.72)
+const COLOR_INSTANCE := Color(0.46, 0.74, 1.0)
+const COLOR_ACTION := Color(0.98, 0.82, 0.36)
 const COLOR_CHARACTER := Color(0.56, 0.82, 1.0)
 const COLOR_MOVE := Color(1.0, 0.78, 0.42)
 const COLOR_WARDROBE := Color(0.62, 0.88, 0.58)
 const COLOR_RUNTIME := Color(0.84, 0.72, 1.0)
 const COLOR_PASS := Color(0.42, 0.88, 0.56)
+const COLOR_WARN := Color(1.0, 0.78, 0.28)
 const COLOR_FAIL := Color(1.0, 0.42, 0.36)
 const COLOR_STATUS := Color(0.72, 0.78, 0.84)
+const PREVIEW_FRAME_SECONDS := 1.0 / 12.0
+
+signal bind_player_requested
+signal bind_dummy_requested
 
 var template_json: Dictionary = {}
 var sprite_set_json: Dictionary = {}
 var moves_json: Dictionary = {}
 var selected_move: String = "idle"
 var runtime: RefCounted = Runtime.new()
+var bound_instance_ref = null
+var bound_instance_id: String = ""
+var bound_template_id: String = ""
+var bound_sprite_set_id: String = ""
+var bound_state: String = ""
+var bound_move: String = ""
+var bound_frame: int = 0
+var bound_hp: String = ""
+var bound_control_mode: String = ""
+var coverage: Dictionary = {}
+var current_action_id: String = "idle"
+var preview_playing: bool = false
+var preview_speed: float = 1.0
+var preview_frame: int = 0
+var preview_show_hurtboxes: bool = true
+var preview_show_hitboxes: bool = true
+var preview_show_foot: bool = true
+var _preview_elapsed: float = 0.0
 
 var template_select: OptionButton
 var move_select: OptionButton
 var sprite_set_select: OptionButton
+var coverage_list: ItemList
 var status_label: Label
 var runtime_label: Label
+var preview_frame_label: Label
+var action_preview_control: Control
+var floating_preview_window: PanelContainer
+var floating_preview_control: Control
+var floating_preview_frame_label: Label
 var navigation_list: ItemList
 var values_panel: VBoxContainer
 var detail_panel: VBoxContainer
@@ -52,8 +86,26 @@ var move_section_list: ItemList
 
 
 func setup() -> void:
+	set_process(true)
 	_build_ui()
+	_ensure_floating_preview_window()
 	load_template_id("combat_gray_s64")
+
+
+func _process(delta: float) -> void:
+	if not preview_playing:
+		return
+	_preview_elapsed += delta * preview_speed
+	if _preview_elapsed < PREVIEW_FRAME_SECONDS:
+		return
+	_preview_elapsed = 0.0
+	var last_frame: int = maxi(0, _preview_frame_count() - 1)
+	if preview_frame >= last_frame:
+		preview_playing = false
+		_refresh_action_preview()
+		return
+	preview_frame = mini(preview_frame + 1, last_frame)
+	_refresh_action_preview()
 
 
 func load_template_id(template_id: String) -> Array:
@@ -64,10 +116,113 @@ func load_template_id(template_id: String) -> Array:
 	moves_json.clear()
 	for move_id in template_json["equipped_moves"]:
 		moves_json[str(move_id)] = DataStore.load_move(str(move_id))
-	selected_move = str(template_json["equipped_moves"][0])
+	if not template_json["equipped_moves"].is_empty():
+		selected_move = str(template_json["equipped_moves"][0])
 	_refresh_options()
 	_refresh_fields()
 	return validate_current()
+
+
+func bind_instance(instance: Node) -> void:
+	if instance == null:
+		_set_status("bind failed: missing instance")
+		return
+	bound_instance_ref = weakref(instance)
+	update_bound_instance_summary(instance)
+	if bound_template_id.is_empty():
+		_set_status("bound %s without template id" % bound_instance_id)
+		_refresh_fields()
+		return
+	if not DataStore.list_template_ids().has(bound_template_id):
+		_set_status("bound %s; missing v0.3 template %s" % [bound_instance_id, bound_template_id])
+		_refresh_fields()
+		return
+	load_template_id(bound_template_id)
+	_set_status("bound %s" % bound_instance_id)
+
+
+func update_bound_instance_summary(instance: Node) -> void:
+	if instance == null:
+		return
+	var summary: Dictionary = {}
+	if instance.has_method("debug_summary"):
+		summary = instance.debug_summary()
+	bound_instance_id = str(summary.get("instance_id", _node_property(instance, "instance_id")))
+	bound_template_id = str(summary.get("template_id", _node_property(instance, "template_id")))
+	bound_sprite_set_id = str(summary.get("sprite_set_id", _node_property(instance, "sprite_set_id")))
+	bound_state = str(summary.get("state", ""))
+	bound_move = str(summary.get("move", ""))
+	bound_frame = int(summary.get("frame", 0))
+	bound_hp = str(summary.get("hp", ""))
+	bound_control_mode = str(summary.get("mode", summary.get("control_mode", "")))
+	if current_nav == "instance_binding":
+		_refresh_three_panel()
+
+
+func refresh_action_coverage() -> Dictionary:
+	coverage = Coverage.analyze(template_json, sprite_set_json, moves_json)
+	return coverage
+
+
+func select_action(action_id: String) -> void:
+	if Catalog.action_for(action_id).is_empty():
+		return
+	current_action_id = action_id
+	var row := _coverage_row_for(action_id)
+	var move_id := str(row.get("backing_move_id", ""))
+	if moves_json.has(move_id):
+		selected_move = move_id
+	preview_frame = clampi(preview_frame, 0, maxi(0, _preview_frame_count() - 1))
+	_refresh_fields()
+
+
+func preview_play() -> void:
+	if preview_frame >= maxi(0, _preview_frame_count() - 1):
+		preview_frame = 0
+	_preview_elapsed = 0.0
+	preview_playing = true
+	_refresh_action_preview()
+
+
+func preview_pause() -> void:
+	preview_playing = false
+	_refresh_action_preview()
+
+
+func preview_step_forward() -> void:
+	preview_playing = false
+	preview_frame = mini(preview_frame + 1, maxi(0, _preview_frame_count() - 1))
+	_refresh_action_preview()
+
+
+func preview_reset() -> void:
+	preview_playing = false
+	preview_frame = 0
+	_refresh_action_preview()
+
+
+func set_preview_speed(value: float) -> void:
+	preview_speed = 0.5 if value < 0.75 else 1.0
+	_refresh_action_preview()
+
+
+func toggle_preview_window() -> void:
+	set_preview_window_visible(not is_preview_window_visible())
+
+
+func set_preview_window_visible(next_visible: bool) -> void:
+	_ensure_floating_preview_window()
+	if floating_preview_window == null:
+		return
+	floating_preview_window.visible = next_visible
+	if next_visible:
+		floating_preview_window.move_to_front()
+		_refresh_action_preview()
+	_set_status("preview window %s" % ("on" if next_visible else "off"))
+
+
+func is_preview_window_visible() -> bool:
+	return floating_preview_window != null and floating_preview_window.visible
 
 
 func copy_template(copy_id: String = "") -> String:
@@ -89,6 +244,32 @@ func save_all() -> void:
 		DataStore.save_move(moves_json[move_id])
 	DataStore.save_sprite_set(sprite_set_json)
 	_set_status("saved %s" % str(template_json["template_id"]))
+
+
+func apply_to_bound_instance() -> bool:
+	var errors := validate_current()
+	if not errors.is_empty():
+		return false
+	var instance := _bound_instance()
+	if instance == null:
+		_set_status("apply failed: no bound instance")
+		return false
+
+	if instance.has_method("apply_v0_3_runtime_bundle"):
+		instance.apply_v0_3_runtime_bundle(template_json, sprite_set_json, moves_json)
+	else:
+		var max_hp := maxi(1, int(template_json.get("hp", 1)))
+		instance.set("template_id", str(template_json.get("template_id", "")))
+		instance.set("sprite_set_id", str(template_json.get("sprite_set_ref", "")))
+		instance.set("max_hp", max_hp)
+		instance.set("current_hp", mini(int(_node_property(instance, "current_hp")), max_hp))
+		instance.set("hurtbox_profile", _runtime_hurtbox_profile())
+		instance.set("foot_collision_profile", _runtime_foot_collision_profile())
+		if instance.has_method("queue_redraw"):
+			instance.queue_redraw()
+	update_bound_instance_summary(instance)
+	_set_status("applied v0.3 bundle to %s" % bound_instance_id)
+	return true
 
 
 func reload_current() -> Array:
@@ -225,28 +406,24 @@ func set_move_events(events: Array) -> void:
 
 
 func wardrobe_coverage() -> Dictionary:
+	var result := refresh_action_coverage()
 	var missing_mapping: Array = []
 	var missing_clips: Array = []
 	var missing_sequences: Array = []
-	var mapping: Dictionary = sprite_set_json.get("required_moves_mapping", {})
-	var clips: Dictionary = sprite_set_json.get("animation_clips", {})
-	var sequences: Dictionary = sprite_set_json.get("frame_sequences", {})
-	for move_id in template_json.get("equipped_moves", []):
-		var id := str(move_id)
-		if not mapping.has(id):
-			missing_mapping.append(id)
-			continue
-		var clip_id := str(mapping[id])
-		if not clips.has(clip_id):
-			missing_clips.append(clip_id)
-			continue
-		var sequence_id := str(clips[clip_id].get("frame_sequence_ref", ""))
-		if not sequences.has(sequence_id):
-			missing_sequences.append(sequence_id)
+	for row in result.get("rows", []):
+		var action_id := str(row.get("action_id", ""))
+		if row.get("warnings", []).has(Coverage.INVALID_SPRITE_MAPPING):
+			missing_mapping.append(action_id)
+		if not bool(row.get("clip_exists", false)) and not str(row.get("clip_id", "")).is_empty():
+			missing_clips.append(str(row.get("clip_id", "")))
+		if row.get("warnings", []).has(Coverage.MISSING_FRAME_SEQUENCE):
+			missing_sequences.append(str(row.get("frame_sequence_ref", "")))
 	return {
 		"missing_mapping": missing_mapping,
 		"missing_clips": missing_clips,
 		"missing_sequences": missing_sequences,
+		"rows": result.get("rows", []),
+		"summary": result.get("summary", {}),
 	}
 
 
@@ -271,7 +448,7 @@ func runtime_summary() -> Dictionary:
 
 
 func _build_ui() -> void:
-	custom_minimum_size = Vector2(480, 336)
+	custom_minimum_size = Vector2(560, 526)
 	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.055, 0.065, 0.075, 0.96)
 	panel_style.border_color = Color(0.26, 0.34, 0.42, 1.0)
@@ -284,7 +461,7 @@ func _build_ui() -> void:
 	add_child(root)
 
 	var title := Label.new()
-	title.text = "Creator Lab v0.3"
+	title.text = "Creator Lab v0.3 Action Lab"
 	title.add_theme_font_size_override("font_size", 10)
 	title.add_theme_color_override("font_color", COLOR_TITLE)
 	root.add_child(title)
@@ -296,6 +473,8 @@ func _build_ui() -> void:
 	_style_control(template_select, 130, 18)
 	template_select.item_selected.connect(_on_template_selected)
 	top.add_child(template_select)
+	top.add_child(_button("Bind P", _on_bind_player_pressed, 48))
+	top.add_child(_button("Bind D", _on_bind_dummy_pressed, 48))
 	top.add_child(_button("Save", _on_save_pressed))
 	top.add_child(_button("Check", _on_check_pressed))
 
@@ -306,23 +485,23 @@ func _build_ui() -> void:
 	tools.add_child(_button("Roundtrip", _on_exact_pressed))
 
 	var main := HBoxContainer.new()
-	main.custom_minimum_size = Vector2(466, 242)
+	main.custom_minimum_size = Vector2(546, 288)
 	main.add_theme_constant_override("separation", 4)
 	root.add_child(main)
 
 	var nav_box := VBoxContainer.new()
-	nav_box.custom_minimum_size = Vector2(96, 238)
+	nav_box.custom_minimum_size = Vector2(114, 284)
 	nav_box.add_theme_constant_override("separation", 2)
 	main.add_child(nav_box)
 	nav_box.add_child(_label("1 Choose", COLOR_CHARACTER))
 	navigation_list = ItemList.new()
-	navigation_list.custom_minimum_size = Vector2(96, 216)
+	navigation_list.custom_minimum_size = Vector2(114, 262)
 	navigation_list.add_theme_font_size_override("font_size", 8)
 	navigation_list.item_selected.connect(_on_navigation_selected)
 	nav_box.add_child(navigation_list)
 
 	var values_scroll := ScrollContainer.new()
-	values_scroll.custom_minimum_size = Vector2(132, 238)
+	values_scroll.custom_minimum_size = Vector2(160, 284)
 	values_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	main.add_child(values_scroll)
 	values_panel = VBoxContainer.new()
@@ -332,14 +511,16 @@ func _build_ui() -> void:
 	values_scroll.add_child(values_panel)
 
 	var detail_scroll := ScrollContainer.new()
-	detail_scroll.custom_minimum_size = Vector2(230, 238)
+	detail_scroll.custom_minimum_size = Vector2(264, 284)
 	detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	main.add_child(detail_scroll)
 	detail_panel = VBoxContainer.new()
-	detail_panel.custom_minimum_size = Vector2(218, 0)
+	detail_panel.custom_minimum_size = Vector2(252, 0)
 	detail_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	detail_panel.add_theme_constant_override("separation", 2)
 	detail_scroll.add_child(detail_panel)
+
+	_build_persistent_preview_surface(root)
 
 	status_label = Label.new()
 	status_label.add_theme_font_size_override("font_size", 8)
@@ -352,6 +533,9 @@ func _refresh_navigation() -> void:
 		return
 	navigation_list.clear()
 	nav_keys.clear()
+	_add_nav_item("Instance", "instance_binding")
+	_add_nav_item("Action Coverage", "action_coverage")
+	_add_nav_item("Action Preview", "action_preview")
 	_add_nav_item("Template", "character_template")
 	_add_nav_item("Hurtboxes", "character_hurtboxes")
 	_add_nav_item("Foot Collision", "character_foot")
@@ -398,6 +582,7 @@ func _refresh_three_panel() -> void:
 func _reset_editor_refs() -> void:
 	move_select = null
 	sprite_set_select = null
+	coverage_list = null
 	hp_input = null
 	sprite_ref_input = null
 	move_type_input = null
@@ -421,6 +606,29 @@ func _reset_editor_refs() -> void:
 func _build_values_panel() -> void:
 	values_panel.add_child(_label("2 Overview", _current_nav_color()))
 	match current_nav:
+		"instance_binding":
+			_add_value("instance", _bound_or_none(bound_instance_id))
+			_add_value("template", _bound_or_none(bound_template_id))
+			_add_value("sprite set", _bound_or_none(bound_sprite_set_id))
+			_add_value("state", _bound_or_none(bound_state))
+			_add_value("move", _bound_or_none(bound_move))
+			_add_value("frame", str(bound_frame))
+			_add_value("hp", _bound_or_none(bound_hp))
+			_add_value("mode", _bound_or_none(bound_control_mode))
+		"action_coverage":
+			var summary: Dictionary = coverage.get("summary", {})
+			_add_value("required", str(coverage.get("rows", []).size()))
+			_add_value("ok", str(summary.get("ok", 0)))
+			_add_value("warning", str(summary.get("warning", 0)))
+			_add_value("fail", str(summary.get("fail", 0)))
+			_build_coverage_list(values_panel)
+		"action_preview":
+			var preview_row := _coverage_row_for(current_action_id)
+			_add_value("action", str(preview_row.get("action_id", current_action_id)))
+			_add_value("status", str(preview_row.get("status", "")))
+			_add_value("clip", str(preview_row.get("clip_id", "")))
+			_add_value("frames", "%s/%s" % [preview_row.get("sequence_frame_count", 0), preview_row.get("move_frame_count", 0)])
+			_add_value("preview", "%d/%d" % [preview_frame + 1, _preview_frame_count()])
 		"character_template":
 			_add_value("id", str(template_json.get("template_id", "")))
 			_add_value("sprite set", str(template_json.get("sprite_set_ref", "")))
@@ -439,15 +647,14 @@ func _build_values_panel() -> void:
 			for move_id in template_json.get("equipped_moves", []):
 				_add_value(str(move_id), str(moves_json.get(str(move_id), {}).get("move_type", "")))
 		"wardrobe_mapping":
-			for move_id in sprite_set_json.get("required_moves_mapping", {}).keys():
-				_add_value(str(move_id), str(sprite_set_json["required_moves_mapping"][move_id]))
+			for coverage_row in coverage.get("rows", []):
+				_add_value(str(coverage_row.get("action_id", "")), str(coverage_row.get("clip_id", "")))
 		"wardrobe_clips":
-			for clip_id in sprite_set_json.get("animation_clips", {}).keys():
-				var clip: Dictionary = sprite_set_json["animation_clips"][clip_id]
-				_add_value(str(clip_id), "seq:%s" % str(clip.get("frame_sequence_ref", "")))
+			for coverage_row in coverage.get("rows", []):
+				_add_value(str(coverage_row.get("clip_id", "")), "seq:%s" % str(coverage_row.get("frame_sequence_ref", "")))
 		"wardrobe_sequences":
-			for sequence_id in sprite_set_json.get("frame_sequences", {}).keys():
-				_add_value(str(sequence_id), "%s frames" % str(sprite_set_json["frame_sequences"][sequence_id].size()))
+			for coverage_row in coverage.get("rows", []):
+				_add_value(str(coverage_row.get("frame_sequence_ref", "")), "%s frames" % str(coverage_row.get("sequence_frame_count", 0)))
 		"runtime_preview":
 			var summary: Dictionary = runtime.debug_summary()
 			_add_value("state", str(summary.get("current_state", "")))
@@ -462,6 +669,12 @@ func _build_values_panel() -> void:
 func _build_detail_panel() -> void:
 	detail_panel.add_child(_label("3 Edit + Preview", _current_nav_color()))
 	match current_nav:
+		"instance_binding":
+			_build_instance_detail(detail_panel)
+		"action_coverage":
+			_build_action_coverage_detail(detail_panel)
+		"action_preview":
+			_build_action_preview_detail(detail_panel)
 		"character_template":
 			_build_template_detail(detail_panel)
 		"character_hurtboxes":
@@ -477,6 +690,95 @@ func _build_detail_panel() -> void:
 		_:
 			if current_nav.begins_with("move:") and moves_json.has(selected_move):
 				_build_move_detail(detail_panel)
+
+
+func _build_instance_detail(parent: VBoxContainer) -> void:
+	parent.add_child(_label("Selected runtime instance", COLOR_INSTANCE))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 3)
+	parent.add_child(row)
+	row.add_child(_button("Bind P", _on_bind_player_pressed, 48))
+	row.add_child(_button("Bind D", _on_bind_dummy_pressed, 48))
+	row.add_child(_button("Apply Bound", _on_apply_bound_pressed, 74))
+	_add_detail_value(parent, "instance", _bound_or_none(bound_instance_id), COLOR_INSTANCE)
+	_add_detail_value(parent, "template", _bound_or_none(bound_template_id), COLOR_INSTANCE)
+	_add_detail_value(parent, "sprite set", _bound_or_none(bound_sprite_set_id), COLOR_INSTANCE)
+	_add_detail_value(parent, "state", _bound_or_none(bound_state), COLOR_INSTANCE)
+	_add_detail_value(parent, "move", _bound_or_none(bound_move), COLOR_INSTANCE)
+	_add_detail_value(parent, "frame", str(bound_frame), COLOR_INSTANCE)
+	_add_detail_value(parent, "hp", _bound_or_none(bound_hp), COLOR_INSTANCE)
+	_add_detail_value(parent, "mode", _bound_or_none(bound_control_mode), COLOR_INSTANCE)
+
+
+func _build_action_coverage_detail(parent: VBoxContainer) -> void:
+	parent.add_child(_label("Action completeness", COLOR_ACTION))
+	var row := _coverage_row_for(current_action_id)
+	if row.is_empty():
+		parent.add_child(_label("No catalog row selected.", COLOR_FAIL))
+		return
+	_add_detail_value(parent, "action", str(row.get("action_id", "")), _coverage_row_color(row))
+	_add_detail_value(parent, "category", str(row.get("category", "")), COLOR_ACTION)
+	_add_detail_value(parent, "state", str(row.get("state_context", "")), COLOR_ACTION)
+	_add_detail_value(parent, "backing", str(row.get("backing", "")), COLOR_ACTION)
+	_add_detail_value(parent, "clip", str(row.get("clip_id", "")), _coverage_row_color(row))
+	_add_detail_value(parent, "sequence", str(row.get("frame_sequence_ref", "")), _coverage_row_color(row))
+	_add_detail_value(parent, "frames", "%s sequence / %s move" % [row.get("sequence_frame_count", 0), row.get("move_frame_count", 0)], _coverage_row_color(row))
+	_add_detail_value(parent, "visual", str(row.get("visual_role", "")), COLOR_ACTION)
+	var warnings: Array = row.get("warnings", [])
+	if warnings.is_empty():
+		parent.add_child(_label("warnings: none", COLOR_PASS))
+	else:
+		parent.add_child(_label("warnings", COLOR_WARN if str(row.get("status", "")) == "WARNING" else COLOR_FAIL))
+		for warning in warnings:
+			parent.add_child(_label(str(warning), _coverage_row_color(row)))
+	parent.add_child(_button("Preview", _on_preview_selected_action_pressed, 64))
+
+
+func _build_action_preview_detail(parent: VBoxContainer) -> void:
+	parent.add_child(_label("Action preview", COLOR_ACTION))
+	var action_select := OptionButton.new()
+	_style_control(action_select, 132, 18)
+	var selected_index := 0
+	for row_index in coverage.get("rows", []).size():
+		var row: Dictionary = coverage["rows"][row_index]
+		action_select.add_item(str(row.get("action_id", "")))
+		if str(row.get("action_id", "")) == current_action_id:
+			selected_index = row_index
+	if action_select.item_count > 0:
+		action_select.select(selected_index)
+	action_select.item_selected.connect(_on_preview_action_selected)
+	_add_option_grid(parent, [["action", action_select]], 1)
+
+	var controls := HBoxContainer.new()
+	controls.add_theme_constant_override("separation", 3)
+	parent.add_child(controls)
+	controls.add_child(_button("Play", _on_preview_play_pressed, 44))
+	controls.add_child(_button("Pause", _on_preview_pause_pressed, 48))
+	controls.add_child(_button("+1", _on_preview_step_pressed, 34))
+	controls.add_child(_button("Reset", _on_preview_reset_pressed, 48))
+
+	var speed_row := HBoxContainer.new()
+	speed_row.add_theme_constant_override("separation", 3)
+	parent.add_child(speed_row)
+	speed_row.add_child(_button("0.5x", _on_preview_half_speed_pressed, 42))
+	speed_row.add_child(_button("1x", _on_preview_normal_speed_pressed, 34))
+
+	var toggles := HBoxContainer.new()
+	toggles.add_theme_constant_override("separation", 3)
+	parent.add_child(toggles)
+	toggles.add_child(_preview_toggle("hurt", preview_show_hurtboxes, _on_preview_hurt_toggled))
+	toggles.add_child(_preview_toggle("hit", preview_show_hitboxes, _on_preview_hit_toggled))
+	toggles.add_child(_preview_toggle("foot", preview_show_foot, _on_preview_foot_toggled))
+
+	var edit_row := HBoxContainer.new()
+	edit_row.add_theme_constant_override("separation", 3)
+	parent.add_child(edit_row)
+	edit_row.add_child(_button("Edit Move", _on_preview_edit_move_pressed, 62))
+	edit_row.add_child(_button("Hitbox", _on_preview_edit_hitbox_pressed, 50))
+	edit_row.add_child(_button("Hurt", _on_preview_edit_hurt_pressed, 42))
+	edit_row.add_child(_button("Foot", _on_preview_edit_foot_pressed, 42))
+
+	parent.add_child(_hint_label("Preview surface stays visible under this editor."))
 
 
 func _build_template_detail(parent: VBoxContainer) -> void:
@@ -677,7 +979,7 @@ func _build_move_events_detail(parent: VBoxContainer, move: Dictionary) -> void:
 
 
 func _build_wardrobe_detail(parent: VBoxContainer) -> void:
-	parent.add_child(_label("Wardrobe coverage - sprite mapping", COLOR_WARDROBE))
+	parent.add_child(_label("Wardrobe coverage - sprite-set view", COLOR_WARDROBE))
 	sprite_set_select = OptionButton.new()
 	_style_control(sprite_set_select, 118, 18)
 	for id in DataStore.list_sprite_set_ids():
@@ -687,10 +989,16 @@ func _build_wardrobe_detail(parent: VBoxContainer) -> void:
 	sprite_set_select.item_selected.connect(_on_sprite_set_selected)
 	_add_option_grid(parent, [["set", sprite_set_select]], 1)
 	var coverage := wardrobe_coverage()
-	parent.add_child(_label("missing move mapping: %s" % str(coverage["missing_mapping"].size())))
-	parent.add_child(_label("missing animation clips: %s" % str(coverage["missing_clips"].size())))
-	parent.add_child(_label("missing frame sequences: %s" % str(coverage["missing_sequences"].size())))
+	var summary: Dictionary = coverage.get("summary", {})
+	parent.add_child(_label("ok:%s warn:%s fail:%s" % [summary.get("ok", 0), summary.get("warning", 0), summary.get("fail", 0)], COLOR_WARDROBE))
+	for row in coverage.get("rows", []):
+		parent.add_child(_label("%s -> %s  %s" % [
+			str(row.get("action_id", "")),
+			str(row.get("clip_id", "")),
+			str(row.get("status", "")),
+		], _coverage_row_color(row)))
 	parent.add_child(_button("Validate", _on_check_pressed, 64))
+	parent.add_child(_button("Generate Stub", _on_wardrobe_generate_stub_pressed, 88))
 
 
 func _build_runtime_detail(parent: VBoxContainer) -> void:
@@ -708,8 +1016,108 @@ func _build_runtime_detail(parent: VBoxContainer) -> void:
 	parent.add_child(runtime_label)
 
 
+func _build_persistent_preview_surface(parent: VBoxContainer) -> void:
+	var shell := HBoxContainer.new()
+	shell.custom_minimum_size = Vector2(546, 136)
+	shell.add_theme_constant_override("separation", 4)
+	parent.add_child(shell)
+
+	var meta := VBoxContainer.new()
+	meta.custom_minimum_size = Vector2(112, 132)
+	meta.add_theme_constant_override("separation", 2)
+	shell.add_child(meta)
+	meta.add_child(_label("4 Preview", COLOR_ACTION))
+	preview_frame_label = _label("", COLOR_ACTION)
+	preview_frame_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	meta.add_child(preview_frame_label)
+
+	action_preview_control = ActionPreview.new()
+	action_preview_control.custom_minimum_size = Vector2(430, 132)
+	action_preview_control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	shell.add_child(action_preview_control)
+
+
+func _ensure_floating_preview_window() -> void:
+	if floating_preview_window != null:
+		return
+	var host := get_parent()
+	if host == null:
+		call_deferred("_ensure_floating_preview_window")
+		return
+
+	floating_preview_window = PanelContainer.new()
+	floating_preview_window.name = "selected_sprite_preview_window"
+	floating_preview_window.position = Vector2(8, 92)
+	floating_preview_window.custom_minimum_size = Vector2(292, 252)
+	floating_preview_window.size = Vector2(292, 252)
+	floating_preview_window.visible = false
+	floating_preview_window.mouse_filter = Control.MOUSE_FILTER_STOP
+	floating_preview_window.z_index = 100
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.035, 0.04, 0.048, 0.99)
+	style.border_color = COLOR_ACTION
+	style.set_border_width_all(1)
+	style.set_content_margin_all(6)
+	floating_preview_window.add_theme_stylebox_override("panel", style)
+	host.add_child(floating_preview_window)
+
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 4)
+	floating_preview_window.add_child(root)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 4)
+	root.add_child(header)
+	var title := _label("Selected Sprite Preview", COLOR_ACTION)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(title)
+	header.add_child(_button("V", _on_preview_window_toggle_pressed, 26))
+
+	floating_preview_frame_label = _label("", COLOR_HINT)
+	root.add_child(floating_preview_frame_label)
+
+	floating_preview_control = ActionPreview.new()
+	floating_preview_control.custom_minimum_size = Vector2(276, 202)
+	floating_preview_control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	floating_preview_control.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(floating_preview_control)
+
+
+func _build_coverage_list(parent: VBoxContainer) -> void:
+	coverage_list = ItemList.new()
+	coverage_list.custom_minimum_size = Vector2(144, 156)
+	coverage_list.add_theme_font_size_override("font_size", 8)
+	coverage_list.item_selected.connect(_on_action_coverage_selected)
+	var selected_index := 0
+	for i in coverage.get("rows", []).size():
+		var row: Dictionary = coverage["rows"][i]
+		var text := "%s  %s" % [str(row.get("action_id", "")), str(row.get("status", ""))]
+		coverage_list.add_item(text)
+		coverage_list.set_item_metadata(coverage_list.item_count - 1, str(row.get("action_id", "")))
+		coverage_list.set_item_custom_fg_color(coverage_list.item_count - 1, _coverage_row_color(row))
+		if str(row.get("action_id", "")) == current_action_id:
+			selected_index = i
+	if coverage_list.item_count > 0:
+		coverage_list.select(selected_index)
+	parent.add_child(coverage_list)
+
+
 func _add_value(label_text: String, value_text: String) -> void:
 	values_panel.add_child(_label("%s: %s" % [label_text, value_text], COLOR_HINT))
+
+
+func _add_detail_value(parent: VBoxContainer, label_text: String, value_text: String, color: Color = COLOR_HINT) -> void:
+	parent.add_child(_label("%s: %s" % [label_text, value_text], color))
+
+
+func _preview_toggle(text: String, pressed: bool, callback: Callable) -> CheckBox:
+	var toggle := CheckBox.new()
+	toggle.text = text
+	toggle.button_pressed = pressed
+	toggle.focus_mode = Control.FOCUS_NONE
+	toggle.add_theme_font_size_override("font_size", 8)
+	toggle.toggled.connect(callback)
+	return toggle
 
 
 func _rect_summary(rect: Dictionary) -> String:
@@ -718,6 +1126,82 @@ func _rect_summary(rect: Dictionary) -> String:
 
 func _xy_summary(value: Dictionary) -> String:
 	return "x:%s y:%s" % [value.get("x", 0), value.get("y", 0)]
+
+
+func _bound_or_none(value: String) -> String:
+	return value if not value.is_empty() else "none"
+
+
+func _coverage_row_for(action_id: String) -> Dictionary:
+	if coverage.is_empty():
+		refresh_action_coverage()
+	for row in coverage.get("rows", []):
+		if str(row.get("action_id", "")) == action_id:
+			return row
+	return {}
+
+
+func _coverage_row_color(row: Dictionary) -> Color:
+	match str(row.get("status", "")):
+		"OK":
+			return COLOR_PASS
+		"WARNING":
+			return COLOR_WARN
+	return COLOR_FAIL
+
+
+func _preview_frame_count() -> int:
+	var row := _coverage_row_for(current_action_id)
+	if row.is_empty():
+		return 1
+	var sequence_ref := str(row.get("frame_sequence_ref", ""))
+	var sequences: Dictionary = sprite_set_json.get("frame_sequences", {})
+	if sequences.has(sequence_ref):
+		return maxi(1, sequences[sequence_ref].size())
+	var move_id := str(row.get("backing_move_id", ""))
+	if moves_json.has(move_id):
+		return maxi(1, int(moves_json[move_id].get("frame_count", 1)))
+	return 1
+
+
+func _clamp_preview_frame() -> void:
+	preview_frame = clampi(preview_frame, 0, maxi(0, _preview_frame_count() - 1))
+
+
+func _refresh_action_preview() -> void:
+	_clamp_preview_frame()
+	var status_text := _preview_status_text()
+	if preview_frame_label != null:
+		preview_frame_label.text = status_text
+	if floating_preview_frame_label != null:
+		floating_preview_frame_label.text = status_text
+	_apply_preview_to_control(action_preview_control)
+	_apply_preview_to_control(floating_preview_control)
+
+
+func _preview_status_text() -> String:
+	return "%s %s  f:%d/%d  %.1fx" % [
+		"play" if preview_playing else "pause",
+		current_action_id,
+		preview_frame + 1,
+		_preview_frame_count(),
+		preview_speed,
+	]
+
+
+func _apply_preview_to_control(control: Control) -> void:
+	if control == null or not control.has_method("set_preview_data"):
+		return
+	control.set_preview_data(_coverage_row_for(current_action_id), template_json, sprite_set_json, moves_json)
+	control.set_overlay_visibility(preview_show_hurtboxes, preview_show_hitboxes, preview_show_foot)
+	control.set_frame(preview_frame)
+
+
+func _node_property(instance: Node, property_name: String):
+	if instance == null:
+		return ""
+	var value = instance.get(property_name)
+	return value if value != null else ""
 
 
 func _clear_children(node: Node) -> void:
@@ -749,7 +1233,10 @@ func _refresh_options() -> void:
 
 
 func _refresh_fields() -> void:
+	refresh_action_coverage()
+	_clamp_preview_frame()
 	_refresh_three_panel()
+	_refresh_action_preview()
 	_refresh_runtime()
 
 
@@ -817,6 +1304,38 @@ func _rect_json(rect: Dictionary) -> Dictionary:
 	}
 
 
+func _rect_from_json(rect: Dictionary) -> Rect2:
+	return Rect2(float(rect.get("x", 0.0)), float(rect.get("y", 0.0)), maxf(1.0, float(rect.get("w", 1.0))), maxf(1.0, float(rect.get("h", 1.0))))
+
+
+func _vector_from_json(value: Dictionary) -> Vector2:
+	return Vector2(float(value.get("x", 0.0)), float(value.get("y", 0.0)))
+
+
+func _runtime_hurtbox_profile() -> Dictionary:
+	var profile := {}
+	for hurtbox_id in template_json.get("hurtboxes", {}).keys():
+		profile[str(hurtbox_id)] = _rect_from_json(template_json["hurtboxes"][hurtbox_id])
+	return profile
+
+
+func _runtime_foot_collision_profile() -> Dictionary:
+	var foot: Dictionary = template_json.get("foot_collision", {})
+	return {
+		"center": _vector_from_json(foot.get("center", {})),
+		"radius": _vector_from_json(foot.get("radius", {})),
+	}
+
+
+func _bound_instance() -> Node:
+	if bound_instance_ref == null:
+		return null
+	var instance = bound_instance_ref.get_ref()
+	if instance is Node:
+		return instance
+	return null
+
+
 func _button(text: String, callback: Callable, width: int = 0) -> Button:
 	var button := Button.new()
 	button.text = text
@@ -871,7 +1390,7 @@ func _add_input_grid(parent: VBoxContainer, fields: Array, callback: Callable) -
 func _add_bound_input_grid(parent: VBoxContainer, rows: Array, pair_columns: int = 3) -> Dictionary:
 	var inputs := {}
 	var grid := GridContainer.new()
-	grid.columns = max(1, pair_columns) * 2
+	grid.columns = maxi(1, pair_columns) * 2
 	grid.add_theme_constant_override("h_separation", 4)
 	grid.add_theme_constant_override("v_separation", 1)
 	parent.add_child(grid)
@@ -892,7 +1411,7 @@ func _add_bound_input_grid(parent: VBoxContainer, rows: Array, pair_columns: int
 
 func _add_option_grid(parent: VBoxContainer, rows: Array, pair_columns: int = 2) -> void:
 	var grid := GridContainer.new()
-	grid.columns = max(1, pair_columns) * 2
+	grid.columns = maxi(1, pair_columns) * 2
 	grid.add_theme_constant_override("h_separation", 4)
 	grid.add_theme_constant_override("v_separation", 1)
 	parent.add_child(grid)
@@ -940,6 +1459,10 @@ func _compact_label(text: String, color: Color = COLOR_LABEL) -> Label:
 
 
 func _nav_color(key: String) -> Color:
+	if key.begins_with("instance"):
+		return COLOR_INSTANCE
+	if key.begins_with("action"):
+		return COLOR_ACTION
 	if key.begins_with("move:"):
 		return COLOR_MOVE
 	if key.begins_with("wardrobe"):
@@ -957,6 +1480,8 @@ func _status_color(text: String) -> Color:
 	var lower := text.to_lower()
 	if lower.contains("fail") or lower.contains("invalid") or lower.contains("missing"):
 		return COLOR_FAIL
+	if lower.contains("warn") or lower.contains("placeholder") or lower.contains("bound"):
+		return COLOR_WARN
 	if lower.contains("pass") or lower.contains("saved") or lower.contains("copied"):
 		return COLOR_PASS
 	return COLOR_STATUS
@@ -1082,6 +1607,18 @@ func _on_template_selected(index: int) -> void:
 	load_template_id(template_select.get_item_text(index))
 
 
+func _on_bind_player_pressed() -> void:
+	bind_player_requested.emit()
+
+
+func _on_bind_dummy_pressed() -> void:
+	bind_dummy_requested.emit()
+
+
+func _on_apply_bound_pressed() -> void:
+	apply_to_bound_instance()
+
+
 func _on_navigation_selected(index: int) -> void:
 	if index < 0 or index >= nav_keys.size():
 		return
@@ -1092,6 +1629,107 @@ func _on_navigation_selected(index: int) -> void:
 			selected_move = move_id
 			current_move_section = "summary"
 	_refresh_fields()
+
+
+func _on_action_coverage_selected(index: int) -> void:
+	if coverage_list == null or index < 0 or index >= coverage_list.item_count:
+		return
+	var action_id := str(coverage_list.get_item_metadata(index))
+	current_action_id = action_id
+	var row := _coverage_row_for(action_id)
+	var move_id := str(row.get("backing_move_id", ""))
+	if moves_json.has(move_id):
+		selected_move = move_id
+	_refresh_fields()
+
+
+func _on_preview_selected_action_pressed() -> void:
+	current_nav = "action_preview"
+	_refresh_fields()
+
+
+func _on_preview_action_selected(index: int) -> void:
+	var rows: Array = coverage.get("rows", [])
+	if index < 0 or index >= rows.size():
+		return
+	select_action(str(rows[index].get("action_id", "")))
+
+
+func _on_preview_play_pressed() -> void:
+	preview_play()
+
+
+func _on_preview_pause_pressed() -> void:
+	preview_pause()
+
+
+func _on_preview_step_pressed() -> void:
+	preview_step_forward()
+
+
+func _on_preview_reset_pressed() -> void:
+	preview_reset()
+
+
+func _on_preview_half_speed_pressed() -> void:
+	set_preview_speed(0.5)
+
+
+func _on_preview_normal_speed_pressed() -> void:
+	set_preview_speed(1.0)
+
+
+func _on_preview_hurt_toggled(value: bool) -> void:
+	preview_show_hurtboxes = value
+	_refresh_action_preview()
+
+
+func _on_preview_hit_toggled(value: bool) -> void:
+	preview_show_hitboxes = value
+	_refresh_action_preview()
+
+
+func _on_preview_foot_toggled(value: bool) -> void:
+	preview_show_foot = value
+	_refresh_action_preview()
+
+
+func _on_preview_window_toggle_pressed() -> void:
+	toggle_preview_window()
+
+
+func _on_preview_edit_move_pressed() -> void:
+	var row := _coverage_row_for(current_action_id)
+	var move_id := str(row.get("backing_move_id", selected_move))
+	if moves_json.has(move_id):
+		selected_move = move_id
+	current_nav = "move:%s" % selected_move
+	current_move_section = "summary"
+	_refresh_fields()
+
+
+func _on_preview_edit_hitbox_pressed() -> void:
+	var row := _coverage_row_for(current_action_id)
+	var move_id := str(row.get("backing_move_id", selected_move))
+	if moves_json.has(move_id):
+		selected_move = move_id
+	current_nav = "move:%s" % selected_move
+	current_move_section = "hitbox"
+	_refresh_fields()
+
+
+func _on_preview_edit_hurt_pressed() -> void:
+	current_nav = "character_hurtboxes"
+	_refresh_fields()
+
+
+func _on_preview_edit_foot_pressed() -> void:
+	current_nav = "character_foot"
+	_refresh_fields()
+
+
+func _on_wardrobe_generate_stub_pressed() -> void:
+	_set_status("wardrobe generation stub: no external generation called")
 
 
 func _on_move_section_selected(index: int) -> void:

@@ -9,6 +9,7 @@ var arena_radius := Vector2(280, 125)
 
 var player: Node2D
 var dummy: Node2D
+var selected_character: Node2D
 var debug_label: RichTextLabel
 var creator_lab: PanelContainer
 var _ai_started_at_msec: int = 0
@@ -21,10 +22,13 @@ func _ready() -> void:
 	dummy = _spawn_character("combat_gray_s64", "test_dummy_1", Vector2(405, 245), true)
 	_build_debug_gui()
 	_build_creator_lab()
+	select_player_character()
 	_ai_started_at_msec = Time.get_ticks_msec()
 
 
 func _process(_delta: float) -> void:
+	if creator_lab != null and selected_character != null and creator_lab.has_method("update_bound_instance_summary"):
+		creator_lab.update_bound_instance_summary(selected_character)
 	_update_debug_gui()
 	queue_redraw()
 
@@ -45,6 +49,8 @@ func _process_input() -> void:
 		dummy.debug_boxes_visible = player.debug_boxes_visible
 	if Input.is_action_just_pressed("toggle_creator_lab") and creator_lab != null:
 		toggle_creator_lab()
+	if Input.is_action_just_pressed("toggle_preview_window") and creator_lab != null and creator_lab.has_method("toggle_preview_window"):
+		creator_lab.toggle_preview_window()
 	if Input.is_action_just_pressed("reset_playground"):
 		player.reset_runtime(Vector2(245, 245))
 		dummy.reset_runtime(Vector2(405, 245))
@@ -68,6 +74,7 @@ func _manual_gameplay_input_active() -> bool:
 func _tick_combat(delta: float) -> void:
 	player.tick_character(delta, arena_center, arena_radius)
 	dummy.tick_character(delta, arena_center, arena_radius)
+	_resolve_foot_spacing()
 	_process_hits(player, dummy)
 	_process_hits(dummy, player)
 
@@ -75,8 +82,33 @@ func _tick_combat(delta: float) -> void:
 func toggle_creator_lab() -> void:
 	if creator_lab != null:
 		creator_lab.visible = not creator_lab.visible
+		if creator_lab.visible and selected_character != null and creator_lab.has_method("update_bound_instance_summary"):
+			creator_lab.update_bound_instance_summary(selected_character)
 		if not creator_lab.visible:
 			get_viewport().gui_release_focus()
+
+
+func select_character(character: Node2D) -> void:
+	if character == null:
+		return
+	selected_character = character
+	if creator_lab != null and creator_lab.has_method("bind_instance"):
+		creator_lab.bind_instance(character)
+	_update_debug_gui()
+
+
+func select_player_character() -> void:
+	select_character(player)
+
+
+func select_dummy_character() -> void:
+	select_character(dummy)
+
+
+func selected_character_summary() -> Dictionary:
+	if selected_character == null:
+		return {}
+	return selected_character.debug_summary()
 
 
 func _spawn_character(template_id: String, instance_id: String, spawn_position: Vector2, test_dummy: bool) -> Node2D:
@@ -112,6 +144,14 @@ func _process_hits(attacker: Node2D, target: Node2D) -> void:
 			attacker.move_executor.mark_target_hit(target.instance_id, window_index)
 
 
+func _resolve_foot_spacing() -> void:
+	var separation_delta: Vector2 = CombatCharacterScript.foot_separation_delta(player, dummy)
+	if separation_delta == Vector2.ZERO:
+		return
+	player.position -= separation_delta * 0.5
+	dummy.position += separation_delta * 0.5
+
+
 func _build_debug_gui() -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "debug_gui"
@@ -120,7 +160,7 @@ func _build_debug_gui() -> void:
 	debug_label = RichTextLabel.new()
 	debug_label.name = "runtime_status"
 	debug_label.position = Vector2(8, 8)
-	debug_label.custom_minimum_size = Vector2(320, 44)
+	debug_label.custom_minimum_size = Vector2(420, 58)
 	debug_label.bbcode_enabled = true
 	debug_label.focus_mode = Control.FOCUS_NONE
 	debug_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -140,16 +180,19 @@ func _build_creator_lab() -> void:
 
 	creator_lab = CreatorLabV03PanelScript.new()
 	creator_lab.name = "creator_lab_v0_3"
-	creator_lab.position = Vector2(144, 12)
-	creator_lab.size = Vector2(480, 336)
+	creator_lab.position = Vector2(72, 10)
+	creator_lab.size = Vector2(560, 526)
 	creator_lab.visible = false
 	layer.add_child(creator_lab)
 	creator_lab.setup()
+	creator_lab.bind_player_requested.connect(select_player_character)
+	creator_lab.bind_dummy_requested.connect(select_dummy_character)
 
 
 func _update_debug_gui() -> void:
 	var p: Dictionary = player.debug_summary()
 	var d: Dictionary = dummy.debug_summary()
+	var s: Dictionary = selected_character_summary()
 	var ai_seconds := 0.0
 	if player.control_mode == "ai":
 		ai_seconds = float(Time.get_ticks_msec() - _ai_started_at_msec) / 1000.0
@@ -157,7 +200,17 @@ func _update_debug_gui() -> void:
 	debug_label.text = "\n".join([
 		"[color=#86d7ff]P[/color] %s %s f:%s hit:%s" % [p["state"], p["hp"], p["frame"], p["active_hitboxes"]],
 		"[color=#ff9aa2]D[/color] %s %s  [color=#ffd166]%s[/color] box:%s" % [d["state"], d["hp"], p["mode"].substr(0, 3), boxes_status],
-		"[color=#c7d2fe]wasd[/color] move  j/k atk  sh dash  sp jump  tab ai  b box  c lab v0.3  r reset",
+		"[color=#86d7ff]SEL[/color] %s tpl:%s set:%s st:%s mv:%s f:%s hp:%s mode:%s" % [
+			s.get("instance_id", "none"),
+			s.get("template_id", ""),
+			s.get("sprite_set_id", ""),
+			s.get("state", ""),
+			s.get("move", ""),
+			s.get("frame", 0),
+			s.get("hp", ""),
+			s.get("mode", ""),
+		],
+		"[color=#c7d2fe]wasd[/color] move  j/k atk  sh dash  sp jump  tab ai  b box  c lab v0.3  v preview  r reset",
 	])
 
 
@@ -187,6 +240,7 @@ func _ensure_input_actions() -> void:
 	_bind_key_action("toggle_ai", [KEY_TAB])
 	_bind_key_action("toggle_boxes", [KEY_B])
 	_bind_key_action("toggle_creator_lab", [KEY_C])
+	_bind_key_action("toggle_preview_window", [KEY_V])
 	_bind_key_action("reset_playground", [KEY_R])
 
 

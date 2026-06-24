@@ -21,7 +21,9 @@ func _run() -> void:
 	var ai_ok: bool = await _run_ai_stress_smoke(playground)
 	var creator_ok: bool = await _run_creator_lab_smoke(playground)
 	var focus_ok: bool = await _run_input_focus_smoke(playground)
-	if punch_ok and kick_ok and lethal_ok and non_goal_ok and ai_ok and creator_ok and focus_ok:
+	var foot_ok: bool = await _run_foot_clamp_smoke(playground)
+	var foot_spacing_ok: bool = _run_foot_spacing_smoke(playground)
+	if punch_ok and kick_ok and lethal_ok and non_goal_ok and ai_ok and creator_ok and focus_ok and foot_ok and foot_spacing_ok:
 		print("runtime_smoke=PASS")
 		quit(0)
 	else:
@@ -126,6 +128,26 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(copy_path))
 
 	panel.load_template_id("combat_gray_s64")
+	playground.select_player_character()
+	var player_bound: bool = (
+		str(panel.bound_instance_id) == "player_1"
+		and str(panel.bound_template_id) == "combat_gray_s64"
+		and not str(panel.bound_hp).is_empty()
+	)
+	playground.select_dummy_character()
+	var dummy_bound: bool = (
+		str(panel.bound_instance_id) == "test_dummy_1"
+		and str(panel.bound_template_id) == "combat_gray_s64"
+		and not str(panel.bound_control_mode).is_empty()
+	)
+	var hud_text := str(playground.debug_label.text)
+	var hud_ok := (
+		hud_text.contains("SEL")
+		and hud_text.contains("test_dummy_1")
+		and hud_text.contains("tpl:combat_gray_s64")
+		and hud_text.contains("mode:")
+	)
+	playground.select_player_character()
 	panel.copy_template(copy_id)
 	if str(panel.template_json["template_id"]) != copy_id:
 		_restore_creator_smoke(original_punch, copy_path)
@@ -144,6 +166,31 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 		{"frame": 2, "event_type": "enable_hitbox", "payload": {"hitbox_id": "hit_fist_1"}},
 		{"frame": 6, "event_type": "disable_hitbox", "payload": {"hitbox_id": "hit_fist_1"}},
 	])
+	var bound_apply_ok: bool = panel.apply_to_bound_instance()
+	var live_hurt: Rect2 = playground.player.hurtbox_profile["hurt_head"]
+	var live_foot: Dictionary = playground.player.foot_collision_profile
+	var live_apply_ok := (
+		bound_apply_ok
+		and int(playground.player.max_hp) == 101
+		and str(playground.player.template_id) == copy_id
+		and str(playground.player.sprite_set_id) == str(panel.template_json["sprite_set_ref"])
+		and is_equal_approx(live_hurt.position.x, -11.0)
+		and is_equal_approx(live_foot["center"].x, 1.0)
+		and is_equal_approx(live_foot["radius"].x, 19.0)
+	)
+	var live_move: Dictionary = playground.player.move_executor.move_templates.get("basic_punch", {})
+	var live_windows: Array = live_move.get("hitbox_windows", [])
+	var live_rect := Rect2()
+	var live_damage := 0
+	if not live_windows.is_empty():
+		live_rect = live_windows[0].get("rect", Rect2())
+		live_damage = int(live_windows[0].get("damage", 0))
+	var live_bridge_ok := (
+		int(live_move.get("total_frames", 0)) == 9
+		and live_windows.size() == 1
+		and live_damage == 9
+		and is_equal_approx(live_rect.size.x, 25.0)
+	)
 
 	var exact_ok: bool = panel.save_reload_exact()
 	var coverage: Dictionary = panel.wardrobe_coverage()
@@ -161,20 +208,98 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 	var runtime_ok: bool = start_errors.is_empty() and int(runtime_summary["active_hitbox_count"]) == 1
 
 	_restore_creator_smoke(original_punch, copy_path)
-	if not (exact_ok and wardrobe_ok and toggle_ok and runtime_ok):
-		print("creator_lab_smoke exact_ok=%s wardrobe_ok=%s toggle_ok=%s runtime_ok=%s" % [exact_ok, wardrobe_ok, toggle_ok, runtime_ok])
-	return exact_ok and wardrobe_ok and toggle_ok and runtime_ok
+	playground.player.apply_template_id("combat_gray_s64")
+	if not (player_bound and dummy_bound and hud_ok and live_apply_ok and live_bridge_ok and exact_ok and wardrobe_ok and toggle_ok and runtime_ok):
+		print("creator_lab_smoke player_bound=%s dummy_bound=%s hud_ok=%s live_apply_ok=%s live_bridge_ok=%s exact_ok=%s wardrobe_ok=%s toggle_ok=%s runtime_ok=%s" % [player_bound, dummy_bound, hud_ok, live_apply_ok, live_bridge_ok, exact_ok, wardrobe_ok, toggle_ok, runtime_ok])
+	return player_bound and dummy_bound and hud_ok and live_apply_ok and live_bridge_ok and exact_ok and wardrobe_ok and toggle_ok and runtime_ok
+
+
+func _run_foot_clamp_smoke(playground: Node) -> bool:
+	var character: Node2D = playground.player
+	var original_profile: Dictionary = character.foot_collision_profile.duplicate(true)
+	var start_position := Vector2(playground.arena_center.x + playground.arena_radius.x + 40.0, playground.arena_center.y)
+
+	character.foot_collision_profile["center"] = Vector2.ZERO
+	character.foot_collision_profile["radius"] = Vector2(4, 4)
+	character.reset_runtime(start_position)
+	playground._tick_combat(1.0 / 60.0)
+	var small_radius_x := character.position.x
+
+	character.foot_collision_profile["center"] = Vector2.ZERO
+	character.foot_collision_profile["radius"] = Vector2(40, 4)
+	character.reset_runtime(start_position)
+	playground._tick_combat(1.0 / 60.0)
+	var large_radius_x := character.position.x
+
+	character.foot_collision_profile["center"] = Vector2(20, 0)
+	character.foot_collision_profile["radius"] = Vector2(4, 4)
+	character.reset_runtime(start_position)
+	playground._tick_combat(1.0 / 60.0)
+	var offset_center_x := character.position.x
+
+	character.foot_collision_profile = original_profile
+	character.reset_runtime(Vector2(245, 245))
+	var ok := large_radius_x < small_radius_x and offset_center_x < small_radius_x
+	if not ok:
+		print("foot_clamp_smoke small=%s large=%s offset=%s" % [small_radius_x, large_radius_x, offset_center_x])
+	return ok
+
+
+func _run_foot_spacing_smoke(playground: Node) -> bool:
+	var player: Node2D = playground.player
+	var dummy: Node2D = playground.dummy
+	var original_player_profile: Dictionary = player.foot_collision_profile.duplicate(true)
+	var original_dummy_profile: Dictionary = dummy.foot_collision_profile.duplicate(true)
+	var original_player_position: Vector2 = player.position
+	var original_dummy_position: Vector2 = dummy.position
+
+	player.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2(10, 6)}
+	dummy.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2(10, 6)}
+	player.reset_runtime(Vector2(320, 205))
+	dummy.reset_runtime(Vector2(324, 205))
+	playground._resolve_foot_spacing()
+	var small_spacing: float = player.foot_center_world().distance_to(dummy.foot_center_world())
+
+	player.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2(30, 6)}
+	dummy.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2(30, 6)}
+	player.reset_runtime(Vector2(320, 205))
+	dummy.reset_runtime(Vector2(324, 205))
+	playground._resolve_foot_spacing()
+	var large_spacing: float = player.foot_center_world().distance_to(dummy.foot_center_world())
+
+	player.foot_collision_profile = {"center": Vector2(12, 0), "radius": Vector2(30, 6)}
+	dummy.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2(30, 6)}
+	player.reset_runtime(Vector2(320, 205))
+	dummy.reset_runtime(Vector2(324, 205))
+	playground._resolve_foot_spacing()
+	var offset_spacing: float = player.foot_center_world().distance_to(dummy.foot_center_world())
+
+	player.foot_collision_profile = original_player_profile
+	dummy.foot_collision_profile = original_dummy_profile
+	player.reset_runtime(original_player_position)
+	dummy.reset_runtime(original_dummy_position)
+
+	var ok: bool = large_spacing > small_spacing and offset_spacing >= large_spacing - 0.01
+	if not ok:
+		print("foot_spacing_smoke small=%s large=%s offset=%s" % [small_spacing, large_spacing, offset_spacing])
+	return ok
 
 
 func _run_creator_toggle_smoke(playground: Node) -> bool:
 	playground.creator_lab.visible = true
 	var action_bound: bool = InputMap.has_action("toggle_creator_lab")
+	var preview_action_bound: bool = InputMap.has_action("toggle_preview_window")
+	playground.creator_lab.set_preview_window_visible(false)
+	playground.creator_lab.toggle_preview_window()
+	var preview_visible: bool = playground.creator_lab.is_preview_window_visible()
+	playground.creator_lab.toggle_preview_window()
+	var preview_hidden: bool = not playground.creator_lab.is_preview_window_visible()
 	playground.toggle_creator_lab()
 	var hidden: bool = not playground.creator_lab.visible
 	var focus_released: bool = playground.get_viewport().gui_get_focus_owner() == null
 	playground.toggle_creator_lab()
 	var visible_again: bool = playground.creator_lab.visible
-	return action_bound and hidden and focus_released and visible_again
+	return action_bound and preview_action_bound and preview_visible and preview_hidden and hidden and focus_released and visible_again
 
 
 func _run_input_focus_smoke(playground: Node) -> bool:

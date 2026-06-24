@@ -28,5 +28,6 @@ Thumbs.db
 .idea/
 
 # Local assistant/editor settings
-.claude/settings.local.json
+.claude/
 .qoder/
+.scratch/

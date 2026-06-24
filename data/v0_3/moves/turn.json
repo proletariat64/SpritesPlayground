@@ -1,0 +1,16 @@
+{
+	"active_window": {
+		"end_frame": 3,
+		"start_frame": 0
+	},
+	"damage": 0,
+	"events": [],
+	"frame_count": 4,
+	"hitboxes": [],
+	"hitstop_frames": 0,
+	"move_id": "turn",
+	"move_type": "locomotion",
+	"multi_hit": false,
+	"schema_version": "0.3",
+	"state_context_override": "idle"
+}
