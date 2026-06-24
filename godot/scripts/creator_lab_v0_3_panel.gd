@@ -267,7 +267,7 @@ func runtime_summary() -> Dictionary:
 
 
 func _build_ui() -> void:
-	custom_minimum_size = Vector2(608, 336)
+	custom_minimum_size = Vector2(544, 336)
 	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.055, 0.065, 0.075, 0.96)
 	panel_style.border_color = Color(0.26, 0.34, 0.42, 1.0)
@@ -303,37 +303,37 @@ func _build_ui() -> void:
 	tools.add_child(_button("Roundtrip", _on_exact_pressed))
 
 	var main := HBoxContainer.new()
-	main.custom_minimum_size = Vector2(594, 242)
+	main.custom_minimum_size = Vector2(530, 242)
 	main.add_theme_constant_override("separation", 4)
 	root.add_child(main)
 
 	var nav_box := VBoxContainer.new()
-	nav_box.custom_minimum_size = Vector2(126, 238)
+	nav_box.custom_minimum_size = Vector2(112, 238)
 	nav_box.add_theme_constant_override("separation", 2)
 	main.add_child(nav_box)
 	nav_box.add_child(_label("1 Choose", COLOR_CHARACTER))
 	navigation_list = ItemList.new()
-	navigation_list.custom_minimum_size = Vector2(126, 216)
+	navigation_list.custom_minimum_size = Vector2(112, 216)
 	navigation_list.add_theme_font_size_override("font_size", 8)
 	navigation_list.item_selected.connect(_on_navigation_selected)
 	nav_box.add_child(navigation_list)
 
 	var values_scroll := ScrollContainer.new()
-	values_scroll.custom_minimum_size = Vector2(190, 238)
+	values_scroll.custom_minimum_size = Vector2(164, 238)
 	values_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	main.add_child(values_scroll)
 	values_panel = VBoxContainer.new()
-	values_panel.custom_minimum_size = Vector2(178, 0)
+	values_panel.custom_minimum_size = Vector2(152, 0)
 	values_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	values_panel.add_theme_constant_override("separation", 2)
 	values_scroll.add_child(values_panel)
 
 	var detail_scroll := ScrollContainer.new()
-	detail_scroll.custom_minimum_size = Vector2(270, 238)
+	detail_scroll.custom_minimum_size = Vector2(244, 238)
 	detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	main.add_child(detail_scroll)
 	detail_panel = VBoxContainer.new()
-	detail_panel.custom_minimum_size = Vector2(250, 0)
+	detail_panel.custom_minimum_size = Vector2(224, 0)
 	detail_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	detail_panel.add_theme_constant_override("separation", 2)
 	detail_scroll.add_child(detail_panel)
@@ -416,10 +416,10 @@ func _build_values_panel() -> void:
 	values_panel.add_child(_label("2 Overview", _current_nav_color()))
 	match current_nav:
 		"character_template":
-			_add_value("template_id", str(template_json.get("template_id", "")))
-			_add_value("sprite_set_ref", str(template_json.get("sprite_set_ref", "")))
+			_add_value("id", str(template_json.get("template_id", "")))
+			_add_value("sprite set", str(template_json.get("sprite_set_ref", "")))
 			_add_value("hp", str(template_json.get("hp", "")))
-			_add_value("equipped", str(template_json.get("equipped_moves", []).size()))
+			_add_value("moves", str(template_json.get("equipped_moves", []).size()))
 		"character_hurtboxes":
 			for hurtbox_id in template_json.get("hurtboxes", {}).keys():
 				var rect: Dictionary = template_json["hurtboxes"][hurtbox_id]
@@ -606,7 +606,7 @@ func _build_move_detail(parent: VBoxContainer) -> void:
 
 	parent.add_child(_label("Frame events JSON", COLOR_MOVE))
 	events_text = TextEdit.new()
-	events_text.custom_minimum_size = Vector2(240, 54)
+	events_text.custom_minimum_size = Vector2(220, 54)
 	events_text.add_theme_font_size_override("font_size", 8)
 	events_text.text = JSON.stringify(move.get("events", []), "\t", true)
 	parent.add_child(events_text)
