@@ -188,6 +188,10 @@ func foot_center_world() -> Vector2:
 	return global_position + foot_collision_profile["center"]
 
 
+func depth_sort_key() -> float:
+	return foot_center_world().y
+
+
 func foot_contact_ellipse() -> Dictionary:
 	return {
 		"center": foot_center_world(),

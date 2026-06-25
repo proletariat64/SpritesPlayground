@@ -12,6 +12,10 @@ const COLOR_FOOT := Color(0.2, 1.0, 0.46, 1.0)
 const COLOR_ORIGIN := Color(0.95, 0.96, 0.98, 1.0)
 const COLOR_ACTIVE := Color(1.0, 0.66, 0.16, 1.0)
 const COLOR_INACTIVE := Color(0.34, 0.42, 0.5, 1.0)
+const COLOR_STRIP_BG := Color(0.08, 0.1, 0.12, 1.0)
+const COLOR_STRIP_INACTIVE := Color(0.22, 0.28, 0.34, 1.0)
+const COLOR_STRIP_HIT := Color(1.0, 0.36, 0.14, 0.9)
+const COLOR_STRIP_CURRENT := Color(1.0, 0.84, 0.22, 1.0)
 
 var row: Dictionary = {}
 var template: Dictionary = {}
@@ -100,6 +104,18 @@ func current_frame_active() -> bool:
 	return frame_index >= int(window.get("start_frame", 0)) and frame_index <= int(window.get("end_frame", maxi(0, frame_count() - 1)))
 
 
+func frame_strip_segment_count() -> int:
+	return frame_count()
+
+
+func frame_strip_active_index() -> int:
+	return frame_index
+
+
+func frame_has_active_hitbox(target_frame: int) -> bool:
+	return _frame_has_active_hitbox(target_frame)
+
+
 func _draw() -> void:
 	var rect := Rect2(Vector2.ZERO, size)
 	draw_rect(rect, COLOR_BG, true)
@@ -114,6 +130,7 @@ func _draw() -> void:
 		_draw_hitboxes(origin)
 	if show_foot:
 		_draw_foot(origin)
+	_draw_frame_strip()
 	_draw_header()
 
 
@@ -202,6 +219,38 @@ func _draw_origin_marker(origin: Vector2) -> void:
 	draw_circle(origin, 2.2, COLOR_ORIGIN)
 	draw_line(origin + Vector2(-6, 0), origin + Vector2(6, 0), COLOR_ORIGIN, 1.0)
 	draw_line(origin + Vector2(0, -6), origin + Vector2(0, 6), COLOR_ORIGIN, 1.0)
+
+
+func _draw_frame_strip() -> void:
+	var count := frame_count()
+	var strip := Rect2(Vector2(7, size.y - 24.0), Vector2(maxf(12.0, size.x - 14.0), 8.0))
+	draw_rect(strip, COLOR_STRIP_BG, true)
+	if count <= 0:
+		return
+	for i in count:
+		var x0 := strip.position.x + strip.size.x * float(i) / float(count)
+		var x1 := strip.position.x + strip.size.x * float(i + 1) / float(count)
+		var segment := Rect2(Vector2(x0, strip.position.y), Vector2(maxf(1.0, x1 - x0 - 1.0), strip.size.y))
+		var color := COLOR_STRIP_INACTIVE
+		if _frame_has_active_hitbox(i):
+			color = COLOR_STRIP_HIT
+		if i == frame_index:
+			color = COLOR_STRIP_CURRENT
+		draw_rect(segment, color, true)
+		if i == frame_index:
+			draw_rect(segment.grow(1.0), Color(1.0, 0.96, 0.72, 1.0), false, 1.0)
+
+
+func _frame_has_active_hitbox(target_frame: int) -> bool:
+	var move := _resolved_move()
+	if move.is_empty():
+		return false
+	for hitbox in move.get("hitboxes", []):
+		var window: Dictionary = hitbox.get("active_window", {})
+		if target_frame >= int(window.get("start_frame", 0)) and target_frame <= int(window.get("end_frame", 0)):
+			return true
+	var move_window: Dictionary = move.get("active_window", {})
+	return target_frame >= int(move_window.get("start_frame", 0)) and target_frame <= int(move_window.get("end_frame", -1))
 
 
 func _resolved_sequence() -> Array:

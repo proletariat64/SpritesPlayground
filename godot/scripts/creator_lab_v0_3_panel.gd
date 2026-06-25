@@ -23,6 +23,10 @@ const PREVIEW_FRAME_SECONDS := 1.0 / 12.0
 
 signal bind_player_requested
 signal bind_dummy_requested
+signal add_npc_requested(template_id: String)
+signal remove_selected_npc_requested
+signal bind_npc_requested(index: int)
+signal npc_template_selected(template_id: String)
 
 var template_json: Dictionary = {}
 var sprite_set_json: Dictionary = {}
@@ -47,14 +51,23 @@ var preview_show_hurtboxes: bool = true
 var preview_show_hitboxes: bool = true
 var preview_show_foot: bool = true
 var _preview_elapsed: float = 0.0
+var npc_template_id: String = "combat_gray_s64"
+var npc_count_current: int = 1
+var npc_limit: int = 10
+var selected_npc_index: int = 0
+var npc_status: String = ""
 
 var template_select: OptionButton
+var npc_template_select: OptionButton
+var npc_count_label: Label
+var npc_status_label: Label
 var move_select: OptionButton
 var sprite_set_select: OptionButton
 var coverage_list: ItemList
 var status_label: Label
 var runtime_label: Label
 var preview_frame_label: Label
+var preview_frame_slider: HSlider
 var action_preview_control: Control
 var floating_preview_window: PanelContainer
 var floating_preview_control: Control
@@ -176,6 +189,42 @@ func select_action(action_id: String) -> void:
 	_refresh_fields()
 
 
+func set_npc_summary(count: int, limit: int = 10, selected_index: int = 0, status: String = "") -> void:
+	npc_limit = maxi(1, limit)
+	npc_count_current = clampi(count, 1, npc_limit)
+	selected_npc_index = clampi(selected_index, 0, maxi(0, npc_count_current - 1))
+	npc_status = status
+	_refresh_npc_controls()
+	if current_nav == "instance_binding":
+		_refresh_three_panel()
+
+
+func update_npc_summary(summary: Dictionary) -> void:
+	var template_id := str(summary.get("npc_template_id", npc_template_id))
+	if not template_id.is_empty():
+		npc_template_id = template_id
+	var summary_status := str(summary.get("npc_status", summary.get("status", npc_status)))
+	set_npc_summary(
+		int(summary.get("npc_count", npc_count_current)),
+		int(summary.get("npc_limit", npc_limit)),
+		int(summary.get("selected_npc_index", selected_npc_index)),
+		summary_status
+	)
+	_refresh_npc_controls()
+
+
+func update_playground_summary(summary: Dictionary) -> void:
+	update_npc_summary(summary)
+
+
+func selected_npc_template_id() -> String:
+	return npc_template_id
+
+
+func selected_npc_bind_index() -> int:
+	return selected_npc_index
+
+
 func preview_play() -> void:
 	if preview_frame >= maxi(0, _preview_frame_count() - 1):
 		preview_frame = 0
@@ -195,10 +244,36 @@ func preview_step_forward() -> void:
 	_refresh_action_preview()
 
 
-func preview_reset() -> void:
+func preview_step_backward() -> void:
+	preview_playing = false
+	preview_frame = maxi(0, preview_frame - 1)
+	_refresh_action_preview()
+
+
+func preview_first() -> void:
 	preview_playing = false
 	preview_frame = 0
 	_refresh_action_preview()
+
+
+func preview_last() -> void:
+	preview_playing = false
+	preview_frame = maxi(0, _preview_frame_count() - 1)
+	_refresh_action_preview()
+
+
+func set_preview_frame(frame_index: int) -> void:
+	preview_playing = false
+	preview_frame = clampi(frame_index, 0, maxi(0, _preview_frame_count() - 1))
+	_refresh_action_preview()
+
+
+func preview_frame_count() -> int:
+	return _preview_frame_count()
+
+
+func preview_reset() -> void:
+	preview_first()
 
 
 func set_preview_speed(value: float) -> void:
@@ -580,6 +655,9 @@ func _refresh_three_panel() -> void:
 
 
 func _reset_editor_refs() -> void:
+	npc_template_select = null
+	npc_count_label = null
+	npc_status_label = null
 	move_select = null
 	sprite_set_select = null
 	coverage_list = null
@@ -600,6 +678,7 @@ func _reset_editor_refs() -> void:
 	hitbox_inputs = {}
 	events_text = null
 	runtime_label = null
+	preview_frame_slider = null
 	move_section_list = null
 
 
@@ -615,6 +694,11 @@ func _build_values_panel() -> void:
 			_add_value("frame", str(bound_frame))
 			_add_value("hp", _bound_or_none(bound_hp))
 			_add_value("mode", _bound_or_none(bound_control_mode))
+			_add_value("npcs", "%d/%d" % [npc_count_current, npc_limit])
+			_add_value("npc selected", str(selected_npc_index + 1))
+			_add_value("npc template", npc_template_id)
+			if not npc_status.is_empty():
+				_add_value("npc status", npc_status)
 		"action_coverage":
 			var summary: Dictionary = coverage.get("summary", {})
 			_add_value("required", str(coverage.get("rows", []).size()))
@@ -700,6 +784,7 @@ func _build_instance_detail(parent: VBoxContainer) -> void:
 	row.add_child(_button("Bind P", _on_bind_player_pressed, 48))
 	row.add_child(_button("Bind D", _on_bind_dummy_pressed, 48))
 	row.add_child(_button("Apply Bound", _on_apply_bound_pressed, 74))
+	_build_npc_controls(parent)
 	_add_detail_value(parent, "instance", _bound_or_none(bound_instance_id), COLOR_INSTANCE)
 	_add_detail_value(parent, "template", _bound_or_none(bound_template_id), COLOR_INSTANCE)
 	_add_detail_value(parent, "sprite set", _bound_or_none(bound_sprite_set_id), COLOR_INSTANCE)
@@ -708,6 +793,34 @@ func _build_instance_detail(parent: VBoxContainer) -> void:
 	_add_detail_value(parent, "frame", str(bound_frame), COLOR_INSTANCE)
 	_add_detail_value(parent, "hp", _bound_or_none(bound_hp), COLOR_INSTANCE)
 	_add_detail_value(parent, "mode", _bound_or_none(bound_control_mode), COLOR_INSTANCE)
+
+
+func _build_npc_controls(parent: VBoxContainer) -> void:
+	parent.add_child(_label("NPC controls", COLOR_RUNTIME))
+	var spawn_row := HBoxContainer.new()
+	spawn_row.add_theme_constant_override("separation", 3)
+	parent.add_child(spawn_row)
+	npc_template_select = OptionButton.new()
+	_style_control(npc_template_select, 128, 18)
+	_populate_npc_template_select()
+	npc_template_select.item_selected.connect(_on_npc_template_selected)
+	spawn_row.add_child(npc_template_select)
+	spawn_row.add_child(_button("Add NPC", _on_add_npc_pressed, 58))
+	spawn_row.add_child(_button("Remove", _on_remove_selected_npc_pressed, 58))
+
+	var bind_row := HBoxContainer.new()
+	bind_row.add_theme_constant_override("separation", 3)
+	parent.add_child(bind_row)
+	bind_row.add_child(_button("Prev NPC", _on_npc_previous_pressed, 58))
+	bind_row.add_child(_button("Bind NPC", _on_bind_npc_pressed, 58))
+	bind_row.add_child(_button("Next NPC", _on_npc_next_pressed, 58))
+
+	npc_count_label = _label("", COLOR_RUNTIME)
+	parent.add_child(npc_count_label)
+	npc_status_label = _label("", COLOR_HINT)
+	npc_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	parent.add_child(npc_status_label)
+	_refresh_npc_controls()
 
 
 func _build_action_coverage_detail(parent: VBoxContainer) -> void:
@@ -752,10 +865,28 @@ func _build_action_preview_detail(parent: VBoxContainer) -> void:
 	var controls := HBoxContainer.new()
 	controls.add_theme_constant_override("separation", 3)
 	parent.add_child(controls)
-	controls.add_child(_button("Play", _on_preview_play_pressed, 44))
-	controls.add_child(_button("Pause", _on_preview_pause_pressed, 48))
-	controls.add_child(_button("+1", _on_preview_step_pressed, 34))
-	controls.add_child(_button("Reset", _on_preview_reset_pressed, 48))
+	controls.add_child(_button("First", _on_preview_first_pressed, 44))
+	controls.add_child(_button("Prev", _on_preview_step_back_pressed, 38))
+	controls.add_child(_button("Play", _on_preview_play_pressed, 42))
+	controls.add_child(_button("Pause", _on_preview_pause_pressed, 44))
+	controls.add_child(_button("Next", _on_preview_step_pressed, 40))
+	controls.add_child(_button("Last", _on_preview_last_pressed, 38))
+
+	var scrub_row := HBoxContainer.new()
+	scrub_row.add_theme_constant_override("separation", 4)
+	parent.add_child(scrub_row)
+	scrub_row.add_child(_compact_label("frame", COLOR_ACTION))
+	preview_frame_slider = HSlider.new()
+	preview_frame_slider.custom_minimum_size = Vector2(184, 18)
+	preview_frame_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	preview_frame_slider.min_value = 0
+	preview_frame_slider.max_value = maxi(0, _preview_frame_count() - 1)
+	preview_frame_slider.step = 1
+	preview_frame_slider.value = preview_frame
+	preview_frame_slider.focus_mode = Control.FOCUS_NONE
+	preview_frame_slider.value_changed.connect(_on_preview_frame_slider_changed)
+	scrub_row.add_child(preview_frame_slider)
+	scrub_row.add_child(_button("Reset", _on_preview_reset_pressed, 42))
 
 	var speed_row := HBoxContainer.new()
 	speed_row.add_theme_constant_override("separation", 3)
@@ -1120,6 +1251,37 @@ func _preview_toggle(text: String, pressed: bool, callback: Callable) -> CheckBo
 	return toggle
 
 
+func _populate_npc_template_select() -> void:
+	if npc_template_select == null:
+		return
+	npc_template_select.clear()
+	var ids := DataStore.list_template_ids()
+	if ids.is_empty():
+		return
+	if npc_template_id.is_empty() or not ids.has(npc_template_id):
+		npc_template_id = str(ids[0])
+	for id in ids:
+		npc_template_select.add_item(str(id))
+		if str(id) == npc_template_id:
+			npc_template_select.select(npc_template_select.item_count - 1)
+
+
+func _refresh_npc_controls() -> void:
+	if npc_template_select != null:
+		_populate_npc_template_select()
+	if npc_count_label != null:
+		npc_count_label.text = "NPCs: %d / %d  selected: %d" % [npc_count_current, npc_limit, selected_npc_index + 1]
+	if npc_status_label != null:
+		npc_status_label.text = "status: %s" % (npc_status if not npc_status.is_empty() else "ready")
+		npc_status_label.add_theme_color_override("font_color", _status_color(npc_status))
+
+
+func _set_npc_status(text: String) -> void:
+	npc_status = text
+	_refresh_npc_controls()
+	_set_status(text)
+
+
 func _rect_summary(rect: Dictionary) -> String:
 	return "x:%s y:%s w:%s h:%s" % [rect.get("x", 0), rect.get("y", 0), rect.get("w", 0), rect.get("h", 0)]
 
@@ -1175,6 +1337,9 @@ func _refresh_action_preview() -> void:
 		preview_frame_label.text = status_text
 	if floating_preview_frame_label != null:
 		floating_preview_frame_label.text = status_text
+	if preview_frame_slider != null:
+		preview_frame_slider.max_value = maxi(0, _preview_frame_count() - 1)
+		preview_frame_slider.set_value_no_signal(preview_frame)
 	_apply_preview_to_control(action_preview_control)
 	_apply_preview_to_control(floating_preview_control)
 
@@ -1229,6 +1394,8 @@ func _refresh_options() -> void:
 			sprite_set_select.add_item(id)
 			if id == str(template_json.get("sprite_set_ref", "")):
 				sprite_set_select.select(sprite_set_select.item_count - 1)
+	if npc_template_select != null:
+		_populate_npc_template_select()
 	_refresh_navigation()
 
 
@@ -1480,7 +1647,7 @@ func _status_color(text: String) -> Color:
 	var lower := text.to_lower()
 	if lower.contains("fail") or lower.contains("invalid") or lower.contains("missing"):
 		return COLOR_FAIL
-	if lower.contains("warn") or lower.contains("placeholder") or lower.contains("bound"):
+	if lower.contains("warn") or lower.contains("placeholder") or lower.contains("bound") or lower.contains("blocked") or lower.contains("minimum") or lower.contains("maximum"):
 		return COLOR_WARN
 	if lower.contains("pass") or lower.contains("saved") or lower.contains("copied"):
 		return COLOR_PASS
@@ -1615,6 +1782,50 @@ func _on_bind_dummy_pressed() -> void:
 	bind_dummy_requested.emit()
 
 
+func _on_npc_template_selected(index: int) -> void:
+	if npc_template_select == null or index < 0 or index >= npc_template_select.item_count:
+		return
+	npc_template_id = npc_template_select.get_item_text(index)
+	npc_template_selected.emit(npc_template_id)
+	_set_npc_status("NPC template selected: %s" % npc_template_id)
+
+
+func _on_add_npc_pressed() -> void:
+	if npc_count_current >= npc_limit:
+		_set_npc_status("NPC add blocked: maximum %d" % npc_limit)
+		return
+	add_npc_requested.emit(npc_template_id)
+	_set_npc_status("add NPC requested: %s" % npc_template_id)
+
+
+func _on_remove_selected_npc_pressed() -> void:
+	if npc_count_current <= 1:
+		_set_npc_status("NPC remove blocked: minimum 1")
+		return
+	remove_selected_npc_requested.emit()
+	_set_npc_status("remove NPC requested: %d" % (selected_npc_index + 1))
+
+
+func _on_npc_previous_pressed() -> void:
+	_select_npc_index(selected_npc_index - 1, true)
+
+
+func _on_npc_next_pressed() -> void:
+	_select_npc_index(selected_npc_index + 1, true)
+
+
+func _on_bind_npc_pressed() -> void:
+	_select_npc_index(selected_npc_index, true)
+
+
+func _select_npc_index(index: int, emit_request: bool) -> void:
+	selected_npc_index = clampi(index, 0, maxi(0, npc_count_current - 1))
+	_refresh_npc_controls()
+	if emit_request:
+		bind_npc_requested.emit(selected_npc_index)
+		_set_npc_status("bind NPC requested: %d" % (selected_npc_index + 1))
+
+
 func _on_apply_bound_pressed() -> void:
 	apply_to_bound_instance()
 
@@ -1663,8 +1874,24 @@ func _on_preview_pause_pressed() -> void:
 	preview_pause()
 
 
+func _on_preview_first_pressed() -> void:
+	preview_first()
+
+
+func _on_preview_step_back_pressed() -> void:
+	preview_step_backward()
+
+
 func _on_preview_step_pressed() -> void:
 	preview_step_forward()
+
+
+func _on_preview_last_pressed() -> void:
+	preview_last()
+
+
+func _on_preview_frame_slider_changed(value: float) -> void:
+	set_preview_frame(int(round(value)))
 
 
 func _on_preview_reset_pressed() -> void:

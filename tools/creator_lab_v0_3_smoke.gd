@@ -39,6 +39,7 @@ func _run() -> void:
 	panel._on_check_pressed()
 	errors.append_array(_expect(str(panel.status_label.text).contains("validation FAIL"), "check button validates broken references"))
 	panel.set_sprite_set_ref(valid_sprite_ref)
+	errors.append_array(_run_npc_ui_smoke(panel))
 
 	var original := DataStore.load_template("combat_gray_s64")
 	var copy_id := "combat_gray_s64_v03_smoke_copy"
@@ -277,6 +278,66 @@ func _run_catalog_and_coverage_smoke(panel: PanelContainer) -> Array:
 	return errors
 
 
+func _run_npc_ui_smoke(panel: PanelContainer) -> Array:
+	var errors: Array = []
+	var add_requests: Array = []
+	var remove_requests: Array = []
+	var bind_requests: Array = []
+	var template_requests: Array = []
+	panel.add_npc_requested.connect(func(template_id: String) -> void:
+		add_requests.append(template_id)
+	)
+	panel.remove_selected_npc_requested.connect(func() -> void:
+		remove_requests.append(true)
+	)
+	panel.bind_npc_requested.connect(func(index: int) -> void:
+		bind_requests.append(index)
+	)
+	panel.npc_template_selected.connect(func(template_id: String) -> void:
+		template_requests.append(template_id)
+	)
+
+	panel.current_nav = "instance_binding"
+	panel.update_npc_summary({
+		"npc_count": 1,
+		"npc_limit": 10,
+		"selected_npc_index": 0,
+		"npc_template_id": "combat_gray_s64",
+		"npc_status": "ready",
+	})
+	panel._refresh_fields()
+	errors.append_array(_expect(panel.npc_template_select != null, "NPC template selector exists"))
+	errors.append_array(_expect(panel.npc_template_select.item_count >= 1, "NPC template selector has templates"))
+	errors.append_array(_expect(str(panel.selected_npc_template_id()) == "combat_gray_s64", "NPC template defaults to combat_gray_s64"))
+	errors.append_array(_expect(str(panel.npc_count_label.text).contains("NPCs: 1 / 10"), "NPC count label shows min count"))
+	panel._on_npc_template_selected(0)
+	errors.append_array(_expect(template_requests.size() == 1, "NPC template selection emits signal"))
+	panel._on_add_npc_pressed()
+	errors.append_array(_expect(add_requests.size() == 1, "Add NPC emits template request"))
+	errors.append_array(_expect(str(add_requests[0]) == panel.selected_npc_template_id(), "Add NPC emits selected template id"))
+	panel.update_npc_summary({"npc_count": 10, "npc_limit": 10, "selected_npc_index": 9})
+	panel._on_add_npc_pressed()
+	errors.append_array(_expect(add_requests.size() == 1, "Add NPC blocks at max"))
+	errors.append_array(_expect(str(panel.npc_status).contains("maximum"), "Add NPC max status visible"))
+	panel.update_npc_summary({"npc_count": 2, "npc_limit": 10, "selected_npc_index": 1})
+	panel._on_remove_selected_npc_pressed()
+	errors.append_array(_expect(remove_requests.size() == 1, "Remove selected NPC emits request above min"))
+	panel.update_npc_summary({"npc_count": 1, "npc_limit": 10, "selected_npc_index": 0})
+	panel._on_remove_selected_npc_pressed()
+	errors.append_array(_expect(remove_requests.size() == 1, "Remove selected NPC blocks at min"))
+	errors.append_array(_expect(str(panel.npc_status).contains("minimum"), "Remove NPC min status visible"))
+	panel.update_npc_summary({"npc_count": 3, "npc_limit": 10, "selected_npc_index": 0})
+	panel._on_npc_next_pressed()
+	errors.append_array(_expect(int(panel.selected_npc_bind_index()) == 1, "Next NPC advances selected index"))
+	errors.append_array(_expect(bind_requests.back() == 1, "Next NPC emits bind request"))
+	panel._on_npc_previous_pressed()
+	errors.append_array(_expect(int(panel.selected_npc_bind_index()) == 0, "Prev NPC decreases selected index"))
+	errors.append_array(_expect(bind_requests.back() == 0, "Prev NPC emits bind request"))
+	panel._on_bind_npc_pressed()
+	errors.append_array(_expect(bind_requests.back() == 0, "Bind NPC emits selected index"))
+	return errors
+
+
 func _run_preview_smoke(panel: PanelContainer) -> Array:
 	var errors: Array = []
 	panel.current_nav = "character_foot"
@@ -289,13 +350,41 @@ func _run_preview_smoke(panel: PanelContainer) -> Array:
 	panel.current_nav = "action_preview"
 	panel._refresh_fields()
 	errors.append_array(_expect(panel.action_preview_control != null, "preview control exists"))
+	errors.append_array(_expect(panel.preview_frame_slider != null, "preview frame scrubber exists"))
+	errors.append_array(_expect(panel.preview_frame_count() > 1, "preview exposes multi-frame count"))
 	errors.append_array(_expect(panel.preview_frame == 0, "preview starts at frame zero"))
 	errors.append_array(_expect(str(panel.action_preview_control.current_render_state()) == "PLACEHOLDER", "preview renders placeholder frame"))
 	errors.append_array(_expect(not bool(panel.action_preview_control.current_frame_active()), "preview inactive frame state"))
 	panel.preview_step_forward()
 	errors.append_array(_expect(panel.preview_frame == 1, "preview step forward"))
+	panel.preview_step_backward()
+	errors.append_array(_expect(panel.preview_frame == 0, "preview step backward"))
+	panel.preview_step_forward()
 	panel.preview_step_forward()
 	errors.append_array(_expect(bool(panel.action_preview_control.current_frame_active()), "preview active frame state"))
+	panel.preview_last()
+	errors.append_array(_expect(panel.preview_frame == panel.preview_frame_count() - 1, "preview last frame"))
+	panel.preview_first()
+	errors.append_array(_expect(panel.preview_frame == 0, "preview first frame"))
+	panel.set_preview_frame(3)
+	errors.append_array(_expect(panel.preview_frame == 3, "preview scrub selects frame"))
+	errors.append_array(_expect(int(panel.preview_frame_slider.value) == 3, "preview scrubber tracks selected frame"))
+	panel._on_preview_frame_slider_changed(4.0)
+	errors.append_array(_expect(panel.preview_frame == 4, "preview slider handler selects frame"))
+	panel.set_preview_frame(999)
+	errors.append_array(_expect(panel.preview_frame == panel.preview_frame_count() - 1, "preview set frame clamps high"))
+	panel.set_preview_frame(-10)
+	errors.append_array(_expect(panel.preview_frame == 0, "preview set frame clamps low"))
+	errors.append_array(_expect(int(panel.action_preview_control.frame_strip_segment_count()) == panel.preview_frame_count(), "preview frame strip matches frame count"))
+	errors.append_array(_expect(int(panel.action_preview_control.frame_strip_active_index()) == panel.preview_frame, "preview frame strip highlights active frame"))
+	panel.preview_play()
+	panel._process(0.2)
+	errors.append_array(_expect(panel.preview_frame > 0, "preview play advances multi-frame action"))
+	panel.preview_pause()
+	var paused_frame: int = panel.preview_frame
+	panel._process(0.4)
+	errors.append_array(_expect(panel.preview_frame == paused_frame, "preview pause freezes frame"))
+	errors.append_array(_expect(int(panel.action_preview_control.frame_index) == int(panel.floating_preview_control.frame_index), "embedded and floating preview share selected frame"))
 	panel.preview_reset()
 	errors.append_array(_expect(panel.preview_frame == 0, "preview reset"))
 	panel.set_preview_speed(0.5)

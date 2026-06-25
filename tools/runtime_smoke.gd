@@ -24,7 +24,12 @@ func _run() -> void:
 	var foot_ok: bool = await _run_foot_clamp_smoke(playground)
 	var foot_spacing_ok: bool = _run_foot_spacing_smoke(playground)
 	var foot_spacing_wall_ok: bool = _run_foot_spacing_wall_clamp_smoke(playground)
-	if punch_ok and kick_ok and lethal_ok and non_goal_ok and ai_ok and creator_ok and focus_ok and foot_ok and foot_spacing_ok and foot_spacing_wall_ok:
+	var npc_collection_ok: bool = await _run_npc_collection_smoke(playground)
+	var all_spacing_ok: bool = _run_all_character_pairwise_spacing_smoke(playground)
+	var all_hits_ok: bool = await _run_all_character_pairwise_hits_smoke(playground)
+	var depth_ok: bool = _run_depth_order_smoke(playground)
+	var reset_all_ok: bool = _run_reset_all_characters_smoke(playground)
+	if punch_ok and kick_ok and lethal_ok and non_goal_ok and ai_ok and creator_ok and focus_ok and foot_ok and foot_spacing_ok and foot_spacing_wall_ok and npc_collection_ok and all_spacing_ok and all_hits_ok and depth_ok and reset_all_ok:
 		print("runtime_smoke=PASS")
 		quit(0)
 	else:
@@ -321,6 +326,223 @@ func _run_foot_spacing_wall_clamp_smoke(playground: Node) -> bool:
 	return ok
 
 
+func _run_npc_collection_smoke(playground: Node) -> bool:
+	var initial_dummy: Node2D = playground.dummy
+	var initial_ok: bool = (
+		playground.npc_count() == 1
+		and playground.all_characters().size() == 2
+		and playground.dummy == initial_dummy
+		and str(playground.dummy.instance_id) == "test_dummy_1"
+	)
+
+	var max_count: int = playground.MAX_NPC_COUNT
+	var min_count: int = playground.MIN_NPC_COUNT
+	var ids := {
+		str(playground.player.instance_id): true,
+		str(playground.dummy.instance_id): true,
+	}
+	var add_ok := true
+	while playground.npc_count() < max_count:
+		var npc: Node2D = playground.add_npc("combat_gray_s64")
+		if npc == null:
+			add_ok = false
+			break
+		var npc_id := str(npc.instance_id)
+		if ids.has(npc_id) or not npc_id.begins_with("npc_"):
+			add_ok = false
+		ids[npc_id] = true
+	await process_frame
+
+	var count_at_max: int = playground.npc_count()
+	var overflow_npc: Node2D = playground.add_npc("combat_gray_s64")
+	var max_status := str(playground.playground_status)
+	var max_blocked: bool = (
+		overflow_npc == null
+		and playground.npc_count() == max_count
+		and count_at_max == max_count
+		and (max_status.contains("maximum") or max_status.contains("limit"))
+	)
+
+	playground.select_npc(playground.npc_count() - 1)
+	var removed_selected_ok: bool = playground.remove_selected_npc() and playground.npc_count() == max_count - 1
+	var remove_ok := true
+	while playground.npc_count() > min_count:
+		var target: Node2D = playground.npcs[playground.npc_count() - 1]
+		if not playground.remove_npc(target):
+			remove_ok = false
+			break
+	await process_frame
+
+	var minimum_count_before: int = playground.npc_count()
+	var min_remove_blocked: bool = not playground.remove_npc(playground.dummy)
+	var min_status := str(playground.playground_status)
+	var min_blocked: bool = (
+		min_remove_blocked
+		and playground.npc_count() == min_count
+		and minimum_count_before == min_count
+		and (min_status.contains("minimum") or min_status.contains("least"))
+	)
+	var alias_ok: bool = playground.dummy == initial_dummy and is_instance_valid(playground.dummy)
+	playground.reset_playground()
+
+	var ok: bool = initial_ok and add_ok and max_blocked and removed_selected_ok and remove_ok and min_blocked and alias_ok
+	if not ok:
+		print("npc_collection_smoke initial=%s add=%s max_blocked=%s removed_selected=%s remove=%s min_blocked=%s alias=%s count=%s" % [
+			initial_ok,
+			add_ok,
+			max_blocked,
+			removed_selected_ok,
+			remove_ok,
+			min_blocked,
+			alias_ok,
+			playground.npc_count(),
+		])
+	return ok
+
+
+func _run_all_character_pairwise_spacing_smoke(playground: Node) -> bool:
+	if not _ensure_npc_count(playground, 4):
+		return false
+	var live_characters: Array = playground.all_characters()
+	var original_profiles: Array = []
+	var original_positions: Array = []
+	for character in live_characters:
+		original_profiles.append(character.foot_collision_profile.duplicate(true))
+		original_positions.append(character.position)
+
+	for character in live_characters:
+		character.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2(12, 6)}
+	_cluster_characters(live_characters)
+	playground._resolve_all_foot_spacing()
+	var small_min_distance: float = _minimum_pair_distance(live_characters)
+
+	for character in live_characters:
+		character.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2(12, 6)}
+	var expanded_npc: Node2D = playground.npcs[1]
+	expanded_npc.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2(36, 6)}
+	_cluster_characters(live_characters)
+	playground._resolve_all_foot_spacing()
+	var expanded_min_distance: float = _minimum_distance_to(expanded_npc, live_characters)
+
+	for index in live_characters.size():
+		live_characters[index].foot_collision_profile = original_profiles[index]
+		live_characters[index].reset_runtime(original_positions[index])
+	_cleanup_npcs_to_min(playground)
+	playground.reset_playground()
+
+	var ok: bool = expanded_min_distance > small_min_distance
+	if not ok:
+		print("all_character_pairwise_spacing_smoke small_min=%s expanded_min=%s count=%s" % [
+			small_min_distance,
+			expanded_min_distance,
+			live_characters.size(),
+		])
+	return ok
+
+
+func _run_all_character_pairwise_hits_smoke(playground: Node) -> bool:
+	if not _ensure_npc_count(playground, 4):
+		return false
+	await process_frame
+
+	playground.player.reset_runtime(Vector2(245, 245))
+	for npc in playground.npcs:
+		npc.reset_runtime(_target_position_for("basic_punch"))
+	playground.player.request_attack("basic_punch")
+	for _frame in 8:
+		playground.player.state_machine.tick(1.0 / 60.0, Vector2.ZERO)
+		playground._process_all_hits()
+
+	var player_hit_all := true
+	for npc in playground.npcs:
+		if npc.current_hp != npc.max_hp - 8:
+			player_hit_all = false
+
+	playground.reset_playground()
+	var npc_attacker: Node2D = playground.npcs[0]
+	npc_attacker.reset_runtime(Vector2(245, 245))
+	playground.player.reset_runtime(_target_position_for("basic_punch"))
+	npc_attacker.request_attack("basic_punch")
+	for _frame in 8:
+		npc_attacker.state_machine.tick(1.0 / 60.0, Vector2.ZERO)
+		playground._process_all_hits()
+	var npc_hit_player: bool = playground.player.current_hp == playground.player.max_hp - 8
+
+	_cleanup_npcs_to_min(playground)
+	playground.reset_playground()
+	var ok: bool = player_hit_all and npc_hit_player
+	if not ok:
+		print("all_character_pairwise_hits_smoke player_hit_all=%s npc_hit_player=%s player_hp=%s" % [
+			player_hit_all,
+			npc_hit_player,
+			playground.player.current_hp,
+		])
+	return ok
+
+
+func _run_depth_order_smoke(playground: Node) -> bool:
+	var player: Node2D = playground.player
+	var dummy: Node2D = playground.dummy
+	var original_player_position: Vector2 = player.position
+	var original_dummy_position: Vector2 = dummy.position
+	var original_player_jump: float = player.state_machine.visual_jump_offset
+	var original_dummy_jump: float = dummy.state_machine.visual_jump_offset
+
+	player.reset_runtime(Vector2(260, 250))
+	dummy.reset_runtime(Vector2(260, 210))
+	playground._update_character_depth_order()
+	var lower_player_front: bool = player.z_index > dummy.z_index
+
+	player.reset_runtime(Vector2(260, 190))
+	dummy.reset_runtime(Vector2(260, 250))
+	playground._update_character_depth_order()
+	var swapped_dummy_front: bool = dummy.z_index > player.z_index
+
+	player.reset_runtime(Vector2(260, 250))
+	dummy.reset_runtime(Vector2(260, 210))
+	player.state_machine.visual_jump_offset = -120.0
+	playground._update_character_depth_order()
+	var jump_ignored: bool = player.z_index > dummy.z_index
+
+	player.state_machine.visual_jump_offset = original_player_jump
+	dummy.state_machine.visual_jump_offset = original_dummy_jump
+	player.reset_runtime(original_player_position)
+	dummy.reset_runtime(original_dummy_position)
+	playground._update_character_depth_order()
+
+	var ok: bool = lower_player_front and swapped_dummy_front and jump_ignored
+	if not ok:
+		print("depth_order_smoke lower_player=%s swapped_dummy=%s jump_ignored=%s pz=%s dz=%s" % [
+			lower_player_front,
+			swapped_dummy_front,
+			jump_ignored,
+			player.z_index,
+			dummy.z_index,
+		])
+	return ok
+
+
+func _run_reset_all_characters_smoke(playground: Node) -> bool:
+	if not _ensure_npc_count(playground, 3):
+		return false
+	for index in playground.all_characters().size():
+		var character: Node2D = playground.all_characters()[index]
+		character.current_hp = maxi(1, character.max_hp - 17)
+		character.position = Vector2(900 + index * 15, 900)
+	playground.player.control_mode = "ai"
+	playground.reset_playground()
+
+	var all_reset: bool = playground.player.control_mode == "manual"
+	for character in playground.all_characters():
+		if character.current_hp != character.max_hp or not _foot_inside_arena(playground, character):
+			all_reset = false
+	_cleanup_npcs_to_min(playground)
+	playground.reset_playground()
+	if not all_reset:
+		print("reset_all_characters_smoke failed")
+	return all_reset
+
+
 func _foot_inside_arena(playground: Node, character: Node2D) -> bool:
 	var foot: Vector2 = character.foot_center_world()
 	var rel: Vector2 = foot - playground.arena_center
@@ -384,3 +606,42 @@ func _target_position_for(move_id: String) -> Vector2:
 	if move_id == "basic_kick":
 		return Vector2(282, 245)
 	return Vector2(282, 245)
+
+
+func _ensure_npc_count(playground: Node, expected_count: int) -> bool:
+	while playground.npc_count() < expected_count:
+		if playground.add_npc("combat_gray_s64") == null:
+			return false
+	while playground.npc_count() > expected_count:
+		var target: Node2D = playground.npcs[playground.npc_count() - 1]
+		if not playground.remove_npc(target):
+			return false
+	return playground.npc_count() == expected_count
+
+
+func _cleanup_npcs_to_min(playground: Node) -> void:
+	_ensure_npc_count(playground, playground.MIN_NPC_COUNT)
+
+
+func _cluster_characters(live_characters: Array) -> void:
+	for index in live_characters.size():
+		live_characters[index].reset_runtime(Vector2(320 + float(index) * 2.0, 205))
+
+
+func _minimum_pair_distance(live_characters: Array) -> float:
+	var minimum := INF
+	for left_index in live_characters.size():
+		for right_index in range(left_index + 1, live_characters.size()):
+			var left: Node2D = live_characters[left_index]
+			var right: Node2D = live_characters[right_index]
+			minimum = minf(minimum, left.foot_center_world().distance_to(right.foot_center_world()))
+	return minimum
+
+
+func _minimum_distance_to(reference_character: Node2D, live_characters: Array) -> float:
+	var minimum := INF
+	for character in live_characters:
+		if character == reference_character:
+			continue
+		minimum = minf(minimum, reference_character.foot_center_world().distance_to(character.foot_center_world()))
+	return minimum
