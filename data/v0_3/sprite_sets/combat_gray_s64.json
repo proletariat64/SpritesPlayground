@@ -1,5 +1,10 @@
 {
 	"animation_clips": {
+		"basic_kick": {
+			"clip_id": "basic_kick",
+			"frame_sequence_ref": "basic_kick",
+			"loop": false
+		},
 		"basic_punch": {
 			"clip_id": "basic_punch",
 			"frame_sequence_ref": "basic_punch",
@@ -10,9 +15,44 @@
 			"frame_sequence_ref": "dash",
 			"loop": false
 		},
+		"dash_attack": {
+			"clip_id": "dash_attack",
+			"frame_sequence_ref": "dash_attack",
+			"loop": false
+		},
+		"dead": {
+			"clip_id": "dead",
+			"frame_sequence_ref": "dead",
+			"loop": false
+		},
+		"get_up": {
+			"clip_id": "get_up",
+			"frame_sequence_ref": "get_up",
+			"loop": false
+		},
+		"guard": {
+			"clip_id": "guard",
+			"frame_sequence_ref": "guard",
+			"loop": false
+		},
+		"heavy_punch": {
+			"clip_id": "heavy_punch",
+			"frame_sequence_ref": "heavy_punch",
+			"loop": false
+		},
 		"hurt": {
 			"clip_id": "hurt",
 			"frame_sequence_ref": "hurt",
+			"loop": false
+		},
+		"hurt_heavy": {
+			"clip_id": "hurt_heavy",
+			"frame_sequence_ref": "hurt_heavy",
+			"loop": false
+		},
+		"hurt_light": {
+			"clip_id": "hurt_light",
+			"frame_sequence_ref": "hurt_light",
 			"loop": false
 		},
 		"idle": {
@@ -25,13 +65,73 @@
 			"frame_sequence_ref": "jump",
 			"loop": false
 		},
+		"jump_air": {
+			"clip_id": "jump_air",
+			"frame_sequence_ref": "jump_air",
+			"loop": false
+		},
+		"jump_attack": {
+			"clip_id": "jump_attack",
+			"frame_sequence_ref": "jump_attack",
+			"loop": false
+		},
+		"jump_land": {
+			"clip_id": "jump_land",
+			"frame_sequence_ref": "jump_land",
+			"loop": false
+		},
+		"jump_start": {
+			"clip_id": "jump_start",
+			"frame_sequence_ref": "jump_start",
+			"loop": false
+		},
+		"knockdown": {
+			"clip_id": "knockdown",
+			"frame_sequence_ref": "knockdown",
+			"loop": false
+		},
+		"round_kick": {
+			"clip_id": "round_kick",
+			"frame_sequence_ref": "round_kick",
+			"loop": false
+		},
+		"run": {
+			"clip_id": "run",
+			"frame_sequence_ref": "run",
+			"loop": true
+		},
+		"stun": {
+			"clip_id": "stun",
+			"frame_sequence_ref": "stun",
+			"loop": false
+		},
+		"turn": {
+			"clip_id": "turn",
+			"frame_sequence_ref": "turn",
+			"loop": false
+		},
 		"walk": {
 			"clip_id": "walk",
 			"frame_sequence_ref": "walk",
 			"loop": true
+		},
+		"win_pose": {
+			"clip_id": "win_pose",
+			"frame_sequence_ref": "win_pose",
+			"loop": false
 		}
 	},
 	"frame_sequences": {
+		"basic_kick": [
+			"placeholder://combat_gray_s64/basic_kick/frame_000.png",
+			"placeholder://combat_gray_s64/basic_kick/frame_001.png",
+			"placeholder://combat_gray_s64/basic_kick/frame_002.png",
+			"placeholder://combat_gray_s64/basic_kick/frame_003.png",
+			"placeholder://combat_gray_s64/basic_kick/frame_004.png",
+			"placeholder://combat_gray_s64/basic_kick/frame_005.png",
+			"placeholder://combat_gray_s64/basic_kick/frame_006.png",
+			"placeholder://combat_gray_s64/basic_kick/frame_007.png"
+		],
 		"basic_punch": [
 			"placeholder://combat_gray_s64/basic_punch/frame_000.png",
 			"placeholder://combat_gray_s64/basic_punch/frame_001.png",
@@ -48,11 +148,71 @@
 			"placeholder://combat_gray_s64/dash/frame_002.png",
 			"placeholder://combat_gray_s64/dash/frame_003.png"
 		],
+		"dash_attack": [
+			"placeholder://combat_gray_s64/dash_attack/frame_000.png",
+			"placeholder://combat_gray_s64/dash_attack/frame_001.png",
+			"placeholder://combat_gray_s64/dash_attack/frame_002.png",
+			"placeholder://combat_gray_s64/dash_attack/frame_003.png",
+			"placeholder://combat_gray_s64/dash_attack/frame_004.png",
+			"placeholder://combat_gray_s64/dash_attack/frame_005.png",
+			"placeholder://combat_gray_s64/dash_attack/frame_006.png",
+			"placeholder://combat_gray_s64/dash_attack/frame_007.png"
+		],
+		"dead": [
+			"placeholder://combat_gray_s64/dead/frame_000.png",
+			"placeholder://combat_gray_s64/dead/frame_001.png",
+			"placeholder://combat_gray_s64/dead/frame_002.png",
+			"placeholder://combat_gray_s64/dead/frame_003.png"
+		],
+		"get_up": [
+			"placeholder://combat_gray_s64/get_up/frame_000.png",
+			"placeholder://combat_gray_s64/get_up/frame_001.png",
+			"placeholder://combat_gray_s64/get_up/frame_002.png",
+			"placeholder://combat_gray_s64/get_up/frame_003.png",
+			"placeholder://combat_gray_s64/get_up/frame_004.png",
+			"placeholder://combat_gray_s64/get_up/frame_005.png",
+			"placeholder://combat_gray_s64/get_up/frame_006.png",
+			"placeholder://combat_gray_s64/get_up/frame_007.png"
+		],
+		"guard": [
+			"placeholder://combat_gray_s64/guard/frame_000.png",
+			"placeholder://combat_gray_s64/guard/frame_001.png",
+			"placeholder://combat_gray_s64/guard/frame_002.png",
+			"placeholder://combat_gray_s64/guard/frame_003.png",
+			"placeholder://combat_gray_s64/guard/frame_004.png",
+			"placeholder://combat_gray_s64/guard/frame_005.png"
+		],
+		"heavy_punch": [
+			"placeholder://combat_gray_s64/heavy_punch/frame_000.png",
+			"placeholder://combat_gray_s64/heavy_punch/frame_001.png",
+			"placeholder://combat_gray_s64/heavy_punch/frame_002.png",
+			"placeholder://combat_gray_s64/heavy_punch/frame_003.png",
+			"placeholder://combat_gray_s64/heavy_punch/frame_004.png",
+			"placeholder://combat_gray_s64/heavy_punch/frame_005.png",
+			"placeholder://combat_gray_s64/heavy_punch/frame_006.png",
+			"placeholder://combat_gray_s64/heavy_punch/frame_007.png",
+			"placeholder://combat_gray_s64/heavy_punch/frame_008.png",
+			"placeholder://combat_gray_s64/heavy_punch/frame_009.png"
+		],
 		"hurt": [
 			"placeholder://combat_gray_s64/hurt/frame_000.png",
 			"placeholder://combat_gray_s64/hurt/frame_001.png",
 			"placeholder://combat_gray_s64/hurt/frame_002.png",
 			"placeholder://combat_gray_s64/hurt/frame_003.png"
+		],
+		"hurt_heavy": [
+			"placeholder://combat_gray_s64/hurt_heavy/frame_000.png",
+			"placeholder://combat_gray_s64/hurt_heavy/frame_001.png",
+			"placeholder://combat_gray_s64/hurt_heavy/frame_002.png",
+			"placeholder://combat_gray_s64/hurt_heavy/frame_003.png",
+			"placeholder://combat_gray_s64/hurt_heavy/frame_004.png",
+			"placeholder://combat_gray_s64/hurt_heavy/frame_005.png"
+		],
+		"hurt_light": [
+			"placeholder://combat_gray_s64/hurt_light/frame_000.png",
+			"placeholder://combat_gray_s64/hurt_light/frame_001.png",
+			"placeholder://combat_gray_s64/hurt_light/frame_002.png",
+			"placeholder://combat_gray_s64/hurt_light/frame_003.png"
 		],
 		"idle": [
 			"placeholder://combat_gray_s64/idle/frame_000.png",
@@ -68,6 +228,84 @@
 			"placeholder://combat_gray_s64/jump/frame_004.png",
 			"placeholder://combat_gray_s64/jump/frame_005.png"
 		],
+		"jump_air": [
+			"placeholder://combat_gray_s64/jump_air/frame_000.png",
+			"placeholder://combat_gray_s64/jump_air/frame_001.png",
+			"placeholder://combat_gray_s64/jump_air/frame_002.png",
+			"placeholder://combat_gray_s64/jump_air/frame_003.png",
+			"placeholder://combat_gray_s64/jump_air/frame_004.png",
+			"placeholder://combat_gray_s64/jump_air/frame_005.png"
+		],
+		"jump_attack": [
+			"placeholder://combat_gray_s64/jump_attack/frame_000.png",
+			"placeholder://combat_gray_s64/jump_attack/frame_001.png",
+			"placeholder://combat_gray_s64/jump_attack/frame_002.png",
+			"placeholder://combat_gray_s64/jump_attack/frame_003.png",
+			"placeholder://combat_gray_s64/jump_attack/frame_004.png",
+			"placeholder://combat_gray_s64/jump_attack/frame_005.png",
+			"placeholder://combat_gray_s64/jump_attack/frame_006.png",
+			"placeholder://combat_gray_s64/jump_attack/frame_007.png"
+		],
+		"jump_land": [
+			"placeholder://combat_gray_s64/jump_land/frame_000.png",
+			"placeholder://combat_gray_s64/jump_land/frame_001.png",
+			"placeholder://combat_gray_s64/jump_land/frame_002.png",
+			"placeholder://combat_gray_s64/jump_land/frame_003.png",
+			"placeholder://combat_gray_s64/jump_land/frame_004.png",
+			"placeholder://combat_gray_s64/jump_land/frame_005.png"
+		],
+		"jump_start": [
+			"placeholder://combat_gray_s64/jump_start/frame_000.png",
+			"placeholder://combat_gray_s64/jump_start/frame_001.png",
+			"placeholder://combat_gray_s64/jump_start/frame_002.png",
+			"placeholder://combat_gray_s64/jump_start/frame_003.png",
+			"placeholder://combat_gray_s64/jump_start/frame_004.png",
+			"placeholder://combat_gray_s64/jump_start/frame_005.png"
+		],
+		"knockdown": [
+			"placeholder://combat_gray_s64/knockdown/frame_000.png",
+			"placeholder://combat_gray_s64/knockdown/frame_001.png",
+			"placeholder://combat_gray_s64/knockdown/frame_002.png",
+			"placeholder://combat_gray_s64/knockdown/frame_003.png",
+			"placeholder://combat_gray_s64/knockdown/frame_004.png",
+			"placeholder://combat_gray_s64/knockdown/frame_005.png",
+			"placeholder://combat_gray_s64/knockdown/frame_006.png",
+			"placeholder://combat_gray_s64/knockdown/frame_007.png"
+		],
+		"round_kick": [
+			"placeholder://combat_gray_s64/round_kick/frame_000.png",
+			"placeholder://combat_gray_s64/round_kick/frame_001.png",
+			"placeholder://combat_gray_s64/round_kick/frame_002.png",
+			"placeholder://combat_gray_s64/round_kick/frame_003.png",
+			"placeholder://combat_gray_s64/round_kick/frame_004.png",
+			"placeholder://combat_gray_s64/round_kick/frame_005.png",
+			"placeholder://combat_gray_s64/round_kick/frame_006.png",
+			"placeholder://combat_gray_s64/round_kick/frame_007.png",
+			"placeholder://combat_gray_s64/round_kick/frame_008.png",
+			"placeholder://combat_gray_s64/round_kick/frame_009.png"
+		],
+		"run": [
+			"placeholder://combat_gray_s64/run/frame_000.png",
+			"placeholder://combat_gray_s64/run/frame_001.png",
+			"placeholder://combat_gray_s64/run/frame_002.png",
+			"placeholder://combat_gray_s64/run/frame_003.png",
+			"placeholder://combat_gray_s64/run/frame_004.png",
+			"placeholder://combat_gray_s64/run/frame_005.png"
+		],
+		"stun": [
+			"placeholder://combat_gray_s64/stun/frame_000.png",
+			"placeholder://combat_gray_s64/stun/frame_001.png",
+			"placeholder://combat_gray_s64/stun/frame_002.png",
+			"placeholder://combat_gray_s64/stun/frame_003.png",
+			"placeholder://combat_gray_s64/stun/frame_004.png",
+			"placeholder://combat_gray_s64/stun/frame_005.png"
+		],
+		"turn": [
+			"placeholder://combat_gray_s64/turn/frame_000.png",
+			"placeholder://combat_gray_s64/turn/frame_001.png",
+			"placeholder://combat_gray_s64/turn/frame_002.png",
+			"placeholder://combat_gray_s64/turn/frame_003.png"
+		],
 		"walk": [
 			"placeholder://combat_gray_s64/walk/frame_000.png",
 			"placeholder://combat_gray_s64/walk/frame_001.png",
@@ -75,15 +313,43 @@
 			"placeholder://combat_gray_s64/walk/frame_003.png",
 			"placeholder://combat_gray_s64/walk/frame_004.png",
 			"placeholder://combat_gray_s64/walk/frame_005.png"
+		],
+		"win_pose": [
+			"placeholder://combat_gray_s64/win_pose/frame_000.png",
+			"placeholder://combat_gray_s64/win_pose/frame_001.png",
+			"placeholder://combat_gray_s64/win_pose/frame_002.png",
+			"placeholder://combat_gray_s64/win_pose/frame_003.png",
+			"placeholder://combat_gray_s64/win_pose/frame_004.png",
+			"placeholder://combat_gray_s64/win_pose/frame_005.png",
+			"placeholder://combat_gray_s64/win_pose/frame_006.png",
+			"placeholder://combat_gray_s64/win_pose/frame_007.png"
 		]
 	},
 	"required_moves_mapping": {
+		"basic_kick": "basic_kick",
 		"basic_punch": "basic_punch",
 		"dash": "dash",
+		"dash_attack": "dash_attack",
+		"dead": "dead",
+		"get_up": "get_up",
+		"guard": "guard",
+		"heavy_punch": "heavy_punch",
 		"hurt": "hurt",
+		"hurt_heavy": "hurt_heavy",
+		"hurt_light": "hurt_light",
 		"idle": "idle",
 		"jump": "jump",
-		"walk": "walk"
+		"jump_air": "jump_air",
+		"jump_attack": "jump_attack",
+		"jump_land": "jump_land",
+		"jump_start": "jump_start",
+		"knockdown": "knockdown",
+		"round_kick": "round_kick",
+		"run": "run",
+		"stun": "stun",
+		"turn": "turn",
+		"walk": "walk",
+		"win_pose": "win_pose"
 	},
 	"schema_version": "0.3",
 	"sprite_set_id": "combat_gray_s64"

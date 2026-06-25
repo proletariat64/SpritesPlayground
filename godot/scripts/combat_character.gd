@@ -74,6 +74,34 @@ func apply_runtime_template(runtime_template: Dictionary) -> void:
 	queue_redraw()
 
 
+func apply_v0_3_runtime_bundle(next_template: Dictionary, _next_sprite_set: Dictionary, next_moves: Dictionary) -> void:
+	var next_max_hp := maxi(1, int(next_template.get("hp", max_hp)))
+	template_id = str(next_template.get("template_id", template_id))
+	sprite_set_id = str(next_template.get("sprite_set_ref", sprite_set_id))
+	max_hp = next_max_hp
+	current_hp = mini(current_hp, max_hp)
+	hurtbox_profile = _v0_3_hurtboxes_to_runtime(next_template.get("hurtboxes", {}))
+	foot_collision_profile = _v0_3_foot_to_runtime(next_template.get("foot_collision", {}))
+	var move_templates := {}
+	for move_id in next_moves.keys():
+		move_templates[str(move_id)] = _v0_3_move_to_runtime(next_moves[move_id])
+	template = {
+		"template_id": template_id,
+		"sprite_size_class": sprite_size_class,
+		"sprite_set_id": sprite_set_id,
+		"frame_size": frame_size,
+		"max_hp": max_hp,
+		"hurtbox_profile": hurtbox_profile,
+		"foot_collision_profile": foot_collision_profile,
+		"move_templates": move_templates,
+	}
+	if move_executor != null:
+		move_executor.configure(move_templates)
+	if state_machine != null:
+		state_machine.reset_to_idle()
+	queue_redraw()
+
+
 func _apply_template_data(runtime_template: Dictionary) -> void:
 	template_id = str(runtime_template["template_id"])
 	sprite_size_class = str(runtime_template["sprite_size_class"])
@@ -104,8 +132,12 @@ func tick_character(delta: float, arena_center: Vector2, arena_radius: Vector2) 
 
 	state_machine.tick(delta, input_vector)
 	position += state_machine.velocity * delta
-	_clamp_foot_to_arena(arena_center, arena_radius)
+	clamp_to_arena(arena_center, arena_radius)
 	queue_redraw()
+
+
+func clamp_to_arena(arena_center: Vector2, arena_radius: Vector2) -> void:
+	_clamp_foot_to_arena(arena_center, arena_radius)
 
 
 func take_hit(damage: int, _hitbox_id: String, _source_instance_id: String, resolved_hurtbox_id: String = "", contact_hurtbox_ids: Array = []) -> void:
@@ -154,6 +186,44 @@ func hurtboxes_world() -> Array:
 
 func foot_center_world() -> Vector2:
 	return global_position + foot_collision_profile["center"]
+
+
+func depth_sort_key() -> float:
+	return foot_center_world().y
+
+
+func foot_contact_ellipse() -> Dictionary:
+	return {
+		"center": foot_center_world(),
+		"radius": foot_collision_profile.get("radius", Vector2.ZERO),
+	}
+
+
+static func foot_separation_delta(first, second) -> Vector2:
+	if first == null or second == null:
+		return Vector2.ZERO
+	if not first.has_method("foot_contact_ellipse") or not second.has_method("foot_contact_ellipse"):
+		return Vector2.ZERO
+	var first_ellipse: Dictionary = first.foot_contact_ellipse()
+	var second_ellipse: Dictionary = second.foot_contact_ellipse()
+	var first_center: Vector2 = first_ellipse.get("center", Vector2.ZERO)
+	var second_center: Vector2 = second_ellipse.get("center", Vector2.ZERO)
+	var first_radius: Vector2 = first_ellipse.get("radius", Vector2.ZERO)
+	var second_radius: Vector2 = second_ellipse.get("radius", Vector2.ZERO)
+	var combined := Vector2(
+		maxf(1.0, first_radius.x + second_radius.x),
+		maxf(1.0, first_radius.y + second_radius.y)
+	)
+	var current_delta := second_center - first_center
+	var normalized := Vector2(current_delta.x / combined.x, current_delta.y / combined.y)
+	var normalized_distance := normalized.length()
+	if normalized_distance >= 1.0:
+		return Vector2.ZERO
+	var direction := Vector2.RIGHT
+	if normalized_distance > 0.0001:
+		direction = normalized / normalized_distance
+	var target_delta := Vector2(direction.x * combined.x, direction.y * combined.y)
+	return target_delta - current_delta
 
 
 func debug_summary() -> Dictionary:
@@ -220,12 +290,66 @@ func _tick_ai(delta: float) -> Vector2:
 func _clamp_foot_to_arena(arena_center: Vector2, arena_radius: Vector2) -> void:
 	var foot := foot_center_world()
 	var rel := foot - arena_center
-	var normalized := Vector2(rel.x / arena_radius.x, rel.y / arena_radius.y)
+	var foot_radius: Vector2 = foot_collision_profile.get("radius", Vector2.ZERO)
+	var effective_radius := Vector2(
+		maxf(1.0, arena_radius.x - foot_radius.x),
+		maxf(1.0, arena_radius.y - foot_radius.y)
+	)
+	var normalized := Vector2(rel.x / effective_radius.x, rel.y / effective_radius.y)
 	if normalized.length() <= 1.0:
 		return
 	normalized = normalized.normalized()
-	var clamped_foot := arena_center + Vector2(normalized.x * arena_radius.x, normalized.y * arena_radius.y)
+	var clamped_foot := arena_center + Vector2(normalized.x * effective_radius.x, normalized.y * effective_radius.y)
 	position += clamped_foot - foot
+
+
+func _v0_3_hurtboxes_to_runtime(hurtboxes: Dictionary) -> Dictionary:
+	var profile := {}
+	for hurtbox_id in hurtboxes.keys():
+		var rect: Dictionary = hurtboxes[hurtbox_id]
+		profile[str(hurtbox_id)] = Rect2(
+			float(rect.get("x", 0.0)),
+			float(rect.get("y", 0.0)),
+			maxf(1.0, float(rect.get("w", 1.0))),
+			maxf(1.0, float(rect.get("h", 1.0)))
+		)
+	return profile
+
+
+func _v0_3_foot_to_runtime(foot: Dictionary) -> Dictionary:
+	var center: Dictionary = foot.get("center", {})
+	var radius: Dictionary = foot.get("radius", {})
+	return {
+		"center": Vector2(float(center.get("x", 0.0)), float(center.get("y", 0.0))),
+		"radius": Vector2(maxf(1.0, float(radius.get("x", 1.0))), maxf(1.0, float(radius.get("y", 1.0)))),
+	}
+
+
+func _v0_3_move_to_runtime(move: Dictionary) -> Dictionary:
+	# ponytail: live MoveExecutor currently consumes frame count, hitbox windows, rects, and damage only.
+	# v0.3 hitstop_frames, multi_hit, events, and sprite-set frame data stay authoring-preview only until live combat consumes them.
+	var windows: Array = []
+	for hitbox in move.get("hitboxes", []):
+		var window: Dictionary = hitbox.get("active_window", {})
+		var rect: Dictionary = hitbox.get("rect", {})
+		windows.append({
+			"from_frame": int(window.get("start_frame", 0)),
+			"to_frame": int(window.get("end_frame", 0)),
+			"hitbox_id": str(hitbox.get("hitbox_id", "")),
+			"damage": int(move.get("damage", 0)),
+			"rect": Rect2(
+				float(rect.get("x", 0.0)),
+				float(rect.get("y", 0.0)),
+				maxf(1.0, float(rect.get("w", 1.0))),
+				maxf(1.0, float(rect.get("h", 1.0)))
+			),
+		})
+	return {
+		"move_id": str(move.get("move_id", "")),
+		"fps": 60,
+		"total_frames": maxi(1, int(move.get("frame_count", 1))),
+		"hitbox_windows": windows,
+	}
 
 
 func _draw() -> void:

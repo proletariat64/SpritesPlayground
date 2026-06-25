@@ -1,0 +1,45 @@
+{
+	"active_window": {
+		"end_frame": 5,
+		"start_frame": 2
+	},
+	"damage": 9,
+	"events": [
+		{
+			"event_type": "enable_hitbox",
+			"frame": 2,
+			"payload": {
+				"hitbox_id": "hit_fist_1"
+			}
+		},
+		{
+			"event_type": "disable_hitbox",
+			"frame": 5,
+			"payload": {
+				"hitbox_id": "hit_fist_1"
+			}
+		}
+	],
+	"frame_count": 8,
+	"hitboxes": [
+		{
+			"active_window": {
+				"end_frame": 5,
+				"start_frame": 2
+			},
+			"hitbox_id": "hit_fist_1",
+			"rect": {
+				"h": 16,
+				"w": 28,
+				"x": 14,
+				"y": -42
+			}
+		}
+	],
+	"hitstop_frames": 3,
+	"move_id": "dash_attack",
+	"move_type": "combat",
+	"multi_hit": false,
+	"schema_version": "0.3",
+	"state_context_override": "dash"
+}
