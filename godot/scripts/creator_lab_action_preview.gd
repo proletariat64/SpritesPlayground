@@ -16,6 +16,7 @@ const COLOR_STRIP_BG := Color(0.08, 0.1, 0.12, 1.0)
 const COLOR_STRIP_INACTIVE := Color(0.22, 0.28, 0.34, 1.0)
 const COLOR_STRIP_HIT := Color(1.0, 0.36, 0.14, 0.9)
 const COLOR_STRIP_CURRENT := Color(1.0, 0.84, 0.22, 1.0)
+const FRAME_STRIP_DETAILED_LIMIT := 24
 
 var row: Dictionary = {}
 var template: Dictionary = {}
@@ -55,12 +56,12 @@ func set_overlay_visibility(next_show_hurtboxes: bool, next_show_hitboxes: bool,
 
 func frame_count() -> int:
 	var sequence := _resolved_sequence()
-	if not sequence.is_empty():
-		return sequence.size()
+	var sequence_count := sequence.size()
 	var move := _resolved_move()
+	var move_count := 0
 	if not move.is_empty():
-		return int(move.get("frame_count", 1))
-	return 1
+		move_count = int(move.get("frame_count", 1))
+	return maxi(1, maxi(sequence_count, move_count))
 
 
 func current_status() -> String:
@@ -227,6 +228,9 @@ func _draw_frame_strip() -> void:
 	draw_rect(strip, COLOR_STRIP_BG, true)
 	if count <= 0:
 		return
+	if count > FRAME_STRIP_DETAILED_LIMIT:
+		_draw_compressed_frame_strip(strip, count)
+		return
 	for i in count:
 		var x0 := strip.position.x + strip.size.x * float(i) / float(count)
 		var x1 := strip.position.x + strip.size.x * float(i + 1) / float(count)
@@ -239,6 +243,36 @@ func _draw_frame_strip() -> void:
 		draw_rect(segment, color, true)
 		if i == frame_index:
 			draw_rect(segment.grow(1.0), Color(1.0, 0.96, 0.72, 1.0), false, 1.0)
+
+
+func _draw_compressed_frame_strip(strip: Rect2, count: int) -> void:
+	var move := _resolved_move()
+	if not move.is_empty():
+		_draw_frame_window(strip, count, move.get("active_window", {}), COLOR_STRIP_HIT)
+		for hitbox in move.get("hitboxes", []):
+			_draw_frame_window(strip, count, hitbox.get("active_window", {}), COLOR_STRIP_HIT)
+	var tick_count := mini(FRAME_STRIP_DETAILED_LIMIT, count)
+	for tick in range(tick_count + 1):
+		var frame := int(round(float(tick) * float(count - 1) / float(tick_count)))
+		var x := _frame_center_x(strip, count, frame)
+		draw_line(Vector2(x, strip.position.y), Vector2(x, strip.position.y + strip.size.y), COLOR_STRIP_INACTIVE, 1.0)
+	var current_x := _frame_center_x(strip, count, frame_index)
+	draw_line(Vector2(current_x, strip.position.y - 2.0), Vector2(current_x, strip.position.y + strip.size.y + 2.0), COLOR_STRIP_CURRENT, 2.0)
+
+
+func _draw_frame_window(strip: Rect2, count: int, window: Dictionary, color: Color) -> void:
+	if window.is_empty():
+		return
+	var start_frame := clampi(int(window.get("start_frame", 0)), 0, count - 1)
+	var end_frame := clampi(int(window.get("end_frame", start_frame)), start_frame, count - 1)
+	var x0 := strip.position.x + strip.size.x * float(start_frame) / float(count)
+	var x1 := strip.position.x + strip.size.x * float(end_frame + 1) / float(count)
+	draw_rect(Rect2(Vector2(x0, strip.position.y), Vector2(maxf(1.0, x1 - x0), strip.size.y)), color, true)
+
+
+func _frame_center_x(strip: Rect2, count: int, target_frame: int) -> float:
+	var frame := clampi(target_frame, 0, count - 1)
+	return strip.position.x + strip.size.x * (float(frame) + 0.5) / float(count)
 
 
 func _frame_has_active_hitbox(target_frame: int) -> bool:

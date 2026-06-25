@@ -1316,14 +1316,16 @@ func _preview_frame_count() -> int:
 	var row := _coverage_row_for(current_action_id)
 	if row.is_empty():
 		return 1
+	var sequence_count := 0
 	var sequence_ref := str(row.get("frame_sequence_ref", ""))
 	var sequences: Dictionary = sprite_set_json.get("frame_sequences", {})
 	if sequences.has(sequence_ref):
-		return maxi(1, sequences[sequence_ref].size())
+		sequence_count = sequences[sequence_ref].size()
+	var move_count := 0
 	var move_id := str(row.get("backing_move_id", ""))
 	if moves_json.has(move_id):
-		return maxi(1, int(moves_json[move_id].get("frame_count", 1)))
-	return 1
+		move_count = int(moves_json[move_id].get("frame_count", 1))
+	return maxi(1, maxi(sequence_count, move_count))
 
 
 func _clamp_preview_frame() -> void:
@@ -1791,17 +1793,11 @@ func _on_npc_template_selected(index: int) -> void:
 
 
 func _on_add_npc_pressed() -> void:
-	if npc_count_current >= npc_limit:
-		_set_npc_status("NPC add blocked: maximum %d" % npc_limit)
-		return
 	add_npc_requested.emit(npc_template_id)
 	_set_npc_status("add NPC requested: %s" % npc_template_id)
 
 
 func _on_remove_selected_npc_pressed() -> void:
-	if npc_count_current <= 1:
-		_set_npc_status("NPC remove blocked: minimum 1")
-		return
 	remove_selected_npc_requested.emit()
 	_set_npc_status("remove NPC requested: %d" % (selected_npc_index + 1))
 

@@ -142,14 +142,14 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 	)
 	playground.select_dummy_character()
 	var dummy_bound: bool = (
-		str(panel.bound_instance_id) == "test_dummy_1"
+		str(panel.bound_instance_id) == "npc_001"
 		and str(panel.bound_template_id) == "combat_gray_s64"
 		and not str(panel.bound_control_mode).is_empty()
 	)
 	var hud_text := str(playground.debug_label.text)
 	var hud_ok := (
 		hud_text.contains("SEL")
-		and hud_text.contains("test_dummy_1")
+		and hud_text.contains("npc_001")
 		and hud_text.contains("tpl:combat_gray_s64")
 		and hud_text.contains("mode:")
 	)
@@ -332,7 +332,7 @@ func _run_npc_collection_smoke(playground: Node) -> bool:
 		playground.npc_count() == 1
 		and playground.all_characters().size() == 2
 		and playground.dummy == initial_dummy
-		and str(playground.dummy.instance_id) == "test_dummy_1"
+		and str(playground.dummy.instance_id) == "npc_001"
 	)
 
 	var max_count: int = playground.MAX_NPC_COUNT
@@ -348,7 +348,8 @@ func _run_npc_collection_smoke(playground: Node) -> bool:
 			add_ok = false
 			break
 		var npc_id := str(npc.instance_id)
-		if ids.has(npc_id) or not npc_id.begins_with("npc_"):
+		var expected_id := "npc_%03d" % playground.npc_count()
+		if ids.has(npc_id) or npc_id != expected_id:
 			add_ok = false
 		ids[npc_id] = true
 	await process_frame
@@ -363,8 +364,18 @@ func _run_npc_collection_smoke(playground: Node) -> bool:
 		and (max_status.contains("maximum") or max_status.contains("limit"))
 	)
 
-	playground.select_npc(playground.npc_count() - 1)
-	var removed_selected_ok: bool = playground.remove_selected_npc() and playground.npc_count() == max_count - 1
+	var spatial_target: Node2D = playground.npcs[4]
+	var spatial_nearest: Node2D = playground.npcs[2]
+	var spatial_far: Node2D = playground.npcs[3]
+	spatial_target.reset_runtime(Vector2(300, 240))
+	spatial_nearest.reset_runtime(Vector2(306, 240))
+	spatial_far.reset_runtime(Vector2(520, 240))
+	playground.select_character(spatial_target)
+	var removed_selected_ok: bool = (
+		playground.remove_selected_npc()
+		and playground.npc_count() == max_count - 1
+		and playground.selected_character == spatial_nearest
+	)
 	var remove_ok := true
 	while playground.npc_count() > min_count:
 		var target: Node2D = playground.npcs[playground.npc_count() - 1]

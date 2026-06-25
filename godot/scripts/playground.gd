@@ -197,13 +197,14 @@ func remove_npc(character: Node2D) -> bool:
 		_update_debug_gui()
 		return false
 	var removed_id := str(character.instance_id)
+	var removed_foot_center: Vector2 = character.foot_center_world()
 	npcs.remove_at(index)
 	characters.erase(character)
 	if selected_character == character:
-		var next_index: int = mini(index, npcs.size() - 1)
 		selected_character = null
-		if next_index >= 0:
-			select_character(npcs[next_index])
+		var nearest_npc := _nearest_npc_to_position(removed_foot_center)
+		if nearest_npc != null:
+			select_character(nearest_npc)
 		else:
 			select_player_character()
 	if is_instance_valid(character):
@@ -329,12 +330,26 @@ func _sync_character_aliases() -> void:
 
 
 func _next_npc_instance_id() -> String:
-	while true:
-		var candidate := "test_dummy_1" if next_npc_index == 1 else "npc_%03d" % next_npc_index
-		next_npc_index += 1
+	for attempt in range(MAX_NPC_COUNT):
+		var candidate_index := ((next_npc_index - 1 + attempt) % MAX_NPC_COUNT) + 1
+		var candidate := "npc_%03d" % candidate_index
 		if not _character_id_exists(candidate):
+			next_npc_index = (candidate_index % MAX_NPC_COUNT) + 1
 			return candidate
-	return "npc_%03d" % Time.get_ticks_msec()
+	return "npc_%03d" % MAX_NPC_COUNT
+
+
+func _nearest_npc_to_position(world_position: Vector2) -> Node2D:
+	var nearest: Node2D = null
+	var nearest_distance := INF
+	for npc in npcs:
+		if npc == null or not is_instance_valid(npc):
+			continue
+		var distance := world_position.distance_squared_to(npc.foot_center_world())
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest = npc
+	return nearest
 
 
 func _spawn_npc_position(index: int) -> Vector2:
