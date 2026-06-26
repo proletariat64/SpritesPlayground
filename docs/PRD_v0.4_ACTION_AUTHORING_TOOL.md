@@ -71,15 +71,15 @@ Frame = time
 Event = trigger
 ```
 
-The state model is frozen to the v0.3 enum:
+	The state model is frozen to the v0.3 enum:
 
-```text
-idle
-walk
-dash
-jump
-hurt
-dead
+	```text
+	idle
+	walk
+	dash
+	jump
+	hurt
+	dead
 ```
 
 This wave does not add states. The required action catalog is an authoring/coverage catalog over v0.3 `MoveTemplate` and `SpriteSet` data. Catalog entries are not new states and do not create gameplay by themselves.

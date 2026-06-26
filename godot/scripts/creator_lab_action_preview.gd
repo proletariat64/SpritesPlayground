@@ -88,6 +88,10 @@ func current_render_state() -> String:
 		if row.get("warnings", []).has("INVALID_SPRITE_MAPPING"):
 			return "INVALID"
 		return "MISSING"
+	if path.begins_with("empty://"):
+		return "EMPTY"
+	if path.begins_with("missing://"):
+		return "MISSING"
 	if path.begins_with("placeholder://"):
 		return "PLACEHOLDER"
 	if _texture_for_path(path) != null:
@@ -163,6 +167,11 @@ func _draw_sprite_state(origin: Vector2) -> void:
 		draw_rect(body_rect, COLOR_PLACEHOLDER, true)
 		draw_rect(body_rect, Color(1.0, 0.74, 0.22), false, 1.0)
 		draw_string(font, body_rect.position + Vector2(2, -5), "placeholder", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(1.0, 0.8, 0.35))
+		return
+	if status == "EMPTY":
+		draw_rect(body_rect, Color(0.12, 0.14, 0.16, 0.35), true)
+		draw_rect(body_rect, Color(0.44, 0.5, 0.56), false, 1.0)
+		draw_string(font, body_rect.position + Vector2(2, -5), "empty", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(0.64, 0.7, 0.76))
 		return
 	draw_rect(body_rect, Color(0.62, 0.66, 0.7, 0.72), true)
 	draw_rect(body_rect, Color(0.86, 0.9, 0.94), false, 1.0)

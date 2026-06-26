@@ -6,6 +6,7 @@ const COMBAT_TICK_RATE := 60
 const MIN_NPC_COUNT := 1
 const MAX_NPC_COUNT := 10
 const DEFAULT_TEMPLATE_ID := "combat_gray_s64"
+const DEFAULT_NPC_TEMPLATE_ID := "skeleton_default_unarmed_s64"
 
 var arena_center := Vector2(320, 205)
 var arena_radius := Vector2(280, 125)
@@ -18,7 +19,7 @@ var creator_lab: PanelContainer
 var characters: Array = []
 var npcs: Array = []
 var next_npc_index: int = 1
-var npc_template_id: String = DEFAULT_TEMPLATE_ID
+var npc_template_id: String = DEFAULT_NPC_TEMPLATE_ID
 var playground_status: String = ""
 var _ai_started_at_msec: int = 0
 
@@ -31,7 +32,7 @@ func _ready() -> void:
 	next_npc_index = 1
 	player = _spawn_character(DEFAULT_TEMPLATE_ID, "player_1", Vector2(245, 245), false)
 	characters.append(player)
-	add_npc(DEFAULT_TEMPLATE_ID)
+	add_npc(DEFAULT_NPC_TEMPLATE_ID)
 	_build_debug_gui()
 	_build_creator_lab()
 	select_player_character()

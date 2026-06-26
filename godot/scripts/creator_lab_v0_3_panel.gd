@@ -6,6 +6,7 @@ const Runtime := preload("res://godot/scripts/prd_v0_3_runtime.gd")
 const Catalog := preload("res://godot/scripts/creator_lab_action_catalog.gd")
 const Coverage := preload("res://godot/scripts/creator_lab_action_coverage.gd")
 const ActionPreview := preload("res://godot/scripts/creator_lab_action_preview.gd")
+const SpriteFramesGeneratorScript := preload("res://godot/scripts/spriteframes_generator.gd")
 const COLOR_TITLE := Color(0.72, 0.86, 1.0)
 const COLOR_LABEL := Color(0.82, 0.88, 0.95)
 const COLOR_HINT := Color(0.56, 0.64, 0.72)
@@ -68,6 +69,7 @@ var status_label: Label
 var runtime_label: Label
 var preview_frame_label: Label
 var preview_frame_slider: HSlider
+var frame_slot_path_input: LineEdit
 var action_preview_control: Control
 var floating_preview_window: PanelContainer
 var floating_preview_control: Control
@@ -318,7 +320,11 @@ func save_all() -> void:
 	for move_id in moves_json.keys():
 		DataStore.save_move(moves_json[move_id])
 	DataStore.save_sprite_set(sprite_set_json)
-	_set_status("saved %s" % str(template_json["template_id"]))
+	var generation := SpriteFramesGeneratorScript.generate(sprite_set_json, {"moves": moves_json})
+	if bool(generation.get("ok", false)):
+		_set_status("saved %s + SpriteFrames generated" % str(template_json["template_id"]))
+	else:
+		_set_status("saved JSON; SpriteFrames generation FAIL: %s" % _diagnostic_codes(generation.get("errors", [])))
 
 
 func apply_to_bound_instance() -> bool:
@@ -328,6 +334,11 @@ func apply_to_bound_instance() -> bool:
 	var instance := _bound_instance()
 	if instance == null:
 		_set_status("apply failed: no bound instance")
+		return false
+
+	var generation := SpriteFramesGeneratorScript.generate(sprite_set_json, {"moves": moves_json})
+	if not bool(generation.get("ok", false)):
+		_set_status("apply blocked: SpriteFrames generation FAIL: %s" % _diagnostic_codes(generation.get("errors", [])))
 		return false
 
 	if instance.has_method("apply_v0_3_runtime_bundle"):
@@ -478,6 +489,50 @@ func set_first_hitbox(hitbox_id: String, start_frame: int, end_frame: int, rect:
 func set_move_events(events: Array) -> void:
 	selected_move_json()["events"] = events.duplicate(true)
 	_refresh_fields()
+
+
+func insert_empty_frame_slot(sequence_id: String, frame_index: int, shift_timing: bool = false) -> bool:
+	if not shift_timing:
+		_set_status("frame insert blocked: choose shift timing")
+		return false
+	if not sprite_set_json.get("frame_sequences", {}).has(sequence_id):
+		_set_status("frame insert failed: missing sequence %s" % sequence_id)
+		return false
+	var sequence: Array = sprite_set_json["frame_sequences"][sequence_id]
+	var insert_index := clampi(frame_index, 0, sequence.size())
+	sequence.insert(insert_index, _slot_uri("empty", sequence_id, insert_index))
+	_shift_timing_after_insert(_move_id_for_sequence(sequence_id), insert_index)
+	_refresh_after_slot_edit("inserted empty frame")
+	return true
+
+
+func remove_frame_slot(sequence_id: String, frame_index: int) -> bool:
+	if not sprite_set_json.get("frame_sequences", {}).has(sequence_id):
+		_set_status("frame remove failed: missing sequence %s" % sequence_id)
+		return false
+	var sequence: Array = sprite_set_json["frame_sequences"][sequence_id]
+	if frame_index < 0 or frame_index >= sequence.size():
+		_set_status("frame remove failed: frame out of range")
+		return false
+	var move_id := _move_id_for_sequence(sequence_id)
+	if _frame_has_timing_reference(move_id, frame_index):
+		_set_status("frame remove blocked: timing metadata references frame %d" % frame_index)
+		return false
+	sequence.remove_at(frame_index)
+	_shift_timing_after_delete(move_id, frame_index)
+	_refresh_after_slot_edit("removed frame")
+	return true
+
+
+func replace_frame_slot(sequence_id: String, frame_index: int, frame_path: String) -> bool:
+	return _set_frame_slot(sequence_id, frame_index, frame_path, "replaced frame")
+
+
+func mark_frame_slot(sequence_id: String, frame_index: int, slot_state: String) -> bool:
+	if not ["empty", "missing", "placeholder"].has(slot_state):
+		_set_status("frame mark failed: invalid slot state %s" % slot_state)
+		return false
+	return _set_frame_slot(sequence_id, frame_index, _slot_uri(slot_state, sequence_id, frame_index), "marked frame %s" % slot_state)
 
 
 func wardrobe_coverage() -> Dictionary:
@@ -887,6 +942,26 @@ func _build_action_preview_detail(parent: VBoxContainer) -> void:
 	preview_frame_slider.value_changed.connect(_on_preview_frame_slider_changed)
 	scrub_row.add_child(preview_frame_slider)
 	scrub_row.add_child(_button("Reset", _on_preview_reset_pressed, 42))
+
+	var slot_path_row := HBoxContainer.new()
+	slot_path_row.add_theme_constant_override("separation", 4)
+	parent.add_child(slot_path_row)
+	slot_path_row.add_child(_compact_label("slot", COLOR_ACTION))
+	frame_slot_path_input = LineEdit.new()
+	_style_control(frame_slot_path_input, 232, 16)
+	frame_slot_path_input.text = _current_frame_slot_text()
+	slot_path_row.add_child(frame_slot_path_input)
+	slot_path_row.add_child(_button("Replace", _on_frame_slot_replace_pressed, 54))
+
+	var slot_row := HBoxContainer.new()
+	slot_row.add_theme_constant_override("separation", 3)
+	parent.add_child(slot_row)
+	slot_row.add_child(_button("Ins<+Shift", _on_frame_slot_insert_before_shift_pressed, 70))
+	slot_row.add_child(_button("Ins>+Shift", _on_frame_slot_insert_after_shift_pressed, 70))
+	slot_row.add_child(_button("Remove", _on_frame_slot_remove_pressed, 52))
+	slot_row.add_child(_button("Empty", _on_frame_slot_mark_empty_pressed, 44))
+	slot_row.add_child(_button("Missing", _on_frame_slot_mark_missing_pressed, 54))
+	slot_row.add_child(_button("Hold", _on_frame_slot_mark_placeholder_pressed, 38))
 
 	var speed_row := HBoxContainer.new()
 	speed_row.add_theme_constant_override("separation", 3)
@@ -1303,6 +1378,121 @@ func _coverage_row_for(action_id: String) -> Dictionary:
 	return {}
 
 
+func _current_sequence_ref() -> String:
+	return str(_coverage_row_for(current_action_id).get("frame_sequence_ref", ""))
+
+
+func _current_frame_slot_text() -> String:
+	var sequence_ref := _current_sequence_ref()
+	var sequences: Dictionary = sprite_set_json.get("frame_sequences", {})
+	if not sequences.has(sequence_ref):
+		return ""
+	var sequence: Array = sequences[sequence_ref]
+	if preview_frame >= 0 and preview_frame < sequence.size():
+		return str(sequence[preview_frame])
+	return ""
+
+
+func _set_frame_slot(sequence_id: String, frame_index: int, frame_path: String, status_text: String) -> bool:
+	if not sprite_set_json.get("frame_sequences", {}).has(sequence_id):
+		_set_status("frame edit failed: missing sequence %s" % sequence_id)
+		return false
+	_ensure_sequence_frame(sequence_id, frame_index)
+	sprite_set_json["frame_sequences"][sequence_id][frame_index] = frame_path
+	_refresh_after_slot_edit(status_text)
+	return true
+
+
+func _ensure_sequence_frame(sequence_id: String, frame_index: int) -> void:
+	var sequence: Array = sprite_set_json["frame_sequences"][sequence_id]
+	while sequence.size() <= frame_index:
+		sequence.append(_slot_uri("empty", sequence_id, sequence.size()))
+
+
+func _slot_uri(slot_state: String, sequence_id: String, frame_index: int) -> String:
+	return "%s://%s/%s/frame_%03d.png" % [slot_state, str(sprite_set_json.get("sprite_set_id", "sprite_set")), sequence_id, frame_index]
+
+
+func _move_id_for_sequence(sequence_id: String) -> String:
+	if coverage.is_empty():
+		refresh_action_coverage()
+	for row in coverage.get("rows", []):
+		if str(row.get("frame_sequence_ref", "")) == sequence_id:
+			return str(row.get("backing_move_id", ""))
+	if moves_json.has(sequence_id):
+		return sequence_id
+	return ""
+
+
+func _frame_has_timing_reference(move_id: String, frame_index: int) -> bool:
+	if move_id.is_empty() or not moves_json.has(move_id):
+		return false
+	var move: Dictionary = moves_json[move_id]
+	if _window_contains(move.get("active_window", {}), frame_index):
+		return true
+	for hitbox in move.get("hitboxes", []):
+		if _window_contains(hitbox.get("active_window", {}), frame_index):
+			return true
+	for event in move.get("events", []):
+		if int(event.get("frame", -1)) == frame_index:
+			return true
+	return false
+
+
+func _window_contains(window: Dictionary, frame_index: int) -> bool:
+	return frame_index >= int(window.get("start_frame", 0)) and frame_index <= int(window.get("end_frame", -1))
+
+
+func _shift_timing_after_insert(move_id: String, frame_index: int) -> void:
+	if move_id.is_empty() or not moves_json.has(move_id):
+		return
+	var move: Dictionary = moves_json[move_id]
+	move["frame_count"] = maxi(1, int(move.get("frame_count", 1)) + 1)
+	_shift_window_after_insert(move.get("active_window", {}), frame_index)
+	for hitbox in move.get("hitboxes", []):
+		_shift_window_after_insert(hitbox.get("active_window", {}), frame_index)
+	for event in move.get("events", []):
+		if int(event.get("frame", -1)) >= frame_index:
+			event["frame"] = int(event["frame"]) + 1
+
+
+func _shift_timing_after_delete(move_id: String, frame_index: int) -> void:
+	if move_id.is_empty() or not moves_json.has(move_id):
+		return
+	var move: Dictionary = moves_json[move_id]
+	move["frame_count"] = maxi(1, int(move.get("frame_count", 1)) - 1)
+	_shift_window_after_delete(move.get("active_window", {}), frame_index)
+	for hitbox in move.get("hitboxes", []):
+		_shift_window_after_delete(hitbox.get("active_window", {}), frame_index)
+	for event in move.get("events", []):
+		if int(event.get("frame", -1)) > frame_index:
+			event["frame"] = int(event["frame"]) - 1
+
+
+func _shift_window_after_insert(window: Dictionary, frame_index: int) -> void:
+	if window.is_empty():
+		return
+	if int(window.get("start_frame", 0)) >= frame_index:
+		window["start_frame"] = int(window["start_frame"]) + 1
+	if int(window.get("end_frame", 0)) >= frame_index:
+		window["end_frame"] = int(window["end_frame"]) + 1
+
+
+func _shift_window_after_delete(window: Dictionary, frame_index: int) -> void:
+	if window.is_empty():
+		return
+	if int(window.get("start_frame", 0)) > frame_index:
+		window["start_frame"] = int(window["start_frame"]) - 1
+	if int(window.get("end_frame", 0)) > frame_index:
+		window["end_frame"] = int(window["end_frame"]) - 1
+
+
+func _refresh_after_slot_edit(status_text: String) -> void:
+	refresh_action_coverage()
+	_refresh_fields()
+	_set_status(status_text)
+
+
 func _coverage_row_color(row: Dictionary) -> Color:
 	match str(row.get("status", "")):
 		"OK":
@@ -1342,6 +1532,8 @@ func _refresh_action_preview() -> void:
 	if preview_frame_slider != null:
 		preview_frame_slider.max_value = maxi(0, _preview_frame_count() - 1)
 		preview_frame_slider.set_value_no_signal(preview_frame)
+	if frame_slot_path_input != null and not frame_slot_path_input.has_focus():
+		frame_slot_path_input.text = _current_frame_slot_text()
 	_apply_preview_to_control(action_preview_control)
 	_apply_preview_to_control(floating_preview_control)
 
@@ -1755,6 +1947,18 @@ func _set_line_edit_valid(input: LineEdit, valid: bool) -> void:
 		input.add_theme_color_override("font_color", COLOR_FAIL)
 
 
+func _diagnostic_codes(diagnostics: Array) -> String:
+	var codes: Array = []
+	for diagnostic in diagnostics:
+		if typeof(diagnostic) == TYPE_DICTIONARY:
+			codes.append(str(diagnostic.get("code", diagnostic)))
+		else:
+			codes.append(str(diagnostic))
+	if codes.is_empty():
+		return "unknown"
+	return ", ".join(codes)
+
+
 func _is_hitbox_id_valid(value: String) -> bool:
 	var expression := RegEx.new()
 	expression.compile("^hit_[a-z0-9_]+$")
@@ -1892,6 +2096,36 @@ func _on_preview_frame_slider_changed(value: float) -> void:
 
 func _on_preview_reset_pressed() -> void:
 	preview_reset()
+
+
+func _on_frame_slot_insert_before_shift_pressed() -> void:
+	insert_empty_frame_slot(_current_sequence_ref(), preview_frame, true)
+
+
+func _on_frame_slot_insert_after_shift_pressed() -> void:
+	insert_empty_frame_slot(_current_sequence_ref(), preview_frame + 1, true)
+
+
+func _on_frame_slot_remove_pressed() -> void:
+	remove_frame_slot(_current_sequence_ref(), preview_frame)
+
+
+func _on_frame_slot_replace_pressed() -> void:
+	if frame_slot_path_input == null:
+		return
+	replace_frame_slot(_current_sequence_ref(), preview_frame, frame_slot_path_input.text.strip_edges())
+
+
+func _on_frame_slot_mark_empty_pressed() -> void:
+	mark_frame_slot(_current_sequence_ref(), preview_frame, "empty")
+
+
+func _on_frame_slot_mark_missing_pressed() -> void:
+	mark_frame_slot(_current_sequence_ref(), preview_frame, "missing")
+
+
+func _on_frame_slot_mark_placeholder_pressed() -> void:
+	mark_frame_slot(_current_sequence_ref(), preview_frame, "placeholder")
 
 
 func _on_preview_half_speed_pressed() -> void:

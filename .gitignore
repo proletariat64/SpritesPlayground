@@ -21,6 +21,8 @@ temp/*
 !temp/.gitkeep
 generated_assets/*
 !generated_assets/.gitkeep
+demo/
+addons/limboai/
 *.temp
 *.tmp
 *.cache
@@ -81,6 +83,8 @@ Desktop.ini
 .claude/
 .qoder/
 .scratch/
+docs/.obsidian/
+docs/.claudian/
 docs/timeline-weeks/
 AGENTS.md
 AGENT.md

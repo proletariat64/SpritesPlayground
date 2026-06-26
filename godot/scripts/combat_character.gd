@@ -4,6 +4,7 @@ class_name CombatCharacter
 const MoveExecutorScript := preload("res://godot/scripts/move_executor.gd")
 const StateMachineScript := preload("res://godot/scripts/combat_state_machine.gd")
 const CharacterTemplateScript := preload("res://godot/scripts/character_template.gd")
+const SpriteFramesGeneratorScript := preload("res://godot/scripts/spriteframes_generator.gd")
 
 var template_id: String = "combat_gray_s64"
 var instance_id: String = "character"
@@ -18,6 +19,11 @@ var is_test_dummy: bool = false
 var template: Dictionary = {}
 var hurtbox_profile: Dictionary = {}
 var foot_collision_profile: Dictionary = {}
+
+var animated_sprite: AnimatedSprite2D
+var sprite_frames_path: String = ""
+var sprite_frames_valid: bool = false
+var visual_fallback_enabled: bool = true
 
 var move_executor: Node
 var state_machine: Node
@@ -34,6 +40,7 @@ var _rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	_rng.seed = hash(instance_id)
 	_load_template()
+	_ensure_animated_sprite()
 	move_executor = MoveExecutorScript.new()
 	move_executor.name = "move_executor"
 	add_child(move_executor)
@@ -43,6 +50,7 @@ func _ready() -> void:
 	state_machine.name = "state_machine"
 	add_child(state_machine)
 	state_machine.configure(move_executor)
+	_load_sprite_frames_for_sprite_set()
 
 	queue_redraw()
 
@@ -60,6 +68,7 @@ func apply_template_id(next_template_id: String) -> void:
 	if state_machine != null:
 		state_machine.reset_to_idle()
 	current_hp = max_hp
+	_load_sprite_frames_for_sprite_set()
 	queue_redraw()
 
 
@@ -71,6 +80,7 @@ func apply_runtime_template(runtime_template: Dictionary) -> void:
 	if state_machine != null:
 		state_machine.reset_to_idle()
 	current_hp = max_hp
+	_load_sprite_frames_for_sprite_set()
 	queue_redraw()
 
 
@@ -99,6 +109,7 @@ func apply_v0_3_runtime_bundle(next_template: Dictionary, _next_sprite_set: Dict
 		move_executor.configure(move_templates)
 	if state_machine != null:
 		state_machine.reset_to_idle()
+	_load_sprite_frames_for_sprite_set()
 	queue_redraw()
 
 
@@ -131,6 +142,7 @@ func tick_character(delta: float, arena_center: Vector2, arena_radius: Vector2) 
 		_apply_manual_actions()
 
 	state_machine.tick(delta, input_vector)
+	_sync_visual_animation()
 	position += state_machine.velocity * delta
 	clamp_to_arena(arena_center, arena_radius)
 	queue_redraw()
@@ -165,6 +177,7 @@ func reset_runtime(new_position: Vector2) -> void:
 	_hit_hurtbox_id = ""
 	_contact_hurtbox_ids.clear()
 	state_machine.reset_to_idle()
+	_sync_visual_animation()
 	queue_redraw()
 
 
@@ -352,17 +365,122 @@ func _v0_3_move_to_runtime(move: Dictionary) -> Dictionary:
 	}
 
 
+func _ensure_animated_sprite() -> void:
+	if animated_sprite != null:
+		return
+	animated_sprite = AnimatedSprite2D.new()
+	animated_sprite.name = "animated_sprite"
+	animated_sprite.centered = true
+	animated_sprite.position = Vector2(0, -32)
+	animated_sprite.visible = false
+	add_child(animated_sprite)
+
+
+func _load_sprite_frames_for_sprite_set() -> void:
+	_ensure_animated_sprite()
+	sprite_frames_path = SpriteFramesGeneratorScript.sprite_frames_path(sprite_set_id)
+	if not FileAccess.file_exists(sprite_frames_path):
+		sprite_frames_valid = false
+		if animated_sprite != null:
+			animated_sprite.sprite_frames = null
+			animated_sprite.visible = false
+		return
+	var resource := ResourceLoader.load(sprite_frames_path, "SpriteFrames", ResourceLoader.CACHE_MODE_IGNORE)
+	if resource is SpriteFrames:
+		animated_sprite.sprite_frames = resource
+		sprite_frames_valid = true
+		animated_sprite.visible = true
+		_sync_visual_animation()
+		return
+	sprite_frames_valid = false
+	if animated_sprite != null:
+		animated_sprite.sprite_frames = null
+		animated_sprite.visible = false
+
+
+func has_spriteframes_playback() -> bool:
+	return sprite_frames_valid and animated_sprite != null and animated_sprite.sprite_frames != null
+
+
+func _sync_visual_animation() -> void:
+	if not has_spriteframes_playback() or state_machine == null:
+		return
+	var frames: SpriteFrames = animated_sprite.sprite_frames
+	var animation_name := _animation_for_runtime_state()
+	if not _has_animation(frames, animation_name):
+		animation_name = _fallback_animation(frames, animation_name)
+	if animation_name.is_empty():
+		animated_sprite.visible = false
+		return
+	animated_sprite.visible = true
+	animated_sprite.flip_h = state_machine.facing < 0
+	animated_sprite.position = Vector2(0, -32 + state_machine.visual_jump_offset)
+	if animated_sprite.animation != animation_name:
+		animated_sprite.animation = animation_name
+	var frame_count := maxi(1, frames.get_frame_count(animation_name))
+	if state_machine.current_state == StateMachineScript.STATE_ATTACK:
+		animated_sprite.pause()
+		animated_sprite.frame = clampi(move_executor.current_frame(), 0, frame_count - 1)
+	else:
+		if not animated_sprite.is_playing():
+			animated_sprite.play(animation_name)
+
+
+func _animation_for_runtime_state() -> String:
+	match state_machine.current_state:
+		StateMachineScript.STATE_ATTACK:
+			return str(state_machine.current_move)
+		StateMachineScript.STATE_DASH:
+			return "dash"
+		StateMachineScript.STATE_JUMP:
+			return "jump"
+		StateMachineScript.STATE_HURT:
+			return "hurt"
+		StateMachineScript.STATE_DEAD:
+			return "dead"
+		StateMachineScript.STATE_WALK:
+			return "walk"
+	return "idle"
+
+
+func _fallback_animation(frames: SpriteFrames, requested: String) -> String:
+	var candidates: Array = []
+	match requested:
+		"dash":
+			candidates = ["run", "walk", "idle"]
+		"jump":
+			candidates = ["idle"]
+		"hurt":
+			candidates = ["hurt_light", "idle"]
+		"dead":
+			candidates = ["hurt", "idle"]
+		_:
+			candidates = ["idle"]
+	for candidate in candidates:
+		if _has_animation(frames, str(candidate)):
+			return str(candidate)
+	return ""
+
+
+func _has_animation(frames: SpriteFrames, animation_name: String) -> bool:
+	for name in frames.get_animation_names():
+		if str(name) == animation_name:
+			return true
+	return false
+
+
 func _draw() -> void:
 	var jump_y: float = state_machine.visual_jump_offset
-	var body_color := Color(0.72, 0.72, 0.72)
-	if is_test_dummy:
-		body_color = Color(0.48, 0.52, 0.58)
-	if current_hp <= 0:
-		body_color = Color(0.24, 0.24, 0.24)
+	if visual_fallback_enabled and not has_spriteframes_playback():
+		var body_color := Color(0.72, 0.72, 0.72)
+		if is_test_dummy:
+			body_color = Color(0.48, 0.52, 0.58)
+		if current_hp <= 0:
+			body_color = Color(0.24, 0.24, 0.24)
 
-	draw_rect(Rect2(Vector2(-16, -64 + jump_y), Vector2(32, 64)), body_color, true)
-	draw_rect(Rect2(Vector2(-16, -64 + jump_y), Vector2(32, 64)), Color(0.08, 0.08, 0.08), false, 1.0)
-	draw_line(Vector2(0, -46 + jump_y), Vector2(10 * state_machine.facing, -46 + jump_y), Color.BLACK, 2.0)
+		draw_rect(Rect2(Vector2(-16, -64 + jump_y), Vector2(32, 64)), body_color, true)
+		draw_rect(Rect2(Vector2(-16, -64 + jump_y), Vector2(32, 64)), Color(0.08, 0.08, 0.08), false, 1.0)
+		draw_line(Vector2(0, -46 + jump_y), Vector2(10 * state_machine.facing, -46 + jump_y), Color.BLACK, 2.0)
 
 	if not debug_boxes_visible:
 		return
