@@ -143,14 +143,14 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 	playground.select_dummy_character()
 	var dummy_bound: bool = (
 		str(panel.bound_instance_id) == "npc_001"
-		and str(panel.bound_template_id) == "combat_gray_s64"
+		and str(panel.bound_template_id) == "skeleton_default_unarmed_s64"
 		and not str(panel.bound_control_mode).is_empty()
 	)
 	var hud_text := str(playground.debug_label.text)
 	var hud_ok := (
 		hud_text.contains("SEL")
 		and hud_text.contains("npc_001")
-		and hud_text.contains("tpl:combat_gray_s64")
+		and hud_text.contains("tpl:skeleton_default_unarmed_s64")
 		and hud_text.contains("mode:")
 	)
 	playground.select_player_character()
@@ -198,6 +198,20 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 		and is_equal_approx(live_rect.size.x, 25.0)
 	)
 
+	var coverage_before_invalid: Dictionary = panel._coverage_row_for("basic_punch")
+	var invalid_sequence_ref := str(coverage_before_invalid.get("frame_sequence_ref", ""))
+	var original_invalid_sequence: Array = panel.sprite_set_json["frame_sequences"][invalid_sequence_ref].duplicate(true)
+	var player_hp_before_invalid := int(playground.player.max_hp)
+	panel.sprite_set_json["frame_sequences"][invalid_sequence_ref][0] = "bogus://runtime_smoke_invalid"
+	panel.set_hp(102)
+	var invalid_apply_ok: bool = (
+		not panel.apply_to_bound_instance()
+		and int(playground.player.max_hp) == player_hp_before_invalid
+		and str(panel.status_label.text).contains("SpriteFrames generation FAIL")
+	)
+	panel.sprite_set_json["frame_sequences"][invalid_sequence_ref] = original_invalid_sequence
+	panel.set_hp(101)
+
 	var exact_ok: bool = panel.save_reload_exact()
 	var coverage: Dictionary = panel.wardrobe_coverage()
 	var wardrobe_ok: bool = (
@@ -215,9 +229,9 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 
 	_restore_creator_smoke(original_punch, copy_path)
 	playground.player.apply_template_id("combat_gray_s64")
-	if not (player_bound and dummy_bound and hud_ok and live_apply_ok and live_bridge_ok and exact_ok and wardrobe_ok and toggle_ok and runtime_ok):
-		print("creator_lab_smoke player_bound=%s dummy_bound=%s hud_ok=%s live_apply_ok=%s live_bridge_ok=%s exact_ok=%s wardrobe_ok=%s toggle_ok=%s runtime_ok=%s" % [player_bound, dummy_bound, hud_ok, live_apply_ok, live_bridge_ok, exact_ok, wardrobe_ok, toggle_ok, runtime_ok])
-	return player_bound and dummy_bound and hud_ok and live_apply_ok and live_bridge_ok and exact_ok and wardrobe_ok and toggle_ok and runtime_ok
+	if not (player_bound and dummy_bound and hud_ok and live_apply_ok and live_bridge_ok and invalid_apply_ok and exact_ok and wardrobe_ok and toggle_ok and runtime_ok):
+		print("creator_lab_smoke player_bound=%s dummy_bound=%s hud_ok=%s live_apply_ok=%s live_bridge_ok=%s invalid_apply=%s exact_ok=%s wardrobe_ok=%s toggle_ok=%s runtime_ok=%s" % [player_bound, dummy_bound, hud_ok, live_apply_ok, live_bridge_ok, invalid_apply_ok, exact_ok, wardrobe_ok, toggle_ok, runtime_ok])
+	return player_bound and dummy_bound and hud_ok and live_apply_ok and live_bridge_ok and invalid_apply_ok and exact_ok and wardrobe_ok and toggle_ok and runtime_ok
 
 
 func _run_foot_clamp_smoke(playground: Node) -> bool:
@@ -333,6 +347,8 @@ func _run_npc_collection_smoke(playground: Node) -> bool:
 		and playground.all_characters().size() == 2
 		and playground.dummy == initial_dummy
 		and str(playground.dummy.instance_id) == "npc_001"
+		and str(playground.dummy.template_id) == "skeleton_default_unarmed_s64"
+		and str(playground.dummy.sprite_set_id) == "skeleton_default_unarmed_s64"
 	)
 
 	var max_count: int = playground.MAX_NPC_COUNT
@@ -393,18 +409,30 @@ func _run_npc_collection_smoke(playground: Node) -> bool:
 		and minimum_count_before == min_count
 		and (min_status.contains("minimum") or min_status.contains("least"))
 	)
+	var skeleton_npc: Node2D = playground.add_npc("skeleton_default_unarmed_s64")
+	await process_frame
+	var skeleton_ok: bool = (
+		skeleton_npc != null
+		and str(skeleton_npc.template_id) == "skeleton_default_unarmed_s64"
+		and str(skeleton_npc.sprite_set_id) == "skeleton_default_unarmed_s64"
+		and skeleton_npc.has_method("has_spriteframes_playback")
+		and bool(skeleton_npc.has_spriteframes_playback())
+	)
+	if skeleton_npc != null:
+		playground.remove_npc(skeleton_npc)
 	var alias_ok: bool = playground.dummy == initial_dummy and is_instance_valid(playground.dummy)
 	playground.reset_playground()
 
-	var ok: bool = initial_ok and add_ok and max_blocked and removed_selected_ok and remove_ok and min_blocked and alias_ok
+	var ok: bool = initial_ok and add_ok and max_blocked and removed_selected_ok and remove_ok and min_blocked and skeleton_ok and alias_ok
 	if not ok:
-		print("npc_collection_smoke initial=%s add=%s max_blocked=%s removed_selected=%s remove=%s min_blocked=%s alias=%s count=%s" % [
+		print("npc_collection_smoke initial=%s add=%s max_blocked=%s removed_selected=%s remove=%s min_blocked=%s skeleton=%s alias=%s count=%s" % [
 			initial_ok,
 			add_ok,
 			max_blocked,
 			removed_selected_ok,
 			remove_ok,
 			min_blocked,
+			skeleton_ok,
 			alias_ok,
 			playground.npc_count(),
 		])
