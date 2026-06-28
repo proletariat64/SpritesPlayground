@@ -1,0 +1,22 @@
+; Engine configuration file.
+; Keep this shell minimal until the rebuild contract defines runtime systems.
+
+config_version=5
+
+[application]
+
+config/name="SpritesPlayground Runtime Rebuild"
+run/main_scene="res://godot/scenes/Main.tscn"
+config/features=PackedStringArray("4.7")
+
+[display]
+
+window/size/viewport_width=640
+window/size/viewport_height=360
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+
