@@ -23,6 +23,7 @@ generated_assets/*
 !generated_assets/.gitkeep
 demo/
 addons/limboai/
+addons/godot_ai/
 *.temp
 *.tmp
 *.cache
@@ -86,6 +87,7 @@ Desktop.ini
 docs/.obsidian/
 docs/.claudian/
 docs/timeline-weeks/
+docs/archive/
 AGENTS.md
 AGENT.md
 CLAUDE.md
