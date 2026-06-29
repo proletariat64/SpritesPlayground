@@ -1,0 +1,63 @@
+{
+	"schema_version": "rebuild.m1",
+	"kind": "SpriteDefinition",
+	"id": "adam",
+	"display_name": "Adam",
+	"role": "playable",
+	"faction": "player",
+	"definition_path": "res://data/rebuild/characters/adam.json",
+	"spawn": {
+		"x": 220,
+		"y": 258,
+		"facing": "east"
+	},
+	"input": {
+		"controller": "player",
+		"move_up": "move_up",
+		"move_down": "move_down",
+		"move_left": "move_left",
+		"move_right": "move_right",
+		"attack_light": "attack_light"
+	},
+	"character_template": {
+		"size_class": "s64",
+		"hp_max": 100,
+		"move_speed": 148,
+		"sprite_set_id": "adam",
+		"sprite_set_path": "res://data/rebuild/sprite_sets/adam.json",
+		"equipped_moves": [
+			"basic_punch",
+			"basic_punch_3hit"
+		],
+		"foot_collision": {
+			"rect": {
+				"x": -12,
+				"y": -5,
+				"w": 24,
+				"h": 10
+			}
+		},
+		"body_collision": {
+			"rect": {
+				"x": -13,
+				"y": -45,
+				"w": 26,
+				"h": 43
+			}
+		},
+		"hurtboxes": [
+			{
+				"id": "body_core",
+				"enabled": true,
+				"priority": 10,
+				"def": 1,
+				"rect": {
+					"x": -14,
+					"y": -50,
+					"w": 28,
+					"h": 50
+				}
+			}
+		]
+	}
+}

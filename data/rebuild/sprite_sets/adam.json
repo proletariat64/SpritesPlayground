@@ -1,0 +1,47 @@
+{
+	"schema_version": "rebuild.m1",
+	"kind": "SpriteSet",
+	"id": "adam",
+	"display_name": "Adam placeholder set",
+	"placeholder": true,
+	"palette": {
+		"skin": "#f1c27d",
+		"hair": "#2f1e16",
+		"shirt": "#2f80a8",
+		"pants": "#374151",
+		"outline": "#111827",
+		"accent": "#f2c94c"
+	},
+	"clips": {
+		"idle": {
+			"policy": "single_south",
+			"frames": 4,
+			"status": "placeholder"
+		},
+		"walk": {
+			"policy": "full_8flip",
+			"frames": 6,
+			"status": "placeholder"
+		},
+		"basic_punch": {
+			"policy": "side_2flip",
+			"frames": 12,
+			"status": "placeholder"
+		},
+		"basic_punch_3hit": {
+			"policy": "side_2flip",
+			"frames": 36,
+			"status": "placeholder"
+		},
+		"hurt": {
+			"policy": "side_2flip",
+			"frames": 8,
+			"status": "placeholder"
+		},
+		"dead": {
+			"policy": "single_south",
+			"frames": 8,
+			"status": "placeholder"
+		}
+	}
+}

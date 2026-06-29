@@ -2,6 +2,9 @@
 .godot/
 .import/
 
+# Godot resource identity
+# Keep *.uid files tracked; Godot 4 uses them as resource/script identity sidecars.
+
 # Godot local/export state
 export.cfg
 export_presets.cfg
@@ -22,6 +25,8 @@ temp/*
 generated_assets/*
 !generated_assets/.gitkeep
 demo/
+
+# Local editor/addon tooling copied in for verification, not source.
 addons/limboai/
 addons/godot_ai/
 *.temp

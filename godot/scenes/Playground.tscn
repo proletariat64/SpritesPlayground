@@ -1,0 +1,24 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://godot/scripts/playground.gd" id="1_playground"]
+[ext_resource type="Script" path="res://godot/scripts/pixel_stage.gd" id="2_stage"]
+[ext_resource type="Script" path="res://godot/scripts/combat_resolver.gd" id="3_resolver"]
+[ext_resource type="PackedScene" path="res://godot/scenes/RuntimeActor.tscn" id="4_actor"]
+
+[node name="Playground" type="Node2D"]
+script = ExtResource("1_playground")
+
+[node name="Stage" type="Node2D" parent="."]
+script = ExtResource("2_stage")
+
+[node name="Actors" type="Node2D" parent="."]
+
+[node name="Adam" parent="Actors" instance=ExtResource("4_actor")]
+definition_path = "res://data/rebuild/characters/adam.json"
+is_player = true
+
+[node name="Cain" parent="Actors" instance=ExtResource("4_actor")]
+definition_path = "res://data/rebuild/characters/cain.json"
+
+[node name="CombatResolver" type="Node" parent="."]
+script = ExtResource("3_resolver")

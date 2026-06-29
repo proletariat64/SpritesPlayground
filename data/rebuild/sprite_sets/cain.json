@@ -1,0 +1,47 @@
+{
+	"schema_version": "rebuild.m1",
+	"kind": "SpriteSet",
+	"id": "cain",
+	"display_name": "Cain placeholder set",
+	"placeholder": true,
+	"palette": {
+		"skin": "#d08b5b",
+		"hair": "#3b2517",
+		"shirt": "#c65d5d",
+		"pants": "#475467",
+		"outline": "#111827",
+		"accent": "#d48a33"
+	},
+	"clips": {
+		"idle": {
+			"policy": "single_south",
+			"frames": 4,
+			"status": "placeholder"
+		},
+		"walk": {
+			"policy": "full_8flip",
+			"frames": 6,
+			"status": "placeholder"
+		},
+		"basic_punch": {
+			"policy": "side_2flip",
+			"frames": 12,
+			"status": "missing_m1_optional"
+		},
+		"basic_punch_3hit": {
+			"policy": "side_2flip",
+			"frames": 36,
+			"status": "missing_m1_optional"
+		},
+		"hurt": {
+			"policy": "side_2flip",
+			"frames": 8,
+			"status": "placeholder"
+		},
+		"dead": {
+			"policy": "single_south",
+			"frames": 8,
+			"status": "placeholder"
+		}
+	}
+}

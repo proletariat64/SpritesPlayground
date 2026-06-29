@@ -1,0 +1,110 @@
+{
+	"schema_version": "rebuild.m1",
+	"kind": "MoveData",
+	"id": "basic_punch_3hit",
+	"category": "combat",
+	"state_event": "ev_attack",
+	"direction_policy": "side_2flip",
+	"animation_name": "basic_punch_3hit",
+	"input_command": {
+		"action": "attack_light",
+		"key": "J"
+	},
+	"segment_policy": "linear_continue",
+	"finish_event": "ev_finished",
+	"segments": [
+		{
+			"segment_id": "s1",
+			"startup_frames": 3,
+			"active_frames": 2,
+			"recovery_frames": 7,
+			"continue_gate": {
+				"input": "attack_light",
+				"start_frame": 6,
+				"end_frame": 11,
+				"next_segment": "s2"
+			},
+			"hitbox_profiles": [
+				{
+					"id": "fist_1",
+					"atk": 10,
+					"active_start_frame": 4,
+					"active_end_frame": 5,
+					"hitstop_frames": 4,
+					"hitstun_frames": 12,
+					"reaction_tag": "hurt_light",
+					"knockback": {
+						"x": 70,
+						"y": 0
+					},
+					"rect": {
+						"x": 13,
+						"y": -44,
+						"w": 28,
+						"h": 18
+					}
+				}
+			]
+		},
+		{
+			"segment_id": "s2",
+			"startup_frames": 2,
+			"active_frames": 2,
+			"recovery_frames": 6,
+			"continue_gate": {
+				"input": "attack_light",
+				"start_frame": 5,
+				"end_frame": 9,
+				"next_segment": "s3"
+			},
+			"hitbox_profiles": [
+				{
+					"id": "fist_2",
+					"atk": 10,
+					"active_start_frame": 3,
+					"active_end_frame": 4,
+					"hitstop_frames": 4,
+					"hitstun_frames": 12,
+					"reaction_tag": "hurt_light",
+					"knockback": {
+						"x": 80,
+						"y": 0
+					},
+					"rect": {
+						"x": 15,
+						"y": -42,
+						"w": 30,
+						"h": 18
+					}
+				}
+			]
+		},
+		{
+			"segment_id": "s3",
+			"startup_frames": 2,
+			"active_frames": 3,
+			"recovery_frames": 9,
+			"hitbox_profiles": [
+				{
+					"id": "fist_3",
+					"atk": 12,
+					"active_start_frame": 3,
+					"active_end_frame": 5,
+					"hitstop_frames": 5,
+					"hitstun_frames": 16,
+					"reaction_tag": "hurt_heavy",
+					"knockback": {
+						"x": 116,
+						"y": 0
+					},
+					"rect": {
+						"x": 17,
+						"y": -45,
+						"w": 34,
+						"h": 20
+					}
+				}
+			]
+		}
+	]
+}

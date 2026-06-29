@@ -1,0 +1,52 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://godot/scripts/runtime_actor.gd" id="1_actor"]
+[ext_resource type="Script" path="res://godot/scripts/state_driver.gd" id="2_state"]
+[ext_resource type="Script" path="res://godot/scripts/runtime_blackboard.gd" id="3_blackboard"]
+[ext_resource type="Script" path="res://godot/scripts/input_system.gd" id="4_input"]
+[ext_resource type="Script" path="res://godot/scripts/move_runtime.gd" id="5_move"]
+[ext_resource type="Script" path="res://godot/scripts/combat_ports.gd" id="6_ports"]
+[ext_resource type="Script" path="res://godot/scripts/life_runtime.gd" id="7_life"]
+[ext_resource type="Script" path="res://godot/scripts/visual_presenter.gd" id="8_visual"]
+[ext_resource type="Script" path="res://godot/scripts/pixel_actor_sprite.gd" id="9_sprite"]
+[ext_resource type="Script" path="res://godot/scripts/actor_health_bar.gd" id="10_health"]
+[ext_resource type="Script" path="res://godot/scripts/debug_overlay.gd" id="11_overlay"]
+
+[node name="RuntimeActor" type="CharacterBody2D"]
+script = ExtResource("1_actor")
+
+[node name="CollisionBody" type="Node2D" parent="."]
+
+[node name="FootCollisionShape" type="CollisionShape2D" parent="CollisionBody"]
+
+[node name="BodyCollisionShape" type="CollisionShape2D" parent="CollisionBody"]
+
+[node name="StateDriver" type="Node" parent="."]
+script = ExtResource("2_state")
+
+[node name="RuntimeBlackboard" type="Node" parent="."]
+script = ExtResource("3_blackboard")
+
+[node name="InputSystem" type="Node" parent="."]
+script = ExtResource("4_input")
+
+[node name="MoveRuntime" type="Node" parent="."]
+script = ExtResource("5_move")
+
+[node name="CombatPorts" type="Node" parent="."]
+script = ExtResource("6_ports")
+
+[node name="LifeRuntime" type="Node" parent="."]
+script = ExtResource("7_life")
+
+[node name="VisualPresenter" type="Node2D" parent="."]
+script = ExtResource("8_visual")
+
+[node name="SpriteSetPlayer" type="Node2D" parent="VisualPresenter"]
+script = ExtResource("9_sprite")
+
+[node name="HealthBars" type="Node2D" parent="VisualPresenter"]
+script = ExtResource("10_health")
+
+[node name="DebugOverlay" type="Node2D" parent="VisualPresenter"]
+script = ExtResource("11_overlay")

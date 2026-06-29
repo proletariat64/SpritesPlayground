@@ -1,0 +1,67 @@
+{
+	"schema_version": "rebuild.m1",
+	"kind": "SpriteDefinition",
+	"id": "cain",
+	"display_name": "Cain",
+	"role": "enemy_dummy",
+	"faction": "enemy",
+	"definition_path": "res://data/rebuild/characters/cain.json",
+	"spawn": {
+		"x": 396,
+		"y": 258,
+		"facing": "west"
+	},
+	"input": {
+		"controller": "dummy"
+	},
+	"character_template": {
+		"size_class": "s64",
+		"hp_max": 30,
+		"move_speed": 0,
+		"sprite_set_id": "cain",
+		"sprite_set_path": "res://data/rebuild/sprite_sets/cain.json",
+		"equipped_moves": [],
+		"foot_collision": {
+			"rect": {
+				"x": -12,
+				"y": -5,
+				"w": 24,
+				"h": 10
+			}
+		},
+		"body_collision": {
+			"rect": {
+				"x": -13,
+				"y": -45,
+				"w": 26,
+				"h": 43
+			}
+		},
+		"hurtboxes": [
+			{
+				"id": "body_core",
+				"enabled": true,
+				"priority": 10,
+				"def": 0,
+				"rect": {
+					"x": -14,
+					"y": -50,
+					"w": 28,
+					"h": 50
+				}
+			},
+			{
+				"id": "head",
+				"enabled": true,
+				"priority": 20,
+				"def": 0,
+				"rect": {
+					"x": -10,
+					"y": -59,
+					"w": 20,
+					"h": 16
+				}
+			}
+		]
+	}
+}
