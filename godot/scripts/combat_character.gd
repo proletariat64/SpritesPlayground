@@ -131,6 +131,7 @@ func tick_character(delta: float, arena_center: Vector2, arena_radius: Vector2) 
 		_contact_hurtbox_ids.clear()
 
 	var input_vector := Vector2.ZERO
+	var run_requested := false
 	if current_hp <= 0:
 		state_machine.enter_dead()
 	elif is_test_dummy:
@@ -140,8 +141,9 @@ func tick_character(delta: float, arena_center: Vector2, arena_radius: Vector2) 
 	else:
 		input_vector = _manual_input()
 		_apply_manual_actions()
+		run_requested = _manual_run_requested()
 
-	state_machine.tick(delta, input_vector)
+	state_machine.tick(delta, input_vector, run_requested)
 	_sync_visual_animation()
 	position += state_machine.velocity * delta
 	clamp_to_arena(arena_center, arena_radius)
@@ -257,6 +259,10 @@ func debug_summary() -> Dictionary:
 
 func _manual_input() -> Vector2:
 	return Input.get_vector("move_left", "move_right", "move_up", "move_down")
+
+
+func _manual_run_requested() -> bool:
+	return Input.is_action_pressed("run")
 
 
 func _apply_manual_actions() -> void:
@@ -406,16 +412,20 @@ func _sync_visual_animation() -> void:
 	if not has_spriteframes_playback() or state_machine == null:
 		return
 	var frames: SpriteFrames = animated_sprite.sprite_frames
-	var animation_name := _animation_for_runtime_state()
-	if not _has_animation(frames, animation_name):
-		animation_name = _fallback_animation(frames, animation_name)
+	var base_name := _animation_for_runtime_state()
+	var resolved := _resolve_visual_animation(frames, base_name)
+	var animation_name := str(resolved.get("animation", ""))
 	if animation_name.is_empty():
 		animated_sprite.visible = false
 		return
 	animated_sprite.visible = true
-	animated_sprite.flip_h = state_machine.facing < 0
+	animated_sprite.flip_h = bool(resolved.get("flip_h", false))
 	animated_sprite.position = Vector2(0, -32 + state_machine.visual_jump_offset)
-	if animated_sprite.animation != animation_name:
+	var previous_animation := str(animated_sprite.animation)
+	var previous_frame := animated_sprite.frame
+	var previous_progress := animated_sprite.frame_progress
+	var switching := previous_animation != animation_name
+	if switching:
 		animated_sprite.animation = animation_name
 	var frame_count := maxi(1, frames.get_frame_count(animation_name))
 	if state_machine.current_state == StateMachineScript.STATE_ATTACK:
@@ -424,6 +434,51 @@ func _sync_visual_animation() -> void:
 	else:
 		if not animated_sprite.is_playing():
 			animated_sprite.play(animation_name)
+		if switching and _preserves_cycle_phase(previous_animation, animation_name):
+			animated_sprite.frame = clampi(previous_frame, 0, frame_count - 1)
+			animated_sprite.frame_progress = previous_progress
+
+
+const LOCOMOTION_BASE_STATES := ["idle", "walk", "run"]
+
+
+func _resolve_visual_animation(frames: SpriteFrames, base_name: String) -> Dictionary:
+	if base_name in LOCOMOTION_BASE_STATES:
+		var direction := str(state_machine.get("locomotion_direction"))
+		var directional := "%s_%s" % [base_name, direction]
+		if _has_animation(frames, directional):
+			return {"animation": directional, "flip_h": false}
+		if _has_animation(frames, base_name):
+			return {"animation": base_name, "flip_h": state_machine.facing < 0}
+		var idle_directional := "idle_%s" % direction
+		if _has_animation(frames, idle_directional):
+			return {"animation": idle_directional, "flip_h": false}
+		if _has_animation(frames, "idle"):
+			return {"animation": "idle", "flip_h": state_machine.facing < 0}
+		return {}
+	var animation_name := base_name
+	if not _has_animation(frames, animation_name):
+		animation_name = _fallback_animation(frames, base_name)
+	if animation_name.is_empty():
+		return {}
+	return {"animation": animation_name, "flip_h": state_machine.facing < 0}
+
+
+func _locomotion_base(animation_name: String) -> String:
+	for base in LOCOMOTION_BASE_STATES:
+		if animation_name == base or animation_name.begins_with(base + "_"):
+			return base
+	return ""
+
+
+func _preserves_cycle_phase(previous_animation: String, next_animation: String) -> bool:
+	var previous_base := _locomotion_base(previous_animation)
+	var next_base := _locomotion_base(next_animation)
+	if previous_base.is_empty() or next_base.is_empty():
+		return false
+	if previous_base == next_base:
+		return true
+	return previous_base in ["walk", "run"] and next_base in ["walk", "run"]
 
 
 func _animation_for_runtime_state() -> String:
@@ -440,6 +495,8 @@ func _animation_for_runtime_state() -> String:
 			return "dead"
 		StateMachineScript.STATE_WALK:
 			return "walk"
+		StateMachineScript.STATE_RUN:
+			return "run"
 	return "idle"
 
 

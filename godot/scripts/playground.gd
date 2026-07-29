@@ -5,7 +5,7 @@ const CreatorLabV03PanelScript := preload("res://godot/scripts/creator_lab_v0_3_
 const COMBAT_TICK_RATE := 60
 const MIN_NPC_COUNT := 1
 const MAX_NPC_COUNT := 10
-const DEFAULT_TEMPLATE_ID := "combat_gray_s64"
+const DEFAULT_TEMPLATE_ID := "miduo_s64"
 const DEFAULT_NPC_TEMPLATE_ID := "skeleton_default_unarmed_s64"
 
 var arena_center := Vector2(320, 205)
@@ -480,7 +480,7 @@ func _update_debug_gui() -> void:
 			s.get("hp", ""),
 			s.get("mode", ""),
 		],
-		"[color=#c7d2fe]wasd[/color] move  j/k atk  sh dash  sp jump  tab ai  b box  c lab v0.3  v preview  r reset  %s" % playground_status,
+		"[color=#c7d2fe]wasd[/color] move  ctrl run  j/k atk  sh dash  sp jump  tab ai  b box  c lab v0.3  v preview  r reset  %s" % playground_status,
 	])
 
 
@@ -503,6 +503,7 @@ func _ensure_input_actions() -> void:
 	_bind_key_action("move_right", [KEY_D, KEY_RIGHT])
 	_bind_key_action("move_up", [KEY_W, KEY_UP])
 	_bind_key_action("move_down", [KEY_S, KEY_DOWN])
+	_bind_key_action("run", [KEY_CTRL])
 	_bind_key_action("dash", [KEY_SHIFT])
 	_bind_key_action("jump", [KEY_SPACE])
 	_bind_key_action("basic_punch", [KEY_J])

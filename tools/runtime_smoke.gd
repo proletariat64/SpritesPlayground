@@ -134,6 +134,7 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(copy_path))
 
 	panel.load_template_id("combat_gray_s64")
+	playground.player.apply_template_id("combat_gray_s64")
 	playground.select_player_character()
 	var player_bound: bool = (
 		str(panel.bound_instance_id) == "player_1"
