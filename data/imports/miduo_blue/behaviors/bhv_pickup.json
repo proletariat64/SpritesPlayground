@@ -1,0 +1,164 @@
+{
+  "behavior": {
+    "behavior_id": "bhv_pickup",
+    "direction_order": [
+      "dir_e",
+      "dir_w"
+    ],
+    "frames_per_direction": 5,
+    "playback": {
+      "fps": 12,
+      "type": "once"
+    }
+  },
+  "coverage": {
+    "complete": true,
+    "unit_keys": [
+      "bhv_pickup__dir_e",
+      "bhv_pickup__dir_w"
+    ]
+  },
+  "directions": [
+    {
+      "direction_id": "dir_e",
+      "frames": [
+        {
+          "bytes": 2225,
+          "file": "frames/dir_e/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:96270e7e9aafe897b79982abdf9406fa5eed9f9e392bb51f6f3d18be101eb657",
+          "width": 80,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "bytes": 2141,
+          "file": "frames/dir_e/001.png",
+          "height": 80,
+          "index": 1,
+          "sha256": "sha256:d2fa34ad791329e83dff970dc889ef9fbfd43496a32e34e2c987123ae436fc55",
+          "width": 80,
+          "x": 80,
+          "y": 0
+        },
+        {
+          "bytes": 2331,
+          "file": "frames/dir_e/002.png",
+          "height": 80,
+          "index": 2,
+          "sha256": "sha256:44e81fde84fe6d07f23075eb3b21461a2bddeed18c83a6887eca46487be37f28",
+          "width": 80,
+          "x": 160,
+          "y": 0
+        },
+        {
+          "bytes": 2155,
+          "file": "frames/dir_e/003.png",
+          "height": 80,
+          "index": 3,
+          "sha256": "sha256:be72a01c1f5b959313bf81d4fd6d47fa68dd1e889de0fafdfb5c74e36cd21078",
+          "width": 80,
+          "x": 240,
+          "y": 0
+        },
+        {
+          "bytes": 2162,
+          "file": "frames/dir_e/004.png",
+          "height": 80,
+          "index": 4,
+          "sha256": "sha256:38bf21c159967e777919c494b5486df2d42a3a44781b7d15d8d45f60de1fcca5",
+          "width": 80,
+          "x": 320,
+          "y": 0
+        }
+      ],
+      "mirrored_from": null,
+      "row": 0,
+      "source": "authored"
+    },
+    {
+      "direction_id": "dir_w",
+      "frames": [
+        {
+          "bytes": 2198,
+          "file": "frames/dir_w/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:40c67517ba3db4fc0c9fcf19c7f361fce3877eb8ff7b66856d6296131b78b9e1",
+          "width": 80,
+          "x": 0,
+          "y": 80
+        },
+        {
+          "bytes": 2135,
+          "file": "frames/dir_w/001.png",
+          "height": 80,
+          "index": 1,
+          "sha256": "sha256:d64f0e068569862beeda61fdf9308a786e055f4e7c69fc757a42337fabecb71e",
+          "width": 80,
+          "x": 80,
+          "y": 80
+        },
+        {
+          "bytes": 2327,
+          "file": "frames/dir_w/002.png",
+          "height": 80,
+          "index": 2,
+          "sha256": "sha256:979e1eb89629c983e72764b78f3b9a22171d23cccf142b94e012c93122934782",
+          "width": 80,
+          "x": 160,
+          "y": 80
+        },
+        {
+          "bytes": 2190,
+          "file": "frames/dir_w/003.png",
+          "height": 80,
+          "index": 3,
+          "sha256": "sha256:81e5955876191bb18f7d41e70fb931e9191a4aa89e164b0354b3871c7ec29831",
+          "width": 80,
+          "x": 240,
+          "y": 80
+        },
+        {
+          "bytes": 2142,
+          "file": "frames/dir_w/004.png",
+          "height": 80,
+          "index": 4,
+          "sha256": "sha256:e0c8253ff95cac74fc0543352262e3fdfca55c46496bf5a5984e2e17617191c5",
+          "width": 80,
+          "x": 320,
+          "y": 80
+        }
+      ],
+      "mirrored_from": "dir_e",
+      "row": 1,
+      "source": "mirrored"
+    }
+  ],
+  "layout": {
+    "columns": 5,
+    "height": 160,
+    "order": "directions_top_to_bottom_frames_left_to_right",
+    "rows": 2,
+    "segment_bytes": 18410,
+    "segment_file": "segment.png",
+    "segment_sha256": "sha256:5db11c5b81445906512bb79d45090a0f2d03f3ae262d04557b84d3888d995131",
+    "type": "direction_rows",
+    "width": 400
+  },
+  "manifest_type": "eden_behavior",
+  "manifest_version": 4,
+  "preview": {
+    "bytes": 18410,
+    "file": "preview.png",
+    "sha256": "sha256:5db11c5b81445906512bb79d45090a0f2d03f3ae262d04557b84d3888d995131"
+  },
+  "sprite": {
+    "class": "s64",
+    "frame_height": 80,
+    "frame_width": 80,
+    "name": "sprite-s64-miduo"
+  },
+  "task_id": "tsk_local_22c30f0eed014a34adc16a3f0b3805be"
+}

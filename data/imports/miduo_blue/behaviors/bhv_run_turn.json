@@ -1,0 +1,444 @@
+{
+  "behavior": {
+    "behavior_id": "bhv_run_turn",
+    "direction_order": [
+      "dir_s",
+      "dir_se",
+      "dir_e",
+      "dir_ne",
+      "dir_n",
+      "dir_nw",
+      "dir_w",
+      "dir_sw"
+    ],
+    "frames_per_direction": 4,
+    "playback": {
+      "fps": 12,
+      "type": "once"
+    }
+  },
+  "coverage": {
+    "complete": true,
+    "unit_keys": [
+      "bhv_run_turn__dir_s",
+      "bhv_run_turn__dir_se",
+      "bhv_run_turn__dir_e",
+      "bhv_run_turn__dir_ne",
+      "bhv_run_turn__dir_n",
+      "bhv_run_turn__dir_nw",
+      "bhv_run_turn__dir_w",
+      "bhv_run_turn__dir_sw"
+    ]
+  },
+  "directions": [
+    {
+      "direction_id": "dir_s",
+      "frames": [
+        {
+          "bytes": 2825,
+          "file": "frames/dir_s/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:46d874e6e3b5228f262cc014e465d83dab8d8b5e03f33dc4e2221a5b9d5db64e",
+          "width": 80,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "bytes": 2666,
+          "file": "frames/dir_s/001.png",
+          "height": 80,
+          "index": 1,
+          "sha256": "sha256:4de608c4024c23ad6462129a33b25c827770eff45480ef2398d05c534eeb2411",
+          "width": 80,
+          "x": 80,
+          "y": 0
+        },
+        {
+          "bytes": 2588,
+          "file": "frames/dir_s/002.png",
+          "height": 80,
+          "index": 2,
+          "sha256": "sha256:b618ae4475bb20a98e407fcc03175111c31633d42b95f82658f7348a8fb0b1af",
+          "width": 80,
+          "x": 160,
+          "y": 0
+        },
+        {
+          "bytes": 2708,
+          "file": "frames/dir_s/003.png",
+          "height": 80,
+          "index": 3,
+          "sha256": "sha256:de5920d478c2f828629723eb08689f926dbfe36e3f74921c49847de7f4959a36",
+          "width": 80,
+          "x": 240,
+          "y": 0
+        }
+      ],
+      "mirrored_from": null,
+      "row": 0,
+      "source": "authored"
+    },
+    {
+      "direction_id": "dir_se",
+      "frames": [
+        {
+          "bytes": 2687,
+          "file": "frames/dir_se/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:a345291a001ed7b564bcc5d72585c644fa49991d5ac7c4bff1c644b48dd9e01c",
+          "width": 80,
+          "x": 0,
+          "y": 80
+        },
+        {
+          "bytes": 2561,
+          "file": "frames/dir_se/001.png",
+          "height": 80,
+          "index": 1,
+          "sha256": "sha256:0077f983907abc958032142d8b7608e9e93394a866bb21f0d8313a7e73bf334e",
+          "width": 80,
+          "x": 80,
+          "y": 80
+        },
+        {
+          "bytes": 2631,
+          "file": "frames/dir_se/002.png",
+          "height": 80,
+          "index": 2,
+          "sha256": "sha256:4342bd24afef403bfa6320a32667a604c623f8d56003fab4cb2552ecce38ef67",
+          "width": 80,
+          "x": 160,
+          "y": 80
+        },
+        {
+          "bytes": 2904,
+          "file": "frames/dir_se/003.png",
+          "height": 80,
+          "index": 3,
+          "sha256": "sha256:44958b2c7b52446975aa9066d1a8711fc604a52fbb92ac9c6beb0ce5144b1bc1",
+          "width": 80,
+          "x": 240,
+          "y": 80
+        }
+      ],
+      "mirrored_from": null,
+      "row": 1,
+      "source": "authored"
+    },
+    {
+      "direction_id": "dir_e",
+      "frames": [
+        {
+          "bytes": 2523,
+          "file": "frames/dir_e/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:cf9290f88eb97d05e77f485e3a3018858b5338d04ebd608826bbb1f46e081cdf",
+          "width": 80,
+          "x": 0,
+          "y": 160
+        },
+        {
+          "bytes": 2507,
+          "file": "frames/dir_e/001.png",
+          "height": 80,
+          "index": 1,
+          "sha256": "sha256:45f9ae18cbce95c61dc880b030b94d90fbe6e53245685aa8c930f3d4d56a0c4c",
+          "width": 80,
+          "x": 80,
+          "y": 160
+        },
+        {
+          "bytes": 2788,
+          "file": "frames/dir_e/002.png",
+          "height": 80,
+          "index": 2,
+          "sha256": "sha256:7bf622b06e9b3f11923c9f38df76a003ee42863d4caaf6dccd5cebf73e217cb3",
+          "width": 80,
+          "x": 160,
+          "y": 160
+        },
+        {
+          "bytes": 2540,
+          "file": "frames/dir_e/003.png",
+          "height": 80,
+          "index": 3,
+          "sha256": "sha256:985403fac29563dfa98a00467562c14f2018b416e645f5823de7cc06859be593",
+          "width": 80,
+          "x": 240,
+          "y": 160
+        }
+      ],
+      "mirrored_from": null,
+      "row": 2,
+      "source": "authored"
+    },
+    {
+      "direction_id": "dir_ne",
+      "frames": [
+        {
+          "bytes": 1797,
+          "file": "frames/dir_ne/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:46e66afc076b78f4dc123fea45c122499114bb1d67b31a17a6c4cde746afbc07",
+          "width": 80,
+          "x": 0,
+          "y": 240
+        },
+        {
+          "bytes": 1557,
+          "file": "frames/dir_ne/001.png",
+          "height": 80,
+          "index": 1,
+          "sha256": "sha256:137f667c3df238dda49851f5ef79b583af3d6cd31296e339cc2c4269f3d8eede",
+          "width": 80,
+          "x": 80,
+          "y": 240
+        },
+        {
+          "bytes": 1777,
+          "file": "frames/dir_ne/002.png",
+          "height": 80,
+          "index": 2,
+          "sha256": "sha256:5c70efee635c0856429aeb019f017f89ffc96cd54d1dd84f066c5c3b16ffe621",
+          "width": 80,
+          "x": 160,
+          "y": 240
+        },
+        {
+          "bytes": 1653,
+          "file": "frames/dir_ne/003.png",
+          "height": 80,
+          "index": 3,
+          "sha256": "sha256:983a671fbcc22dfea4dc32178d1980c026a6011eaf8f1ac8b622ee4635044365",
+          "width": 80,
+          "x": 240,
+          "y": 240
+        }
+      ],
+      "mirrored_from": null,
+      "row": 3,
+      "source": "authored"
+    },
+    {
+      "direction_id": "dir_n",
+      "frames": [
+        {
+          "bytes": 1533,
+          "file": "frames/dir_n/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:f8ebbef6f6ff76c28305991e02209fc29235dbc68e07ab8221fe8a0e3f5b5391",
+          "width": 80,
+          "x": 0,
+          "y": 320
+        },
+        {
+          "bytes": 1559,
+          "file": "frames/dir_n/001.png",
+          "height": 80,
+          "index": 1,
+          "sha256": "sha256:df7f991e3b34a6240a4c4635a0b342b3a0fab0fe7ad4ae1ac16a015a544fc145",
+          "width": 80,
+          "x": 80,
+          "y": 320
+        },
+        {
+          "bytes": 1461,
+          "file": "frames/dir_n/002.png",
+          "height": 80,
+          "index": 2,
+          "sha256": "sha256:ec5f881cf972051e01f42e7acd53d13390a499da4c8120c6097e5bf886b34979",
+          "width": 80,
+          "x": 160,
+          "y": 320
+        },
+        {
+          "bytes": 1468,
+          "file": "frames/dir_n/003.png",
+          "height": 80,
+          "index": 3,
+          "sha256": "sha256:071e7620f938b9c220fb2f596fa49d4c3a5e111c7af44f61c8805db6936f7bd0",
+          "width": 80,
+          "x": 240,
+          "y": 320
+        }
+      ],
+      "mirrored_from": null,
+      "row": 4,
+      "source": "authored"
+    },
+    {
+      "direction_id": "dir_nw",
+      "frames": [
+        {
+          "bytes": 1788,
+          "file": "frames/dir_nw/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:08ef0f632fe74851e32bef7103b9fe5abdaac679886f820287b2d2317aa0acef",
+          "width": 80,
+          "x": 0,
+          "y": 400
+        },
+        {
+          "bytes": 1557,
+          "file": "frames/dir_nw/001.png",
+          "height": 80,
+          "index": 1,
+          "sha256": "sha256:c67805ff93bf8fe3fddefe5ea26c36365beef9550460997ab61ee868919ad433",
+          "width": 80,
+          "x": 80,
+          "y": 400
+        },
+        {
+          "bytes": 1737,
+          "file": "frames/dir_nw/002.png",
+          "height": 80,
+          "index": 2,
+          "sha256": "sha256:bea1501946250f49a5853e5e6119c6307b90797a39b81be885091059f49bde7f",
+          "width": 80,
+          "x": 160,
+          "y": 400
+        },
+        {
+          "bytes": 1702,
+          "file": "frames/dir_nw/003.png",
+          "height": 80,
+          "index": 3,
+          "sha256": "sha256:d9e6dc411ccb00c0a9b172c4cc07168d6f0bff0cb29bf27f6956c1ca47e6eddd",
+          "width": 80,
+          "x": 240,
+          "y": 400
+        }
+      ],
+      "mirrored_from": "dir_ne",
+      "row": 5,
+      "source": "mirrored"
+    },
+    {
+      "direction_id": "dir_w",
+      "frames": [
+        {
+          "bytes": 2278,
+          "file": "frames/dir_w/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:94c352729003076a4add5165126eb1a109a632045f30c2e63ba02f1190473fec",
+          "width": 80,
+          "x": 0,
+          "y": 480
+        },
+        {
+          "bytes": 2171,
+          "file": "frames/dir_w/001.png",
+          "height": 80,
+          "index": 1,
+          "sha256": "sha256:b46b941ab9c8ae9b64e0e0345cb82e3e58dbef468e100cc69a3508d2385ba5c3",
+          "width": 80,
+          "x": 80,
+          "y": 480
+        },
+        {
+          "bytes": 2439,
+          "file": "frames/dir_w/002.png",
+          "height": 80,
+          "index": 2,
+          "sha256": "sha256:f3d2da28734c7cb65e0d7c0fb32aaf5924758102a1d4e6e206c0acdc638ec282",
+          "width": 80,
+          "x": 160,
+          "y": 480
+        },
+        {
+          "bytes": 2234,
+          "file": "frames/dir_w/003.png",
+          "height": 80,
+          "index": 3,
+          "sha256": "sha256:098f5f1b494486fc5851134fcae3f28521a80bc1ba18e6edca88ebb85a82276e",
+          "width": 80,
+          "x": 240,
+          "y": 480
+        }
+      ],
+      "mirrored_from": "dir_e",
+      "row": 6,
+      "source": "mirrored"
+    },
+    {
+      "direction_id": "dir_sw",
+      "frames": [
+        {
+          "bytes": 2729,
+          "file": "frames/dir_sw/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:d7e0d72672e0a091033f3d56176244364cda1c71f66bf55f0b89a97a12f38138",
+          "width": 80,
+          "x": 0,
+          "y": 560
+        },
+        {
+          "bytes": 2630,
+          "file": "frames/dir_sw/001.png",
+          "height": 80,
+          "index": 1,
+          "sha256": "sha256:02c071c218c1f556122ccac4f9cf50ba001ae7d0f003421153656da923ea4479",
+          "width": 80,
+          "x": 80,
+          "y": 560
+        },
+        {
+          "bytes": 2667,
+          "file": "frames/dir_sw/002.png",
+          "height": 80,
+          "index": 2,
+          "sha256": "sha256:1ebb2de57d28d9b82ca0354eb0932c0b98e9076c988b8fab61ebcde7f4394e48",
+          "width": 80,
+          "x": 160,
+          "y": 560
+        },
+        {
+          "bytes": 2901,
+          "file": "frames/dir_sw/003.png",
+          "height": 80,
+          "index": 3,
+          "sha256": "sha256:bf8a5f3f84c0dc6f87bf4959b28802bf58d57df58f3e93b6fda333bf74b10251",
+          "width": 80,
+          "x": 240,
+          "y": 560
+        }
+      ],
+      "mirrored_from": "dir_se",
+      "row": 7,
+      "source": "mirrored"
+    }
+  ],
+  "layout": {
+    "columns": 4,
+    "height": 640,
+    "order": "directions_top_to_bottom_frames_left_to_right",
+    "rows": 8,
+    "segment_bytes": 62077,
+    "segment_file": "segment.png",
+    "segment_sha256": "sha256:00b8c090d31c7a51608387d6075c5df0f93aecb36301e1ed336e42ae60a1fa12",
+    "type": "direction_rows",
+    "width": 320
+  },
+  "manifest_type": "eden_behavior",
+  "manifest_version": 4,
+  "preview": {
+    "bytes": 62077,
+    "file": "preview.png",
+    "sha256": "sha256:00b8c090d31c7a51608387d6075c5df0f93aecb36301e1ed336e42ae60a1fa12"
+  },
+  "sprite": {
+    "class": "s64",
+    "frame_height": 80,
+    "frame_width": 80,
+    "name": "sprite-s64-miduo"
+  },
+  "task_id": "tsk_local_22c30f0eed014a34adc16a3f0b3805be"
+}

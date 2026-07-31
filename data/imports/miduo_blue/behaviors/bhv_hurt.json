@@ -1,0 +1,124 @@
+{
+  "behavior": {
+    "behavior_id": "bhv_hurt",
+    "direction_order": [
+      "dir_e",
+      "dir_w"
+    ],
+    "frames_per_direction": 3,
+    "playback": {
+      "fps": 12,
+      "type": "once"
+    }
+  },
+  "coverage": {
+    "complete": true,
+    "unit_keys": [
+      "bhv_hurt__dir_e",
+      "bhv_hurt__dir_w"
+    ]
+  },
+  "directions": [
+    {
+      "direction_id": "dir_e",
+      "frames": [
+        {
+          "bytes": 2257,
+          "file": "frames/dir_e/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:cc1f429f33911f194af5ac57255edd428f779392d69c22449459b5722c93980b",
+          "width": 80,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "bytes": 2140,
+          "file": "frames/dir_e/001.png",
+          "height": 80,
+          "index": 1,
+          "sha256": "sha256:8647253be14e0c22982b2af7321bc1024cd97a3c84feff45f020a2ef449ed636",
+          "width": 80,
+          "x": 80,
+          "y": 0
+        },
+        {
+          "bytes": 2044,
+          "file": "frames/dir_e/002.png",
+          "height": 80,
+          "index": 2,
+          "sha256": "sha256:c58833d3426f0b7b8227299648328e32215f189d8368bb57d63349e317fa7c62",
+          "width": 80,
+          "x": 160,
+          "y": 0
+        }
+      ],
+      "mirrored_from": null,
+      "row": 0,
+      "source": "authored"
+    },
+    {
+      "direction_id": "dir_w",
+      "frames": [
+        {
+          "bytes": 2236,
+          "file": "frames/dir_w/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:9532602a9a830994f0389216af214a9206b07df1744d98608969eb27d15327e7",
+          "width": 80,
+          "x": 0,
+          "y": 80
+        },
+        {
+          "bytes": 2183,
+          "file": "frames/dir_w/001.png",
+          "height": 80,
+          "index": 1,
+          "sha256": "sha256:d624d9c69f6e5fd33486087411550d33bb37f4df984e5714580ad56eff77845b",
+          "width": 80,
+          "x": 80,
+          "y": 80
+        },
+        {
+          "bytes": 2051,
+          "file": "frames/dir_w/002.png",
+          "height": 80,
+          "index": 2,
+          "sha256": "sha256:d53288fac48ac79186cd19c614e8c923ac2c5554f92ded2949fcd385cae93f21",
+          "width": 80,
+          "x": 160,
+          "y": 80
+        }
+      ],
+      "mirrored_from": "dir_e",
+      "row": 1,
+      "source": "mirrored"
+    }
+  ],
+  "layout": {
+    "columns": 3,
+    "height": 160,
+    "order": "directions_top_to_bottom_frames_left_to_right",
+    "rows": 2,
+    "segment_bytes": 10971,
+    "segment_file": "segment.png",
+    "segment_sha256": "sha256:2032aabe60fe5a772b6d7c028f5b2a485b9be6222aed85cc418ef10b0b0f4397",
+    "type": "direction_rows",
+    "width": 240
+  },
+  "manifest_type": "eden_behavior",
+  "manifest_version": 4,
+  "preview": {
+    "bytes": 10971,
+    "file": "preview.png",
+    "sha256": "sha256:2032aabe60fe5a772b6d7c028f5b2a485b9be6222aed85cc418ef10b0b0f4397"
+  },
+  "sprite": {
+    "class": "s64",
+    "frame_height": 80,
+    "frame_width": 80,
+    "name": "sprite-s64-miduo"
+  },
+  "task_id": "tsk_local_22c30f0eed014a34adc16a3f0b3805be"
+}

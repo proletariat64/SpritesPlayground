@@ -20,6 +20,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
+from PIL import Image
+
 
 CANONICAL_BEHAVIORS = (
     "bhv_idle_breath",
@@ -296,6 +298,212 @@ def import_character(
     }
     _write_json(report_path, report)
     return report
+
+
+def recolor_character(
+    project_root: Path | str,
+    source_character_id: str,
+    target_name: str,
+    palette_mapping: dict[tuple[int, int, int, int], tuple[int, int, int, int]],
+    *,
+    mapping_id: str,
+) -> dict[str, Any]:
+    """Create an independent character using an explicit exact RGBA mapping.
+
+    The caller owns clothing semantics: this API never guesses colors or broadens the
+    supplied mapping. Alpha must remain unchanged for every replacement.
+    """
+
+    project_root = Path(project_root).expanduser().resolve()
+    source_id = _snake_id(source_character_id)
+    character_id = _snake_id(target_name)
+    if character_id == source_id:
+        raise ImportFailure("recolor target id must differ from source character id")
+    normalized_mapping = _validate_palette_mapping(palette_mapping)
+    if not mapping_id.strip():
+        raise ImportFailure("palette mapping requires a stable mapping_id")
+
+    source_frames = project_root / "godot/assets/frames" / source_id
+    source_template_path = project_root / "data/v0_3/templates" / f"{source_id}.json"
+    source_sprite_set_path = project_root / "data/v0_3/sprite_sets" / f"{source_id}.json"
+    source_report_path = project_root / "data/imports" / source_id / "import_report.json"
+    for required in (source_frames, source_template_path, source_sprite_set_path, source_report_path):
+        if not required.exists():
+            raise ImportFailure(f"missing imported source character input: {required}")
+
+    target_frames = project_root / "godot/assets/frames" / character_id
+    target_template_path = project_root / "data/v0_3/templates" / f"{character_id}.json"
+    target_sprite_set_path = project_root / "data/v0_3/sprite_sets" / f"{character_id}.json"
+    provenance_root = project_root / "data/imports" / character_id
+    report_path = provenance_root / "recolor_report.json"
+    palette_path = provenance_root / "palette_mapping.json"
+    if target_frames.exists():
+        shutil.rmtree(target_frames)
+    if provenance_root.exists():
+        shutil.rmtree(provenance_root)
+
+    source_paths = sorted(source_frames.rglob("*.png"))
+    if not source_paths:
+        raise ImportFailure(f"source character has no frames: {source_id}")
+    recolored_pixels = 0
+    used_sources: set[tuple[int, int, int, int]] = set()
+    for source_path in source_paths:
+        target_path = target_frames / source_path.relative_to(source_frames)
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        image = Image.open(source_path).convert("RGBA")
+        output = []
+        for pixel in image.getdata():
+            replacement = normalized_mapping.get(pixel)
+            if replacement is None:
+                output.append(pixel)
+            else:
+                output.append(replacement)
+                used_sources.add(pixel)
+                recolored_pixels += 1
+        image.putdata(output)
+        image.save(target_path, format="PNG", optimize=False, compress_level=9)
+    unused_sources = sorted(set(normalized_mapping) - used_sources)
+    if unused_sources:
+        raise ImportFailure(
+            f"palette mapping contains {len(unused_sources)} unused source colors"
+        )
+    if recolored_pixels == 0:
+        raise ImportFailure("palette mapping did not recolor any pixels")
+
+    source_template = _read_json(source_template_path)
+    source_sprite_set = _read_json(source_sprite_set_path)
+    source_report = _read_json(source_report_path)
+    source_moves = [str(move_id) for move_id in source_template.get("equipped_moves", [])]
+    target_moves = [
+        _scoped_variant_move_id(move_id, source_id, character_id)
+        for move_id in source_moves
+    ]
+    target_template = json.loads(json.dumps(source_template))
+    target_template["template_id"] = character_id
+    target_template["sprite_set_ref"] = character_id
+    target_template["equipped_moves"] = target_moves
+
+    target_sprite_set = json.loads(json.dumps(source_sprite_set))
+    target_sprite_set["sprite_set_id"] = character_id
+    for sequence in target_sprite_set.get("frame_sequences", {}).values():
+        for index, path in enumerate(sequence):
+            sequence[index] = str(path).replace(
+                f"res://godot/assets/frames/{source_id}/",
+                f"res://godot/assets/frames/{character_id}/",
+            )
+    source_mapping = target_sprite_set.get("required_moves_mapping", {})
+    target_sprite_set["required_moves_mapping"] = {
+        _scoped_variant_move_id(str(move_id), source_id, character_id): clip_id
+        for move_id, clip_id in source_mapping.items()
+    }
+
+    moves_dir = project_root / "data/v0_3/moves"
+    for stale in moves_dir.glob(f"{character_id}_*.json"):
+        stale.unlink()
+    for source_move_id, target_move_id in zip(source_moves, target_moves):
+        source_move_path = moves_dir / f"{source_move_id}.json"
+        source_move = _read_json(source_move_path)
+        target_move = json.loads(json.dumps(source_move))
+        target_move["move_id"] = target_move_id
+        _write_json(moves_dir / f"{target_move_id}.json", target_move)
+
+    _write_json(target_template_path, target_template)
+    _write_json(target_sprite_set_path, target_sprite_set)
+    _copy_variant_provenance(
+        project_root / "data/imports" / source_id,
+        provenance_root,
+        source_report_path,
+    )
+    palette_document = {
+        "schema_version": 1,
+        "mapping_id": mapping_id.strip(),
+        "source_character_id": source_id,
+        "target_character_id": character_id,
+        "entries": [
+            {"from_rgba": list(source), "to_rgba": list(normalized_mapping[source])}
+            for source in sorted(normalized_mapping)
+        ],
+    }
+    _write_json(palette_path, palette_document)
+
+    report = {
+        "schema_version": 1,
+        "status": "complete",
+        "source_character_id": source_id,
+        "character_id": character_id,
+        "character_name": target_name.strip(),
+        "mapping_id": mapping_id.strip(),
+        "mapping_entry_count": len(normalized_mapping),
+        "recolored_pixel_count": recolored_pixels,
+        "frame_count": len(source_paths),
+        "source_accounting": source_report.get("source_accounting", {}),
+        "equipped_actions": source_report.get("equipped_actions", []),
+        "equipped_moves": target_moves,
+        "missing": source_report.get("missing", []),
+        "unequipped": source_report.get("unequipped", []),
+        "unresolved": [],
+        "source_import_report_sha256": _sha256(source_report_path),
+        "outputs": {
+            "template": target_template_path.relative_to(project_root).as_posix(),
+            "sprite_set": target_sprite_set_path.relative_to(project_root).as_posix(),
+            "report": report_path.relative_to(project_root).as_posix(),
+            "palette_mapping": palette_path.relative_to(project_root).as_posix(),
+            "frames": target_frames.relative_to(project_root).as_posix(),
+            "provenance": provenance_root.relative_to(project_root).as_posix(),
+        },
+    }
+    _write_json(report_path, report)
+    return report
+
+
+def _validate_palette_mapping(
+    palette_mapping: dict[tuple[int, int, int, int], tuple[int, int, int, int]],
+) -> dict[tuple[int, int, int, int], tuple[int, int, int, int]]:
+    if not palette_mapping:
+        raise ImportFailure("recolor requires an explicit non-empty palette mapping")
+    result = {}
+    for source, target in palette_mapping.items():
+        if len(source) != 4 or len(target) != 4:
+            raise ImportFailure("palette entries must contain exact RGBA tuples")
+        normalized_source = tuple(int(channel) for channel in source)
+        normalized_target = tuple(int(channel) for channel in target)
+        if any(channel < 0 or channel > 255 for channel in normalized_source + normalized_target):
+            raise ImportFailure("palette RGBA channels must be within 0..255")
+        if normalized_source[3] != normalized_target[3]:
+            raise ImportFailure("palette mapping cannot change alpha")
+        if normalized_source == normalized_target:
+            raise ImportFailure("palette mapping entries must change RGB")
+        result[normalized_source] = normalized_target
+    return result
+
+
+def _scoped_variant_move_id(move_id: str, source_id: str, target_id: str) -> str:
+    prefix = f"{source_id}_"
+    if not move_id.startswith(prefix):
+        raise ImportFailure(f"source move is not character scoped: {move_id}")
+    return f"{target_id}_{move_id.removeprefix(prefix)}"
+
+
+def _copy_variant_provenance(
+    source_root: Path,
+    target_root: Path,
+    source_report_path: Path,
+) -> None:
+    target_root.mkdir(parents=True, exist_ok=True)
+    # Variant provenance keeps immutable Eden manifests and references the source
+    # import report. Identical preview PNG copies would create duplicate Godot UIDs.
+    for name in ("eden_package.json", "behaviors"):
+        source = source_root / name
+        target = target_root / name
+        if source.is_dir():
+            shutil.copytree(
+                source,
+                target,
+                ignore=shutil.ignore_patterns("*.import", "*.uid"),
+            )
+        elif source.is_file():
+            shutil.copyfile(source, target)
+    shutil.copyfile(source_report_path, target_root / "source_import_report.json")
 
 
 def _load_behavior_records(
@@ -739,9 +947,20 @@ def _generate_spriteframes(project_root: Path, character_id: str, godot: str) ->
         )
 
 
+def _load_palette_mapping(path: Path) -> tuple[str, dict[tuple[int, int, int, int], tuple[int, int, int, int]]]:
+    document = _read_json(path)
+    mapping_id = str(document.get("mapping_id", "")).strip()
+    mapping = {}
+    for entry in document.get("entries", []):
+        source = tuple(int(channel) for channel in entry.get("from_rgba", []))
+        target = tuple(int(channel) for channel in entry.get("to_rgba", []))
+        mapping[source] = target
+    return mapping_id, _validate_palette_mapping(mapping)
+
+
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("package", type=Path, help="Eden package directory")
+    parser.add_argument("package", nargs="?", type=Path, help="Eden package directory")
     parser.add_argument("character_name", help="target character name")
     parser.add_argument(
         "--project-root",
@@ -760,18 +979,41 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         help="write import data without invoking Godot SpriteFrames generation",
     )
     parser.add_argument("--godot", default="godot", help="Godot executable")
+    parser.add_argument(
+        "--recolor-from",
+        help="create a variant from an already imported character id",
+    )
+    parser.add_argument(
+        "--palette-mapping",
+        type=Path,
+        help="explicit exact-RGBA palette mapping JSON (required with --recolor-from)",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(sys.argv[1:] if argv is None else argv)
     try:
-        report = import_character(
-            args.package,
-            args.character_name,
-            args.project_root,
-            verify_hashes=not args.skip_hash_verification,
-        )
+        if args.recolor_from:
+            if args.palette_mapping is None:
+                raise ImportFailure("--recolor-from requires --palette-mapping")
+            mapping_id, mapping = _load_palette_mapping(args.palette_mapping)
+            report = recolor_character(
+                args.project_root,
+                args.recolor_from,
+                args.character_name,
+                mapping,
+                mapping_id=mapping_id,
+            )
+        else:
+            if args.package is None:
+                raise ImportFailure("Eden package is required for a base import")
+            report = import_character(
+                args.package,
+                args.character_name,
+                args.project_root,
+                verify_hashes=not args.skip_hash_verification,
+            )
         if not args.skip_spriteframes:
             _generate_spriteframes(
                 args.project_root.resolve(), report["character_id"], args.godot

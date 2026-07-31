@@ -1,0 +1,52 @@
+{
+  "active_window": {
+    "end_frame": 3,
+    "start_frame": 2
+  },
+  "damage": 10,
+  "events": [
+    {
+      "event_type": "enable_hitbox",
+      "frame": 2,
+      "payload": {
+        "hitbox_id": "hit_high_kick"
+      }
+    },
+    {
+      "event_type": "disable_hitbox",
+      "frame": 3,
+      "payload": {
+        "hitbox_id": "hit_high_kick"
+      }
+    },
+    {
+      "event_type": "apply_hitstop",
+      "frame": 3,
+      "payload": {
+        "frames": 3
+      }
+    }
+  ],
+  "frame_count": 6,
+  "hitboxes": [
+    {
+      "active_window": {
+        "end_frame": 3,
+        "start_frame": 2
+      },
+      "hitbox_id": "hit_high_kick",
+      "rect": {
+        "h": 20,
+        "w": 36,
+        "x": 10,
+        "y": -48
+      }
+    }
+  ],
+  "hitstop_frames": 3,
+  "move_id": "miduo_blue_high_kick",
+  "move_type": "combat",
+  "multi_hit": false,
+  "schema_version": "0.3",
+  "state_context_override": "idle"
+}

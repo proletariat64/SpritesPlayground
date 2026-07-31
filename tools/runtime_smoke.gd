@@ -13,6 +13,10 @@ func _run() -> void:
 	root.add_child(playground)
 	await process_frame
 	await physics_frame
+	# Legacy runtime checks pin NPCs as stationary targets; AI behavior has its own
+	# public Playground seam in ai_combat_smoke.gd.
+	playground.dummy.is_test_dummy = true
+	playground.player.set_combat_target(playground.dummy)
 
 	var punch_ok: bool = await _run_move_hit_smoke(playground, "jab", 6)
 	var kick_ok: bool = await _run_move_hit_smoke(playground, "high_kick", 10)
@@ -144,14 +148,14 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 	playground.select_dummy_character()
 	var dummy_bound: bool = (
 		str(panel.bound_instance_id) == "npc_001"
-		and str(panel.bound_template_id) == "skeleton_default_unarmed_s64"
+		and str(panel.bound_template_id) == "miduo_blue"
 		and not str(panel.bound_control_mode).is_empty()
 	)
 	var hud_text := str(playground.debug_label.text)
 	var hud_ok := (
 		hud_text.contains("SEL")
 		and hud_text.contains("npc_001")
-		and hud_text.contains("tpl:skeleton_default_unarmed_s64")
+		and hud_text.contains("tpl:miduo_blue")
 		and hud_text.contains("mode:")
 	)
 	playground.select_player_character()
@@ -348,8 +352,8 @@ func _run_npc_collection_smoke(playground: Node) -> bool:
 		and playground.all_characters().size() == 2
 		and playground.dummy == initial_dummy
 		and str(playground.dummy.instance_id) == "npc_001"
-		and str(playground.dummy.template_id) == "skeleton_default_unarmed_s64"
-		and str(playground.dummy.sprite_set_id) == "skeleton_default_unarmed_s64"
+		and str(playground.dummy.template_id) == "miduo_blue"
+		and str(playground.dummy.sprite_set_id) == "miduo_blue"
 	)
 
 	var max_count: int = playground.MAX_NPC_COUNT
@@ -505,6 +509,7 @@ func _run_all_character_pairwise_hits_smoke(playground: Node) -> bool:
 	var npc_attacker: Node2D = playground.npcs[0]
 	npc_attacker.apply_template_id("skeleton_default_unarmed_s64")
 	npc_attacker.reset_runtime(Vector2(245, 245))
+	npc_attacker.state_machine.facing = 1
 	playground.player.reset_runtime(_target_position_for("basic_punch"))
 	npc_attacker.request_attack("basic_punch")
 	for _frame in 8:
@@ -660,6 +665,8 @@ func _ensure_npc_count(playground: Node, expected_count: int) -> bool:
 		var target: Node2D = playground.npcs[playground.npc_count() - 1]
 		if not playground.remove_npc(target):
 			return false
+	for npc in playground.npcs:
+		npc.is_test_dummy = true
 	return playground.npc_count() == expected_count
 
 

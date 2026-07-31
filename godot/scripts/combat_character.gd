@@ -5,6 +5,7 @@ const MoveExecutorScript := preload("res://godot/scripts/move_executor.gd")
 const StateMachineScript := preload("res://godot/scripts/combat_state_machine.gd")
 const CharacterTemplateScript := preload("res://godot/scripts/character_template.gd")
 const SpriteFramesGeneratorScript := preload("res://godot/scripts/spriteframes_generator.gd")
+const CombatAIControllerScript := preload("res://godot/scripts/combat_ai_controller.gd")
 const COMBO_BUFFER_MSEC := 650
 const COMBAT_CONTEXT_SECONDS := 2.0
 # Temporary #33 presentation rule until Move reaction metadata exists: heavy hits
@@ -32,21 +33,18 @@ var visual_fallback_enabled: bool = true
 
 var move_executor: Node
 var state_machine: Node
+var ai_controller: Node
+var combat_target: Node2D
 
 var _flash_time: float = 0.0
 var _hit_hurtbox_id: String = ""
 var _contact_hurtbox_ids: Dictionary = {}
-var _ai_elapsed: float = 0.0
-var _ai_decision_in: float = 0.0
-var _ai_vector: Vector2 = Vector2.ZERO
 var _queued_combo_move: String = ""
 var _combo_started_at_msec: int = 0
 var _combat_context_remaining: float = 0.0
-var _rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
-	_rng.seed = hash(instance_id)
 	_load_template()
 	_ensure_animated_sprite()
 	move_executor = MoveExecutorScript.new()
@@ -59,6 +57,12 @@ func _ready() -> void:
 	add_child(state_machine)
 	state_machine.configure(move_executor)
 	move_executor.move_finished.connect(_on_move_finished_for_combo)
+
+	ai_controller = CombatAIControllerScript.new()
+	ai_controller.name = "combat_ai_controller"
+	add_child(ai_controller)
+	ai_controller.configure(self)
+	ai_controller.set_target(combat_target)
 	_load_sprite_frames_for_sprite_set()
 
 	queue_redraw()
@@ -192,6 +196,8 @@ func reset_runtime(new_position: Vector2) -> void:
 	_contact_hurtbox_ids.clear()
 	_clear_combo_buffer()
 	_combat_context_remaining = 0.0
+	if ai_controller != null:
+		ai_controller.reset()
 	state_machine.reset_to_idle()
 	_sync_visual_animation()
 	queue_redraw()
@@ -268,6 +274,7 @@ func debug_summary() -> Dictionary:
 		"last_hit_hurtbox": _hit_hurtbox_id,
 		"contact_hurtboxes": _contact_hurtbox_ids.keys(),
 		"mode": control_mode,
+		"ai_backend": ai_backend(),
 	}
 
 
@@ -393,28 +400,20 @@ func _kick_move_id() -> String:
 	return _first_available_move(["high_kick", "basic_kick"])
 
 
-func _tick_ai(delta: float) -> Vector2:
-	_ai_elapsed += delta
-	_ai_decision_in -= delta
-	if _ai_decision_in > 0.0:
-		return _ai_vector
+func set_combat_target(next_target: Node2D) -> void:
+	combat_target = next_target
+	if ai_controller != null:
+		ai_controller.set_target(next_target)
 
-	_ai_decision_in = _rng.randf_range(0.25, 0.75)
-	var choice := _rng.randi_range(0, 5)
-	match choice:
-		0:
-			_ai_vector = Vector2.ZERO
-		1:
-			_ai_vector = Vector2(_rng.randf_range(-1.0, 1.0), _rng.randf_range(-0.6, 0.6)).normalized()
-		2:
-			state_machine.request_action("dash")
-		3:
-			state_machine.request_action("jump")
-		4:
-			request_attack(_punch_move_id())
-		5:
-			request_attack(_kick_move_id())
-	return _ai_vector
+
+func ai_backend() -> String:
+	return str(ai_controller.backend()) if ai_controller != null else "deterministic_fallback"
+
+
+func _tick_ai(delta: float) -> Vector2:
+	if ai_controller == null:
+		return Vector2.ZERO
+	return ai_controller.movement_intent(delta)
 
 
 func _clamp_foot_to_arena(arena_center: Vector2, arena_radius: Vector2) -> void:

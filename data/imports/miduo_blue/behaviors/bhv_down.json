@@ -1,0 +1,84 @@
+{
+  "behavior": {
+    "behavior_id": "bhv_down",
+    "direction_order": [
+      "dir_e",
+      "dir_w"
+    ],
+    "frames_per_direction": 1,
+    "playback": {
+      "fps": 12,
+      "type": "hold"
+    }
+  },
+  "coverage": {
+    "complete": true,
+    "unit_keys": [
+      "bhv_down__dir_e",
+      "bhv_down__dir_w"
+    ]
+  },
+  "directions": [
+    {
+      "direction_id": "dir_e",
+      "frames": [
+        {
+          "bytes": 2282,
+          "file": "frames/dir_e/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:4db8e3d89a51540d7a36c4f66b09f12bd69e07401b922bb8217c9a37c5545a60",
+          "width": 80,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "mirrored_from": null,
+      "row": 0,
+      "source": "authored"
+    },
+    {
+      "direction_id": "dir_w",
+      "frames": [
+        {
+          "bytes": 2295,
+          "file": "frames/dir_w/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:fce6763b3e2e09153fad1670a74977414a1784f4142ad35ceae39b8ab23cc7a9",
+          "width": 80,
+          "x": 0,
+          "y": 80
+        }
+      ],
+      "mirrored_from": "dir_e",
+      "row": 1,
+      "source": "mirrored"
+    }
+  ],
+  "layout": {
+    "columns": 1,
+    "height": 160,
+    "order": "directions_top_to_bottom_frames_left_to_right",
+    "rows": 2,
+    "segment_bytes": 4262,
+    "segment_file": "segment.png",
+    "segment_sha256": "sha256:1fec6a52f78c58869ff804cf549865e05e5a7f1e7e0b4d8ffd879fa88ac4fad0",
+    "type": "direction_rows",
+    "width": 80
+  },
+  "manifest_type": "eden_behavior",
+  "manifest_version": 4,
+  "preview": {
+    "bytes": 4262,
+    "file": "preview.png",
+    "sha256": "sha256:1fec6a52f78c58869ff804cf549865e05e5a7f1e7e0b4d8ffd879fa88ac4fad0"
+  },
+  "sprite": {
+    "class": "s64",
+    "frame_height": 80,
+    "frame_width": 80,
+    "name": "sprite-s64-miduo"
+  },
+  "task_id": "tsk_local_22c30f0eed014a34adc16a3f0b3805be"
+}

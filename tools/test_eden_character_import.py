@@ -9,12 +9,18 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tools.import_eden_character import import_character
+from PIL import Image
+
+from tools.import_eden_character import import_character, recolor_character
 
 
 DEFAULT_MIDUO_PACKAGE = Path(
     "/home/ubuntu/app/eden-0.3.2/workspace/export/"
     "tsk_local_22c30f0eed014a34adc16a3f0b3805be/package"
+)
+MIDUO_BLUE_MAPPING = (
+    Path(__file__).resolve().parents[1]
+    / "data/recolor_presets/miduo_green_uniform_to_blue_v1.json"
 )
 
 
@@ -122,6 +128,118 @@ class EdenCharacterImportTests(unittest.TestCase):
                 first = Path(first_dir) / first_report["outputs"][output_key]
                 second = Path(second_dir) / second_report["outputs"][output_key]
                 self.assertEqual(first.read_bytes(), second.read_bytes())
+
+    def test_recolor_is_complete_selective_and_independent(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_root = Path(temp_dir)
+            import_character(self.package_root, "Miduo", project_root)
+            palette = _palette_from_document(MIDUO_BLUE_MAPPING)
+            source_template = project_root / "data/v0_3/templates/miduo.json"
+            source_move = project_root / "data/v0_3/moves/miduo_jab.json"
+            source_template_before = source_template.read_bytes()
+            source_move_before = source_move.read_bytes()
+
+            report = recolor_character(
+                project_root,
+                "miduo",
+                "Miduo Blue",
+                palette,
+                mapping_id="miduo_green_uniform_to_blue_v1",
+            )
+
+            self.assertEqual(report["status"], "complete")
+            self.assertEqual(report["source_character_id"], "miduo")
+            self.assertEqual(report["character_id"], "miduo_blue")
+            self.assertEqual(report["frame_count"], 476)
+            self.assertGreater(report["recolored_pixel_count"], 0)
+            self.assertEqual(report["mapping_entry_count"], len(palette))
+
+            target_frames = project_root / "godot/assets/frames/miduo_blue"
+            self.assertEqual(len(list(target_frames.rglob("*.png"))), 476)
+            _assert_only_palette_pixels_changed(
+                self,
+                project_root / "godot/assets/frames/miduo",
+                target_frames,
+                palette,
+            )
+
+            target_template = json.loads(
+                (project_root / "data/v0_3/templates/miduo_blue.json").read_text()
+            )
+            target_sprite_set = json.loads(
+                (project_root / "data/v0_3/sprite_sets/miduo_blue.json").read_text()
+            )
+            self.assertEqual(target_template["template_id"], "miduo_blue")
+            self.assertEqual(target_template["sprite_set_ref"], "miduo_blue")
+            self.assertEqual(target_sprite_set["sprite_set_id"], "miduo_blue")
+            self.assertTrue(all(move.startswith("miduo_blue_") for move in target_template["equipped_moves"]))
+            self.assertEqual(
+                [move.removeprefix("miduo_blue_") for move in target_template["equipped_moves"]],
+                [move.removeprefix("miduo_") for move in json.loads(source_template_before)["equipped_moves"]],
+            )
+
+            target_template["hp"] = 333
+            target_template_path = project_root / "data/v0_3/templates/miduo_blue.json"
+            target_template_path.write_text(json.dumps(target_template), encoding="utf-8")
+            target_move_path = project_root / "data/v0_3/moves/miduo_blue_jab.json"
+            target_move = json.loads(target_move_path.read_text())
+            target_move["damage"] = 77
+            target_move_path.write_text(json.dumps(target_move), encoding="utf-8")
+            self.assertEqual(source_template.read_bytes(), source_template_before)
+            self.assertEqual(source_move.read_bytes(), source_move_before)
+
+    def test_same_recolor_inputs_produce_byte_identical_saved_data(self) -> None:
+        outputs = []
+        for _ in range(2):
+            temp = tempfile.TemporaryDirectory()
+            self.addCleanup(temp.cleanup)
+            root = Path(temp.name)
+            import_character(self.package_root, "Miduo", root)
+            palette = _palette_from_document(MIDUO_BLUE_MAPPING)
+            report = recolor_character(
+                root,
+                "miduo",
+                "Miduo Blue",
+                palette,
+                mapping_id="miduo_green_uniform_to_blue_v1",
+            )
+            outputs.append((root, report))
+        for output_key in ("template", "sprite_set", "report", "palette_mapping"):
+            first = outputs[0][0] / outputs[0][1]["outputs"][output_key]
+            second = outputs[1][0] / outputs[1][1]["outputs"][output_key]
+            self.assertEqual(first.read_bytes(), second.read_bytes())
+
+
+def _palette_from_document(path: Path) -> dict[tuple[int, int, int, int], tuple[int, int, int, int]]:
+    document = json.loads(path.read_text(encoding="utf-8"))
+    return {
+        tuple(entry["from_rgba"]): tuple(entry["to_rgba"])
+        for entry in document["entries"]
+    }
+
+
+def _assert_only_palette_pixels_changed(
+    case: unittest.TestCase,
+    source_root: Path,
+    target_root: Path,
+    palette: dict[tuple[int, int, int, int], tuple[int, int, int, int]],
+) -> None:
+    changed = 0
+    for source_path in sorted(source_root.rglob("*.png")):
+        relative = source_path.relative_to(source_root)
+        target_path = target_root / relative
+        case.assertTrue(target_path.is_file(), str(relative))
+        source_pixels = list(Image.open(source_path).convert("RGBA").getdata())
+        target_pixels = list(Image.open(target_path).convert("RGBA").getdata())
+        case.assertEqual(len(source_pixels), len(target_pixels))
+        for source, target in zip(source_pixels, target_pixels):
+            case.assertEqual(target[3], source[3])
+            if source in palette:
+                case.assertEqual(target, palette[source])
+                changed += 1
+            else:
+                case.assertEqual(target, source)
+    case.assertGreater(changed, 0)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,2450 @@
+{
+  "animation_clips": {
+    "big_jump": {
+      "clip_id": "big_jump",
+      "frame_sequence_ref": "big_jump",
+      "loop": false
+    },
+    "big_jump_w": {
+      "clip_id": "big_jump_w",
+      "frame_sequence_ref": "big_jump_w",
+      "loop": false
+    },
+    "cross_punch": {
+      "clip_id": "cross_punch",
+      "frame_sequence_ref": "cross_punch",
+      "loop": false
+    },
+    "cross_punch_w": {
+      "clip_id": "cross_punch_w",
+      "frame_sequence_ref": "cross_punch_w",
+      "loop": false
+    },
+    "dash": {
+      "clip_id": "dash",
+      "frame_sequence_ref": "dash",
+      "loop": false
+    },
+    "dash_w": {
+      "clip_id": "dash_w",
+      "frame_sequence_ref": "dash_w",
+      "loop": false
+    },
+    "dead": {
+      "clip_id": "dead",
+      "frame_sequence_ref": "dead",
+      "loop": false
+    },
+    "dead_w": {
+      "clip_id": "dead_w",
+      "frame_sequence_ref": "dead_w",
+      "loop": false
+    },
+    "eden_big_jump_air_e": {
+      "clip_id": "eden_big_jump_air_e",
+      "frame_sequence_ref": "eden_big_jump_air_e",
+      "loop": false
+    },
+    "eden_big_jump_air_w": {
+      "clip_id": "eden_big_jump_air_w",
+      "frame_sequence_ref": "eden_big_jump_air_w",
+      "loop": false
+    },
+    "eden_big_jump_land_e": {
+      "clip_id": "eden_big_jump_land_e",
+      "frame_sequence_ref": "eden_big_jump_land_e",
+      "loop": false
+    },
+    "eden_big_jump_land_w": {
+      "clip_id": "eden_big_jump_land_w",
+      "frame_sequence_ref": "eden_big_jump_land_w",
+      "loop": false
+    },
+    "eden_big_jump_start_e": {
+      "clip_id": "eden_big_jump_start_e",
+      "frame_sequence_ref": "eden_big_jump_start_e",
+      "loop": false
+    },
+    "eden_big_jump_start_w": {
+      "clip_id": "eden_big_jump_start_w",
+      "frame_sequence_ref": "eden_big_jump_start_w",
+      "loop": false
+    },
+    "eden_cross_punch_e": {
+      "clip_id": "eden_cross_punch_e",
+      "frame_sequence_ref": "eden_cross_punch_e",
+      "loop": false
+    },
+    "eden_cross_punch_w": {
+      "clip_id": "eden_cross_punch_w",
+      "frame_sequence_ref": "eden_cross_punch_w",
+      "loop": false
+    },
+    "eden_dash_e": {
+      "clip_id": "eden_dash_e",
+      "frame_sequence_ref": "eden_dash_e",
+      "loop": false
+    },
+    "eden_dash_w": {
+      "clip_id": "eden_dash_w",
+      "frame_sequence_ref": "eden_dash_w",
+      "loop": false
+    },
+    "eden_down_e": {
+      "clip_id": "eden_down_e",
+      "frame_sequence_ref": "eden_down_e",
+      "loop": false
+    },
+    "eden_down_w": {
+      "clip_id": "eden_down_w",
+      "frame_sequence_ref": "eden_down_w",
+      "loop": false
+    },
+    "eden_fall_down_e": {
+      "clip_id": "eden_fall_down_e",
+      "frame_sequence_ref": "eden_fall_down_e",
+      "loop": false
+    },
+    "eden_fall_down_w": {
+      "clip_id": "eden_fall_down_w",
+      "frame_sequence_ref": "eden_fall_down_w",
+      "loop": false
+    },
+    "eden_fight_idle_e": {
+      "clip_id": "eden_fight_idle_e",
+      "frame_sequence_ref": "eden_fight_idle_e",
+      "loop": true
+    },
+    "eden_fight_idle_w": {
+      "clip_id": "eden_fight_idle_w",
+      "frame_sequence_ref": "eden_fight_idle_w",
+      "loop": true
+    },
+    "eden_flying_kick_e": {
+      "clip_id": "eden_flying_kick_e",
+      "frame_sequence_ref": "eden_flying_kick_e",
+      "loop": false
+    },
+    "eden_flying_kick_w": {
+      "clip_id": "eden_flying_kick_w",
+      "frame_sequence_ref": "eden_flying_kick_w",
+      "loop": false
+    },
+    "eden_get_up_e": {
+      "clip_id": "eden_get_up_e",
+      "frame_sequence_ref": "eden_get_up_e",
+      "loop": false
+    },
+    "eden_get_up_w": {
+      "clip_id": "eden_get_up_w",
+      "frame_sequence_ref": "eden_get_up_w",
+      "loop": false
+    },
+    "eden_high_kick_e": {
+      "clip_id": "eden_high_kick_e",
+      "frame_sequence_ref": "eden_high_kick_e",
+      "loop": false
+    },
+    "eden_high_kick_w": {
+      "clip_id": "eden_high_kick_w",
+      "frame_sequence_ref": "eden_high_kick_w",
+      "loop": false
+    },
+    "eden_hurt_e": {
+      "clip_id": "eden_hurt_e",
+      "frame_sequence_ref": "eden_hurt_e",
+      "loop": false
+    },
+    "eden_hurt_w": {
+      "clip_id": "eden_hurt_w",
+      "frame_sequence_ref": "eden_hurt_w",
+      "loop": false
+    },
+    "eden_idle_breath_e": {
+      "clip_id": "eden_idle_breath_e",
+      "frame_sequence_ref": "eden_idle_breath_e",
+      "loop": true
+    },
+    "eden_idle_breath_n": {
+      "clip_id": "eden_idle_breath_n",
+      "frame_sequence_ref": "eden_idle_breath_n",
+      "loop": true
+    },
+    "eden_idle_breath_ne": {
+      "clip_id": "eden_idle_breath_ne",
+      "frame_sequence_ref": "eden_idle_breath_ne",
+      "loop": true
+    },
+    "eden_idle_breath_nw": {
+      "clip_id": "eden_idle_breath_nw",
+      "frame_sequence_ref": "eden_idle_breath_nw",
+      "loop": true
+    },
+    "eden_idle_breath_s": {
+      "clip_id": "eden_idle_breath_s",
+      "frame_sequence_ref": "eden_idle_breath_s",
+      "loop": true
+    },
+    "eden_idle_breath_se": {
+      "clip_id": "eden_idle_breath_se",
+      "frame_sequence_ref": "eden_idle_breath_se",
+      "loop": true
+    },
+    "eden_idle_breath_sw": {
+      "clip_id": "eden_idle_breath_sw",
+      "frame_sequence_ref": "eden_idle_breath_sw",
+      "loop": true
+    },
+    "eden_idle_breath_w": {
+      "clip_id": "eden_idle_breath_w",
+      "frame_sequence_ref": "eden_idle_breath_w",
+      "loop": true
+    },
+    "eden_jab_e": {
+      "clip_id": "eden_jab_e",
+      "frame_sequence_ref": "eden_jab_e",
+      "loop": false
+    },
+    "eden_jab_w": {
+      "clip_id": "eden_jab_w",
+      "frame_sequence_ref": "eden_jab_w",
+      "loop": false
+    },
+    "eden_jump_air_e": {
+      "clip_id": "eden_jump_air_e",
+      "frame_sequence_ref": "eden_jump_air_e",
+      "loop": false
+    },
+    "eden_jump_air_w": {
+      "clip_id": "eden_jump_air_w",
+      "frame_sequence_ref": "eden_jump_air_w",
+      "loop": false
+    },
+    "eden_jump_start_e": {
+      "clip_id": "eden_jump_start_e",
+      "frame_sequence_ref": "eden_jump_start_e",
+      "loop": false
+    },
+    "eden_jump_start_w": {
+      "clip_id": "eden_jump_start_w",
+      "frame_sequence_ref": "eden_jump_start_w",
+      "loop": false
+    },
+    "eden_land_e": {
+      "clip_id": "eden_land_e",
+      "frame_sequence_ref": "eden_land_e",
+      "loop": false
+    },
+    "eden_land_w": {
+      "clip_id": "eden_land_w",
+      "frame_sequence_ref": "eden_land_w",
+      "loop": false
+    },
+    "eden_pickup_e": {
+      "clip_id": "eden_pickup_e",
+      "frame_sequence_ref": "eden_pickup_e",
+      "loop": false
+    },
+    "eden_pickup_w": {
+      "clip_id": "eden_pickup_w",
+      "frame_sequence_ref": "eden_pickup_w",
+      "loop": false
+    },
+    "eden_pull_e": {
+      "clip_id": "eden_pull_e",
+      "frame_sequence_ref": "eden_pull_e",
+      "loop": true
+    },
+    "eden_pull_w": {
+      "clip_id": "eden_pull_w",
+      "frame_sequence_ref": "eden_pull_w",
+      "loop": true
+    },
+    "eden_push_e": {
+      "clip_id": "eden_push_e",
+      "frame_sequence_ref": "eden_push_e",
+      "loop": true
+    },
+    "eden_push_w": {
+      "clip_id": "eden_push_w",
+      "frame_sequence_ref": "eden_push_w",
+      "loop": true
+    },
+    "eden_roundhouse_kick_e": {
+      "clip_id": "eden_roundhouse_kick_e",
+      "frame_sequence_ref": "eden_roundhouse_kick_e",
+      "loop": false
+    },
+    "eden_roundhouse_kick_w": {
+      "clip_id": "eden_roundhouse_kick_w",
+      "frame_sequence_ref": "eden_roundhouse_kick_w",
+      "loop": false
+    },
+    "eden_run_loop_e": {
+      "clip_id": "eden_run_loop_e",
+      "frame_sequence_ref": "eden_run_loop_e",
+      "loop": true
+    },
+    "eden_run_loop_n": {
+      "clip_id": "eden_run_loop_n",
+      "frame_sequence_ref": "eden_run_loop_n",
+      "loop": true
+    },
+    "eden_run_loop_ne": {
+      "clip_id": "eden_run_loop_ne",
+      "frame_sequence_ref": "eden_run_loop_ne",
+      "loop": true
+    },
+    "eden_run_loop_nw": {
+      "clip_id": "eden_run_loop_nw",
+      "frame_sequence_ref": "eden_run_loop_nw",
+      "loop": true
+    },
+    "eden_run_loop_s": {
+      "clip_id": "eden_run_loop_s",
+      "frame_sequence_ref": "eden_run_loop_s",
+      "loop": true
+    },
+    "eden_run_loop_se": {
+      "clip_id": "eden_run_loop_se",
+      "frame_sequence_ref": "eden_run_loop_se",
+      "loop": true
+    },
+    "eden_run_loop_sw": {
+      "clip_id": "eden_run_loop_sw",
+      "frame_sequence_ref": "eden_run_loop_sw",
+      "loop": true
+    },
+    "eden_run_loop_w": {
+      "clip_id": "eden_run_loop_w",
+      "frame_sequence_ref": "eden_run_loop_w",
+      "loop": true
+    },
+    "eden_run_start_e": {
+      "clip_id": "eden_run_start_e",
+      "frame_sequence_ref": "eden_run_start_e",
+      "loop": false
+    },
+    "eden_run_start_n": {
+      "clip_id": "eden_run_start_n",
+      "frame_sequence_ref": "eden_run_start_n",
+      "loop": false
+    },
+    "eden_run_start_ne": {
+      "clip_id": "eden_run_start_ne",
+      "frame_sequence_ref": "eden_run_start_ne",
+      "loop": false
+    },
+    "eden_run_start_nw": {
+      "clip_id": "eden_run_start_nw",
+      "frame_sequence_ref": "eden_run_start_nw",
+      "loop": false
+    },
+    "eden_run_start_s": {
+      "clip_id": "eden_run_start_s",
+      "frame_sequence_ref": "eden_run_start_s",
+      "loop": false
+    },
+    "eden_run_start_se": {
+      "clip_id": "eden_run_start_se",
+      "frame_sequence_ref": "eden_run_start_se",
+      "loop": false
+    },
+    "eden_run_start_sw": {
+      "clip_id": "eden_run_start_sw",
+      "frame_sequence_ref": "eden_run_start_sw",
+      "loop": false
+    },
+    "eden_run_start_w": {
+      "clip_id": "eden_run_start_w",
+      "frame_sequence_ref": "eden_run_start_w",
+      "loop": false
+    },
+    "eden_run_stop_e": {
+      "clip_id": "eden_run_stop_e",
+      "frame_sequence_ref": "eden_run_stop_e",
+      "loop": false
+    },
+    "eden_run_stop_n": {
+      "clip_id": "eden_run_stop_n",
+      "frame_sequence_ref": "eden_run_stop_n",
+      "loop": false
+    },
+    "eden_run_stop_ne": {
+      "clip_id": "eden_run_stop_ne",
+      "frame_sequence_ref": "eden_run_stop_ne",
+      "loop": false
+    },
+    "eden_run_stop_nw": {
+      "clip_id": "eden_run_stop_nw",
+      "frame_sequence_ref": "eden_run_stop_nw",
+      "loop": false
+    },
+    "eden_run_stop_s": {
+      "clip_id": "eden_run_stop_s",
+      "frame_sequence_ref": "eden_run_stop_s",
+      "loop": false
+    },
+    "eden_run_stop_se": {
+      "clip_id": "eden_run_stop_se",
+      "frame_sequence_ref": "eden_run_stop_se",
+      "loop": false
+    },
+    "eden_run_stop_sw": {
+      "clip_id": "eden_run_stop_sw",
+      "frame_sequence_ref": "eden_run_stop_sw",
+      "loop": false
+    },
+    "eden_run_stop_w": {
+      "clip_id": "eden_run_stop_w",
+      "frame_sequence_ref": "eden_run_stop_w",
+      "loop": false
+    },
+    "eden_run_turn_e": {
+      "clip_id": "eden_run_turn_e",
+      "frame_sequence_ref": "eden_run_turn_e",
+      "loop": false
+    },
+    "eden_run_turn_n": {
+      "clip_id": "eden_run_turn_n",
+      "frame_sequence_ref": "eden_run_turn_n",
+      "loop": false
+    },
+    "eden_run_turn_ne": {
+      "clip_id": "eden_run_turn_ne",
+      "frame_sequence_ref": "eden_run_turn_ne",
+      "loop": false
+    },
+    "eden_run_turn_nw": {
+      "clip_id": "eden_run_turn_nw",
+      "frame_sequence_ref": "eden_run_turn_nw",
+      "loop": false
+    },
+    "eden_run_turn_s": {
+      "clip_id": "eden_run_turn_s",
+      "frame_sequence_ref": "eden_run_turn_s",
+      "loop": false
+    },
+    "eden_run_turn_se": {
+      "clip_id": "eden_run_turn_se",
+      "frame_sequence_ref": "eden_run_turn_se",
+      "loop": false
+    },
+    "eden_run_turn_sw": {
+      "clip_id": "eden_run_turn_sw",
+      "frame_sequence_ref": "eden_run_turn_sw",
+      "loop": false
+    },
+    "eden_run_turn_w": {
+      "clip_id": "eden_run_turn_w",
+      "frame_sequence_ref": "eden_run_turn_w",
+      "loop": false
+    },
+    "eden_sweep_e": {
+      "clip_id": "eden_sweep_e",
+      "frame_sequence_ref": "eden_sweep_e",
+      "loop": false
+    },
+    "eden_sweep_w": {
+      "clip_id": "eden_sweep_w",
+      "frame_sequence_ref": "eden_sweep_w",
+      "loop": false
+    },
+    "eden_throw_object_e": {
+      "clip_id": "eden_throw_object_e",
+      "frame_sequence_ref": "eden_throw_object_e",
+      "loop": false
+    },
+    "eden_throw_object_w": {
+      "clip_id": "eden_throw_object_w",
+      "frame_sequence_ref": "eden_throw_object_w",
+      "loop": false
+    },
+    "eden_walk_loop_e": {
+      "clip_id": "eden_walk_loop_e",
+      "frame_sequence_ref": "eden_walk_loop_e",
+      "loop": true
+    },
+    "eden_walk_loop_n": {
+      "clip_id": "eden_walk_loop_n",
+      "frame_sequence_ref": "eden_walk_loop_n",
+      "loop": true
+    },
+    "eden_walk_loop_ne": {
+      "clip_id": "eden_walk_loop_ne",
+      "frame_sequence_ref": "eden_walk_loop_ne",
+      "loop": true
+    },
+    "eden_walk_loop_nw": {
+      "clip_id": "eden_walk_loop_nw",
+      "frame_sequence_ref": "eden_walk_loop_nw",
+      "loop": true
+    },
+    "eden_walk_loop_s": {
+      "clip_id": "eden_walk_loop_s",
+      "frame_sequence_ref": "eden_walk_loop_s",
+      "loop": true
+    },
+    "eden_walk_loop_se": {
+      "clip_id": "eden_walk_loop_se",
+      "frame_sequence_ref": "eden_walk_loop_se",
+      "loop": true
+    },
+    "eden_walk_loop_sw": {
+      "clip_id": "eden_walk_loop_sw",
+      "frame_sequence_ref": "eden_walk_loop_sw",
+      "loop": true
+    },
+    "eden_walk_loop_w": {
+      "clip_id": "eden_walk_loop_w",
+      "frame_sequence_ref": "eden_walk_loop_w",
+      "loop": true
+    },
+    "eden_walk_start_e": {
+      "clip_id": "eden_walk_start_e",
+      "frame_sequence_ref": "eden_walk_start_e",
+      "loop": false
+    },
+    "eden_walk_start_n": {
+      "clip_id": "eden_walk_start_n",
+      "frame_sequence_ref": "eden_walk_start_n",
+      "loop": false
+    },
+    "eden_walk_start_ne": {
+      "clip_id": "eden_walk_start_ne",
+      "frame_sequence_ref": "eden_walk_start_ne",
+      "loop": false
+    },
+    "eden_walk_start_nw": {
+      "clip_id": "eden_walk_start_nw",
+      "frame_sequence_ref": "eden_walk_start_nw",
+      "loop": false
+    },
+    "eden_walk_start_s": {
+      "clip_id": "eden_walk_start_s",
+      "frame_sequence_ref": "eden_walk_start_s",
+      "loop": false
+    },
+    "eden_walk_start_se": {
+      "clip_id": "eden_walk_start_se",
+      "frame_sequence_ref": "eden_walk_start_se",
+      "loop": false
+    },
+    "eden_walk_start_sw": {
+      "clip_id": "eden_walk_start_sw",
+      "frame_sequence_ref": "eden_walk_start_sw",
+      "loop": false
+    },
+    "eden_walk_start_w": {
+      "clip_id": "eden_walk_start_w",
+      "frame_sequence_ref": "eden_walk_start_w",
+      "loop": false
+    },
+    "eden_walk_stop_e": {
+      "clip_id": "eden_walk_stop_e",
+      "frame_sequence_ref": "eden_walk_stop_e",
+      "loop": false
+    },
+    "eden_walk_stop_n": {
+      "clip_id": "eden_walk_stop_n",
+      "frame_sequence_ref": "eden_walk_stop_n",
+      "loop": false
+    },
+    "eden_walk_stop_ne": {
+      "clip_id": "eden_walk_stop_ne",
+      "frame_sequence_ref": "eden_walk_stop_ne",
+      "loop": false
+    },
+    "eden_walk_stop_nw": {
+      "clip_id": "eden_walk_stop_nw",
+      "frame_sequence_ref": "eden_walk_stop_nw",
+      "loop": false
+    },
+    "eden_walk_stop_s": {
+      "clip_id": "eden_walk_stop_s",
+      "frame_sequence_ref": "eden_walk_stop_s",
+      "loop": false
+    },
+    "eden_walk_stop_se": {
+      "clip_id": "eden_walk_stop_se",
+      "frame_sequence_ref": "eden_walk_stop_se",
+      "loop": false
+    },
+    "eden_walk_stop_sw": {
+      "clip_id": "eden_walk_stop_sw",
+      "frame_sequence_ref": "eden_walk_stop_sw",
+      "loop": false
+    },
+    "eden_walk_stop_w": {
+      "clip_id": "eden_walk_stop_w",
+      "frame_sequence_ref": "eden_walk_stop_w",
+      "loop": false
+    },
+    "eden_walk_turn_e": {
+      "clip_id": "eden_walk_turn_e",
+      "frame_sequence_ref": "eden_walk_turn_e",
+      "loop": false
+    },
+    "eden_walk_turn_n": {
+      "clip_id": "eden_walk_turn_n",
+      "frame_sequence_ref": "eden_walk_turn_n",
+      "loop": false
+    },
+    "eden_walk_turn_ne": {
+      "clip_id": "eden_walk_turn_ne",
+      "frame_sequence_ref": "eden_walk_turn_ne",
+      "loop": false
+    },
+    "eden_walk_turn_nw": {
+      "clip_id": "eden_walk_turn_nw",
+      "frame_sequence_ref": "eden_walk_turn_nw",
+      "loop": false
+    },
+    "eden_walk_turn_s": {
+      "clip_id": "eden_walk_turn_s",
+      "frame_sequence_ref": "eden_walk_turn_s",
+      "loop": false
+    },
+    "eden_walk_turn_se": {
+      "clip_id": "eden_walk_turn_se",
+      "frame_sequence_ref": "eden_walk_turn_se",
+      "loop": false
+    },
+    "eden_walk_turn_sw": {
+      "clip_id": "eden_walk_turn_sw",
+      "frame_sequence_ref": "eden_walk_turn_sw",
+      "loop": false
+    },
+    "eden_walk_turn_w": {
+      "clip_id": "eden_walk_turn_w",
+      "frame_sequence_ref": "eden_walk_turn_w",
+      "loop": false
+    },
+    "fight_idle": {
+      "clip_id": "fight_idle",
+      "frame_sequence_ref": "fight_idle",
+      "loop": true
+    },
+    "fight_idle_w": {
+      "clip_id": "fight_idle_w",
+      "frame_sequence_ref": "fight_idle_w",
+      "loop": true
+    },
+    "flying_kick": {
+      "clip_id": "flying_kick",
+      "frame_sequence_ref": "flying_kick",
+      "loop": false
+    },
+    "flying_kick_w": {
+      "clip_id": "flying_kick_w",
+      "frame_sequence_ref": "flying_kick_w",
+      "loop": false
+    },
+    "high_kick": {
+      "clip_id": "high_kick",
+      "frame_sequence_ref": "high_kick",
+      "loop": false
+    },
+    "high_kick_w": {
+      "clip_id": "high_kick_w",
+      "frame_sequence_ref": "high_kick_w",
+      "loop": false
+    },
+    "hurt": {
+      "clip_id": "hurt",
+      "frame_sequence_ref": "hurt",
+      "loop": false
+    },
+    "hurt_w": {
+      "clip_id": "hurt_w",
+      "frame_sequence_ref": "hurt_w",
+      "loop": false
+    },
+    "idle_e": {
+      "clip_id": "idle_e",
+      "frame_sequence_ref": "idle_e",
+      "loop": true
+    },
+    "idle_n": {
+      "clip_id": "idle_n",
+      "frame_sequence_ref": "idle_n",
+      "loop": true
+    },
+    "idle_ne": {
+      "clip_id": "idle_ne",
+      "frame_sequence_ref": "idle_ne",
+      "loop": true
+    },
+    "idle_nw": {
+      "clip_id": "idle_nw",
+      "frame_sequence_ref": "idle_nw",
+      "loop": true
+    },
+    "idle_s": {
+      "clip_id": "idle_s",
+      "frame_sequence_ref": "idle_s",
+      "loop": true
+    },
+    "idle_se": {
+      "clip_id": "idle_se",
+      "frame_sequence_ref": "idle_se",
+      "loop": true
+    },
+    "idle_sw": {
+      "clip_id": "idle_sw",
+      "frame_sequence_ref": "idle_sw",
+      "loop": true
+    },
+    "idle_w": {
+      "clip_id": "idle_w",
+      "frame_sequence_ref": "idle_w",
+      "loop": true
+    },
+    "jab": {
+      "clip_id": "jab",
+      "frame_sequence_ref": "jab",
+      "loop": false
+    },
+    "jab_w": {
+      "clip_id": "jab_w",
+      "frame_sequence_ref": "jab_w",
+      "loop": false
+    },
+    "jump": {
+      "clip_id": "jump",
+      "frame_sequence_ref": "jump",
+      "loop": false
+    },
+    "jump_w": {
+      "clip_id": "jump_w",
+      "frame_sequence_ref": "jump_w",
+      "loop": false
+    },
+    "knockdown": {
+      "clip_id": "knockdown",
+      "frame_sequence_ref": "knockdown",
+      "loop": false
+    },
+    "knockdown_w": {
+      "clip_id": "knockdown_w",
+      "frame_sequence_ref": "knockdown_w",
+      "loop": false
+    },
+    "pickup": {
+      "clip_id": "pickup",
+      "frame_sequence_ref": "pickup",
+      "loop": false
+    },
+    "pickup_w": {
+      "clip_id": "pickup_w",
+      "frame_sequence_ref": "pickup_w",
+      "loop": false
+    },
+    "pull": {
+      "clip_id": "pull",
+      "frame_sequence_ref": "pull",
+      "loop": false
+    },
+    "pull_w": {
+      "clip_id": "pull_w",
+      "frame_sequence_ref": "pull_w",
+      "loop": false
+    },
+    "push": {
+      "clip_id": "push",
+      "frame_sequence_ref": "push",
+      "loop": false
+    },
+    "push_w": {
+      "clip_id": "push_w",
+      "frame_sequence_ref": "push_w",
+      "loop": false
+    },
+    "roundhouse_kick": {
+      "clip_id": "roundhouse_kick",
+      "frame_sequence_ref": "roundhouse_kick",
+      "loop": false
+    },
+    "roundhouse_kick_w": {
+      "clip_id": "roundhouse_kick_w",
+      "frame_sequence_ref": "roundhouse_kick_w",
+      "loop": false
+    },
+    "run_e": {
+      "clip_id": "run_e",
+      "frame_sequence_ref": "run_e",
+      "loop": true
+    },
+    "run_e_full": {
+      "clip_id": "run_e_full",
+      "frame_sequence_ref": "run_e_full",
+      "loop": false
+    },
+    "run_n": {
+      "clip_id": "run_n",
+      "frame_sequence_ref": "run_n",
+      "loop": true
+    },
+    "run_n_full": {
+      "clip_id": "run_n_full",
+      "frame_sequence_ref": "run_n_full",
+      "loop": false
+    },
+    "run_ne": {
+      "clip_id": "run_ne",
+      "frame_sequence_ref": "run_ne",
+      "loop": true
+    },
+    "run_ne_full": {
+      "clip_id": "run_ne_full",
+      "frame_sequence_ref": "run_ne_full",
+      "loop": false
+    },
+    "run_nw": {
+      "clip_id": "run_nw",
+      "frame_sequence_ref": "run_nw",
+      "loop": true
+    },
+    "run_nw_full": {
+      "clip_id": "run_nw_full",
+      "frame_sequence_ref": "run_nw_full",
+      "loop": false
+    },
+    "run_s": {
+      "clip_id": "run_s",
+      "frame_sequence_ref": "run_s",
+      "loop": true
+    },
+    "run_s_full": {
+      "clip_id": "run_s_full",
+      "frame_sequence_ref": "run_s_full",
+      "loop": false
+    },
+    "run_se": {
+      "clip_id": "run_se",
+      "frame_sequence_ref": "run_se",
+      "loop": true
+    },
+    "run_se_full": {
+      "clip_id": "run_se_full",
+      "frame_sequence_ref": "run_se_full",
+      "loop": false
+    },
+    "run_sw": {
+      "clip_id": "run_sw",
+      "frame_sequence_ref": "run_sw",
+      "loop": true
+    },
+    "run_sw_full": {
+      "clip_id": "run_sw_full",
+      "frame_sequence_ref": "run_sw_full",
+      "loop": false
+    },
+    "run_w": {
+      "clip_id": "run_w",
+      "frame_sequence_ref": "run_w",
+      "loop": true
+    },
+    "run_w_full": {
+      "clip_id": "run_w_full",
+      "frame_sequence_ref": "run_w_full",
+      "loop": false
+    },
+    "sweep": {
+      "clip_id": "sweep",
+      "frame_sequence_ref": "sweep",
+      "loop": false
+    },
+    "sweep_w": {
+      "clip_id": "sweep_w",
+      "frame_sequence_ref": "sweep_w",
+      "loop": false
+    },
+    "throw_object": {
+      "clip_id": "throw_object",
+      "frame_sequence_ref": "throw_object",
+      "loop": false
+    },
+    "throw_object_w": {
+      "clip_id": "throw_object_w",
+      "frame_sequence_ref": "throw_object_w",
+      "loop": false
+    },
+    "walk_e": {
+      "clip_id": "walk_e",
+      "frame_sequence_ref": "walk_e",
+      "loop": true
+    },
+    "walk_e_full": {
+      "clip_id": "walk_e_full",
+      "frame_sequence_ref": "walk_e_full",
+      "loop": false
+    },
+    "walk_n": {
+      "clip_id": "walk_n",
+      "frame_sequence_ref": "walk_n",
+      "loop": true
+    },
+    "walk_n_full": {
+      "clip_id": "walk_n_full",
+      "frame_sequence_ref": "walk_n_full",
+      "loop": false
+    },
+    "walk_ne": {
+      "clip_id": "walk_ne",
+      "frame_sequence_ref": "walk_ne",
+      "loop": true
+    },
+    "walk_ne_full": {
+      "clip_id": "walk_ne_full",
+      "frame_sequence_ref": "walk_ne_full",
+      "loop": false
+    },
+    "walk_nw": {
+      "clip_id": "walk_nw",
+      "frame_sequence_ref": "walk_nw",
+      "loop": true
+    },
+    "walk_nw_full": {
+      "clip_id": "walk_nw_full",
+      "frame_sequence_ref": "walk_nw_full",
+      "loop": false
+    },
+    "walk_s": {
+      "clip_id": "walk_s",
+      "frame_sequence_ref": "walk_s",
+      "loop": true
+    },
+    "walk_s_full": {
+      "clip_id": "walk_s_full",
+      "frame_sequence_ref": "walk_s_full",
+      "loop": false
+    },
+    "walk_se": {
+      "clip_id": "walk_se",
+      "frame_sequence_ref": "walk_se",
+      "loop": true
+    },
+    "walk_se_full": {
+      "clip_id": "walk_se_full",
+      "frame_sequence_ref": "walk_se_full",
+      "loop": false
+    },
+    "walk_sw": {
+      "clip_id": "walk_sw",
+      "frame_sequence_ref": "walk_sw",
+      "loop": true
+    },
+    "walk_sw_full": {
+      "clip_id": "walk_sw_full",
+      "frame_sequence_ref": "walk_sw_full",
+      "loop": false
+    },
+    "walk_w": {
+      "clip_id": "walk_w",
+      "frame_sequence_ref": "walk_w",
+      "loop": true
+    },
+    "walk_w_full": {
+      "clip_id": "walk_w_full",
+      "frame_sequence_ref": "walk_w_full",
+      "loop": false
+    }
+  },
+  "frame_sequences": {
+    "big_jump": [
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_start/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_start/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_start/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_air/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_land/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_land/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_land/dir_e/002.png"
+    ],
+    "big_jump_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_start/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_start/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_start/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_air/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_land/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_land/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_land/dir_w/002.png"
+    ],
+    "cross_punch": [
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_e/004.png"
+    ],
+    "cross_punch_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_w/004.png"
+    ],
+    "dash": [
+      "res://godot/assets/frames/miduo_blue/bhv_dash/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_dash/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_dash/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_dash/dir_e/003.png"
+    ],
+    "dash_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_dash/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_dash/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_dash/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_dash/dir_w/003.png"
+    ],
+    "dead": [
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_down/dir_e/000.png"
+    ],
+    "dead_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_down/dir_w/000.png"
+    ],
+    "eden_big_jump_air_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_air/dir_e/000.png"
+    ],
+    "eden_big_jump_air_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_air/dir_w/000.png"
+    ],
+    "eden_big_jump_land_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_land/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_land/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_land/dir_e/002.png"
+    ],
+    "eden_big_jump_land_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_land/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_land/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_land/dir_w/002.png"
+    ],
+    "eden_big_jump_start_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_start/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_start/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_start/dir_e/002.png"
+    ],
+    "eden_big_jump_start_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_start/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_start/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_big_jump_start/dir_w/002.png"
+    ],
+    "eden_cross_punch_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_e/004.png"
+    ],
+    "eden_cross_punch_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_cross_punch/dir_w/004.png"
+    ],
+    "eden_dash_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_dash/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_dash/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_dash/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_dash/dir_e/003.png"
+    ],
+    "eden_dash_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_dash/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_dash/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_dash/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_dash/dir_w/003.png"
+    ],
+    "eden_down_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_down/dir_e/000.png"
+    ],
+    "eden_down_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_down/dir_w/000.png"
+    ],
+    "eden_fall_down_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/005.png"
+    ],
+    "eden_fall_down_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/005.png"
+    ],
+    "eden_fight_idle_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_e/005.png"
+    ],
+    "eden_fight_idle_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_w/005.png"
+    ],
+    "eden_flying_kick_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_e/005.png"
+    ],
+    "eden_flying_kick_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_w/005.png"
+    ],
+    "eden_get_up_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_e/004.png"
+    ],
+    "eden_get_up_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_w/004.png"
+    ],
+    "eden_high_kick_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_e/005.png"
+    ],
+    "eden_high_kick_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_w/005.png"
+    ],
+    "eden_hurt_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_hurt/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_hurt/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_hurt/dir_e/002.png"
+    ],
+    "eden_hurt_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_hurt/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_hurt/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_hurt/dir_w/002.png"
+    ],
+    "eden_idle_breath_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_e/003.png"
+    ],
+    "eden_idle_breath_n": [
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_n/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_n/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_n/003.png"
+    ],
+    "eden_idle_breath_ne": [
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_ne/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_ne/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_ne/003.png"
+    ],
+    "eden_idle_breath_nw": [
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_nw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_nw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_nw/003.png"
+    ],
+    "eden_idle_breath_s": [
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_s/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_s/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_s/003.png"
+    ],
+    "eden_idle_breath_se": [
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_se/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_se/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_se/003.png"
+    ],
+    "eden_idle_breath_sw": [
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_sw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_sw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_sw/003.png"
+    ],
+    "eden_idle_breath_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_w/003.png"
+    ],
+    "eden_jab_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_jab/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jab/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jab/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jab/dir_e/003.png"
+    ],
+    "eden_jab_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_jab/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jab/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jab/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jab/dir_w/003.png"
+    ],
+    "eden_jump_air_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_jump_air/dir_e/000.png"
+    ],
+    "eden_jump_air_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_jump_air/dir_w/000.png"
+    ],
+    "eden_jump_start_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_jump_start/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jump_start/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jump_start/dir_e/002.png"
+    ],
+    "eden_jump_start_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_jump_start/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jump_start/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jump_start/dir_w/002.png"
+    ],
+    "eden_land_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_land/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_land/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_land/dir_e/002.png"
+    ],
+    "eden_land_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_land/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_land/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_land/dir_w/002.png"
+    ],
+    "eden_pickup_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_e/004.png"
+    ],
+    "eden_pickup_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_w/004.png"
+    ],
+    "eden_pull_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_e/005.png"
+    ],
+    "eden_pull_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_w/005.png"
+    ],
+    "eden_push_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_e/005.png"
+    ],
+    "eden_push_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_w/005.png"
+    ],
+    "eden_roundhouse_kick_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_e/005.png"
+    ],
+    "eden_roundhouse_kick_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_w/005.png"
+    ],
+    "eden_run_loop_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/007.png"
+    ],
+    "eden_run_loop_n": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/007.png"
+    ],
+    "eden_run_loop_ne": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/007.png"
+    ],
+    "eden_run_loop_nw": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/007.png"
+    ],
+    "eden_run_loop_s": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/007.png"
+    ],
+    "eden_run_loop_se": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/007.png"
+    ],
+    "eden_run_loop_sw": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/007.png"
+    ],
+    "eden_run_loop_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/007.png"
+    ],
+    "eden_run_start_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_e/001.png"
+    ],
+    "eden_run_start_n": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_n/001.png"
+    ],
+    "eden_run_start_ne": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_ne/001.png"
+    ],
+    "eden_run_start_nw": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_nw/001.png"
+    ],
+    "eden_run_start_s": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_s/001.png"
+    ],
+    "eden_run_start_se": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_se/001.png"
+    ],
+    "eden_run_start_sw": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_sw/001.png"
+    ],
+    "eden_run_start_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_w/001.png"
+    ],
+    "eden_run_stop_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_e/001.png"
+    ],
+    "eden_run_stop_n": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_n/001.png"
+    ],
+    "eden_run_stop_ne": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_ne/001.png"
+    ],
+    "eden_run_stop_nw": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_nw/001.png"
+    ],
+    "eden_run_stop_s": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_s/001.png"
+    ],
+    "eden_run_stop_se": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_se/001.png"
+    ],
+    "eden_run_stop_sw": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_sw/001.png"
+    ],
+    "eden_run_stop_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_w/001.png"
+    ],
+    "eden_run_turn_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_e/003.png"
+    ],
+    "eden_run_turn_n": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_n/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_n/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_n/003.png"
+    ],
+    "eden_run_turn_ne": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_ne/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_ne/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_ne/003.png"
+    ],
+    "eden_run_turn_nw": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_nw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_nw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_nw/003.png"
+    ],
+    "eden_run_turn_s": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_s/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_s/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_s/003.png"
+    ],
+    "eden_run_turn_se": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_se/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_se/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_se/003.png"
+    ],
+    "eden_run_turn_sw": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_sw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_sw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_sw/003.png"
+    ],
+    "eden_run_turn_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_w/003.png"
+    ],
+    "eden_sweep_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_e/005.png"
+    ],
+    "eden_sweep_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_w/005.png"
+    ],
+    "eden_throw_object_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_e/004.png"
+    ],
+    "eden_throw_object_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_w/004.png"
+    ],
+    "eden_walk_loop_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/007.png"
+    ],
+    "eden_walk_loop_n": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/007.png"
+    ],
+    "eden_walk_loop_ne": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/007.png"
+    ],
+    "eden_walk_loop_nw": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/007.png"
+    ],
+    "eden_walk_loop_s": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/007.png"
+    ],
+    "eden_walk_loop_se": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/007.png"
+    ],
+    "eden_walk_loop_sw": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/007.png"
+    ],
+    "eden_walk_loop_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/007.png"
+    ],
+    "eden_walk_start_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_e/001.png"
+    ],
+    "eden_walk_start_n": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_n/001.png"
+    ],
+    "eden_walk_start_ne": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_ne/001.png"
+    ],
+    "eden_walk_start_nw": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_nw/001.png"
+    ],
+    "eden_walk_start_s": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_s/001.png"
+    ],
+    "eden_walk_start_se": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_se/001.png"
+    ],
+    "eden_walk_start_sw": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_sw/001.png"
+    ],
+    "eden_walk_start_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_w/001.png"
+    ],
+    "eden_walk_stop_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_e/001.png"
+    ],
+    "eden_walk_stop_n": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_n/001.png"
+    ],
+    "eden_walk_stop_ne": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_ne/001.png"
+    ],
+    "eden_walk_stop_nw": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_nw/001.png"
+    ],
+    "eden_walk_stop_s": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_s/001.png"
+    ],
+    "eden_walk_stop_se": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_se/001.png"
+    ],
+    "eden_walk_stop_sw": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_sw/001.png"
+    ],
+    "eden_walk_stop_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_w/001.png"
+    ],
+    "eden_walk_turn_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_e/003.png"
+    ],
+    "eden_walk_turn_n": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_n/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_n/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_n/003.png"
+    ],
+    "eden_walk_turn_ne": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_ne/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_ne/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_ne/003.png"
+    ],
+    "eden_walk_turn_nw": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_nw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_nw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_nw/003.png"
+    ],
+    "eden_walk_turn_s": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_s/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_s/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_s/003.png"
+    ],
+    "eden_walk_turn_se": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_se/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_se/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_se/003.png"
+    ],
+    "eden_walk_turn_sw": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_sw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_sw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_sw/003.png"
+    ],
+    "eden_walk_turn_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_w/003.png"
+    ],
+    "fight_idle": [
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_e/005.png"
+    ],
+    "fight_idle_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fight_idle/dir_w/005.png"
+    ],
+    "flying_kick": [
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_e/005.png"
+    ],
+    "flying_kick_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_flying_kick/dir_w/005.png"
+    ],
+    "high_kick": [
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_e/005.png"
+    ],
+    "high_kick_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_high_kick/dir_w/005.png"
+    ],
+    "hurt": [
+      "res://godot/assets/frames/miduo_blue/bhv_hurt/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_hurt/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_hurt/dir_e/002.png"
+    ],
+    "hurt_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_hurt/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_hurt/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_hurt/dir_w/002.png"
+    ],
+    "idle_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_e/003.png"
+    ],
+    "idle_n": [
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_n/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_n/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_n/003.png"
+    ],
+    "idle_ne": [
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_ne/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_ne/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_ne/003.png"
+    ],
+    "idle_nw": [
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_nw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_nw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_nw/003.png"
+    ],
+    "idle_s": [
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_s/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_s/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_s/003.png"
+    ],
+    "idle_se": [
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_se/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_se/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_se/003.png"
+    ],
+    "idle_sw": [
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_sw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_sw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_sw/003.png"
+    ],
+    "idle_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_idle_breath/dir_w/003.png"
+    ],
+    "jab": [
+      "res://godot/assets/frames/miduo_blue/bhv_jab/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jab/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jab/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jab/dir_e/003.png"
+    ],
+    "jab_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_jab/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jab/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jab/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jab/dir_w/003.png"
+    ],
+    "jump": [
+      "res://godot/assets/frames/miduo_blue/bhv_jump_start/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jump_start/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jump_start/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jump_air/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_land/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_land/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_land/dir_e/002.png"
+    ],
+    "jump_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_jump_start/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jump_start/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jump_start/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_jump_air/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_land/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_land/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_land/dir_w/002.png"
+    ],
+    "knockdown": [
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_e/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_down/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_e/004.png"
+    ],
+    "knockdown_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_fall_down/dir_w/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_down/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_get_up/dir_w/004.png"
+    ],
+    "pickup": [
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_e/004.png"
+    ],
+    "pickup_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pickup/dir_w/004.png"
+    ],
+    "pull": [
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_e/005.png"
+    ],
+    "pull_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_pull/dir_w/005.png"
+    ],
+    "push": [
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_e/005.png"
+    ],
+    "push_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_push/dir_w/005.png"
+    ],
+    "roundhouse_kick": [
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_e/005.png"
+    ],
+    "roundhouse_kick_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_roundhouse_kick/dir_w/005.png"
+    ],
+    "run_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/007.png"
+    ],
+    "run_e_full": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_e/007.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_e/003.png"
+    ],
+    "run_n": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/007.png"
+    ],
+    "run_n_full": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_n/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_n/007.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_n/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_n/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_n/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_n/003.png"
+    ],
+    "run_ne": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/007.png"
+    ],
+    "run_ne_full": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_ne/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_ne/007.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_ne/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_ne/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_ne/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_ne/003.png"
+    ],
+    "run_nw": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/007.png"
+    ],
+    "run_nw_full": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_nw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_nw/007.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_nw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_nw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_nw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_nw/003.png"
+    ],
+    "run_s": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/007.png"
+    ],
+    "run_s_full": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_s/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_s/007.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_s/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_s/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_s/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_s/003.png"
+    ],
+    "run_se": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/007.png"
+    ],
+    "run_se_full": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_se/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_se/007.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_se/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_se/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_se/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_se/003.png"
+    ],
+    "run_sw": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/007.png"
+    ],
+    "run_sw_full": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_sw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_sw/007.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_sw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_sw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_sw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_sw/003.png"
+    ],
+    "run_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/007.png"
+    ],
+    "run_w_full": [
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_start/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_loop/dir_w/007.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_stop/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_run_turn/dir_w/003.png"
+    ],
+    "sweep": [
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_e/005.png"
+    ],
+    "sweep_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_sweep/dir_w/005.png"
+    ],
+    "throw_object": [
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_e/004.png"
+    ],
+    "throw_object_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_throw_object/dir_w/004.png"
+    ],
+    "walk_e": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/007.png"
+    ],
+    "walk_e_full": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_e/007.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_e/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_e/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_e/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_e/003.png"
+    ],
+    "walk_n": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/007.png"
+    ],
+    "walk_n_full": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_n/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_n/007.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_n/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_n/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_n/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_n/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_n/003.png"
+    ],
+    "walk_ne": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/007.png"
+    ],
+    "walk_ne_full": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_ne/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_ne/007.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_ne/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_ne/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_ne/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_ne/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_ne/003.png"
+    ],
+    "walk_nw": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/007.png"
+    ],
+    "walk_nw_full": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_nw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_nw/007.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_nw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_nw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_nw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_nw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_nw/003.png"
+    ],
+    "walk_s": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/007.png"
+    ],
+    "walk_s_full": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_s/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_s/007.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_s/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_s/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_s/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_s/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_s/003.png"
+    ],
+    "walk_se": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/007.png"
+    ],
+    "walk_se_full": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_se/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_se/007.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_se/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_se/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_se/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_se/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_se/003.png"
+    ],
+    "walk_sw": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/007.png"
+    ],
+    "walk_sw_full": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_sw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_sw/007.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_sw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_sw/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_sw/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_sw/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_sw/003.png"
+    ],
+    "walk_w": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/007.png"
+    ],
+    "walk_w_full": [
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_start/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/003.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/004.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/005.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/006.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_loop/dir_w/007.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_stop/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_w/000.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_w/001.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_w/002.png",
+      "res://godot/assets/frames/miduo_blue/bhv_walk_turn/dir_w/003.png"
+    ]
+  },
+  "required_moves_mapping": {
+    "miduo_blue_big_jump": "big_jump",
+    "miduo_blue_cross_punch": "cross_punch",
+    "miduo_blue_dash": "dash",
+    "miduo_blue_dead": "dead",
+    "miduo_blue_fight_idle": "fight_idle",
+    "miduo_blue_flying_kick": "flying_kick",
+    "miduo_blue_high_kick": "high_kick",
+    "miduo_blue_hurt": "hurt",
+    "miduo_blue_idle": "idle_e",
+    "miduo_blue_jab": "jab",
+    "miduo_blue_jump": "jump",
+    "miduo_blue_knockdown": "knockdown",
+    "miduo_blue_roundhouse_kick": "roundhouse_kick",
+    "miduo_blue_run": "run_e_full",
+    "miduo_blue_sweep": "sweep",
+    "miduo_blue_walk": "walk_e_full"
+  },
+  "schema_version": "0.3",
+  "sprite_set_id": "miduo_blue"
+}
