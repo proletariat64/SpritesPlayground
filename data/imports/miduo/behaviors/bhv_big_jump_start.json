@@ -1,0 +1,124 @@
+{
+  "behavior": {
+    "behavior_id": "bhv_big_jump_start",
+    "direction_order": [
+      "dir_e",
+      "dir_w"
+    ],
+    "frames_per_direction": 3,
+    "playback": {
+      "fps": 12,
+      "type": "once"
+    }
+  },
+  "coverage": {
+    "complete": true,
+    "unit_keys": [
+      "bhv_big_jump_start__dir_e",
+      "bhv_big_jump_start__dir_w"
+    ]
+  },
+  "directions": [
+    {
+      "direction_id": "dir_e",
+      "frames": [
+        {
+          "bytes": 2085,
+          "file": "frames/dir_e/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:bb72684ee8b4b0b0b77bd1e05fa2edeeea513eb2c2377004ac13acb3e0c34e08",
+          "width": 80,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "bytes": 2251,
+          "file": "frames/dir_e/001.png",
+          "height": 80,
+          "index": 1,
+          "sha256": "sha256:17fce22561b20e6d8d1adae9eaec077c0cf5b8a58a53bf4f350fffe82f7aa4d4",
+          "width": 80,
+          "x": 80,
+          "y": 0
+        },
+        {
+          "bytes": 2365,
+          "file": "frames/dir_e/002.png",
+          "height": 80,
+          "index": 2,
+          "sha256": "sha256:70834788d16b925ba401312f110391f8b7c0ceeaa11d0877c5a470d6518e33f4",
+          "width": 80,
+          "x": 160,
+          "y": 0
+        }
+      ],
+      "mirrored_from": null,
+      "row": 0,
+      "source": "authored"
+    },
+    {
+      "direction_id": "dir_w",
+      "frames": [
+        {
+          "bytes": 2083,
+          "file": "frames/dir_w/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:cfb917177b58d7fdcaf8b6aba04a357592a3c7da659d8e3e021c05f3f0583dc7",
+          "width": 80,
+          "x": 0,
+          "y": 80
+        },
+        {
+          "bytes": 2249,
+          "file": "frames/dir_w/001.png",
+          "height": 80,
+          "index": 1,
+          "sha256": "sha256:726cb57e1ad83e4c64d2d014aed2151596b0bfe9441c3d27714c37d8f9d14c57",
+          "width": 80,
+          "x": 80,
+          "y": 80
+        },
+        {
+          "bytes": 2423,
+          "file": "frames/dir_w/002.png",
+          "height": 80,
+          "index": 2,
+          "sha256": "sha256:e66889748834bc8239432e605be0c8028f3d043108c99b7b4c8d877fb104d4dd",
+          "width": 80,
+          "x": 160,
+          "y": 80
+        }
+      ],
+      "mirrored_from": "dir_e",
+      "row": 1,
+      "source": "mirrored"
+    }
+  ],
+  "layout": {
+    "columns": 3,
+    "height": 160,
+    "order": "directions_top_to_bottom_frames_left_to_right",
+    "rows": 2,
+    "segment_bytes": 11585,
+    "segment_file": "segment.png",
+    "segment_sha256": "sha256:bcd10ec3fe9be6d20679fa76b5f9b4cacbf5085b011fb7cb04f54878011697b4",
+    "type": "direction_rows",
+    "width": 240
+  },
+  "manifest_type": "eden_behavior",
+  "manifest_version": 4,
+  "preview": {
+    "bytes": 11585,
+    "file": "preview.png",
+    "sha256": "sha256:bcd10ec3fe9be6d20679fa76b5f9b4cacbf5085b011fb7cb04f54878011697b4"
+  },
+  "sprite": {
+    "class": "s64",
+    "frame_height": 80,
+    "frame_width": 80,
+    "name": "sprite-s64-miduo"
+  },
+  "task_id": "tsk_local_22c30f0eed014a34adc16a3f0b3805be"
+}

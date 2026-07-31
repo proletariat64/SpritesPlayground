@@ -271,15 +271,42 @@ func _apply_manual_actions() -> void:
 	if Input.is_action_just_pressed("jump"):
 		state_machine.request_action("jump")
 	if Input.is_action_just_pressed("basic_punch"):
-		request_attack("basic_punch")
+		request_attack(_punch_move_id())
 	if Input.is_action_just_pressed("basic_kick"):
-		request_attack("basic_kick")
+		request_attack(_kick_move_id())
 
 
 func request_attack(move_id: String) -> bool:
 	if not state_machine.can_start_attack():
 		return false
-	return move_executor.start_attack_intent(move_id)
+	return move_executor.start_attack_intent(_resolve_move_id(move_id))
+
+
+# Explicit runtime-facing alias rule: a bare move id (jab) resolves to the
+# character-scoped id (miduo_jab) when that is what the template equipped.
+func _resolve_move_id(move_id: String) -> String:
+	if move_executor.move_templates.has(move_id):
+		return move_id
+	var prefixed := "%s_%s" % [template_id, move_id]
+	if move_executor.move_templates.has(prefixed):
+		return prefixed
+	return move_id
+
+
+func _first_available_move(candidates: Array) -> String:
+	for candidate in candidates:
+		var resolved := _resolve_move_id(str(candidate))
+		if move_executor.move_templates.has(resolved):
+			return resolved
+	return str(candidates[0]) if not candidates.is_empty() else ""
+
+
+func _punch_move_id() -> String:
+	return _first_available_move(["jab", "basic_punch"])
+
+
+func _kick_move_id() -> String:
+	return _first_available_move(["high_kick", "basic_kick"])
 
 
 func _tick_ai(delta: float) -> Vector2:
@@ -300,9 +327,9 @@ func _tick_ai(delta: float) -> Vector2:
 		3:
 			state_machine.request_action("jump")
 		4:
-			request_attack("basic_punch")
+			request_attack(_punch_move_id())
 		5:
-			request_attack("basic_kick")
+			request_attack(_kick_move_id())
 	return _ai_vector
 
 
@@ -363,8 +390,10 @@ func _v0_3_move_to_runtime(move: Dictionary) -> Dictionary:
 				maxf(1.0, float(rect.get("h", 1.0)))
 			),
 		})
+	var runtime_move_id := str(move.get("move_id", ""))
 	return {
-		"move_id": str(move.get("move_id", "")),
+		"move_id": runtime_move_id,
+		"animation_id": CharacterTemplateScript.animation_id_for_move(runtime_move_id, template_id),
 		"fps": 60,
 		"total_frames": maxi(1, int(move.get("frame_count", 1))),
 		"hitbox_windows": windows,
@@ -484,7 +513,12 @@ func _preserves_cycle_phase(previous_animation: String, next_animation: String) 
 func _animation_for_runtime_state() -> String:
 	match state_machine.current_state:
 		StateMachineScript.STATE_ATTACK:
-			return str(state_machine.current_move)
+			# Attack clips keep their imported action id; scoped move ids (miduo_jab)
+			# resolve back through the explicit animation_id alias.
+			var animation_id := str(move_executor.active_move.get("animation_id", ""))
+			if animation_id.is_empty():
+				animation_id = str(state_machine.current_move)
+			return animation_id
 		StateMachineScript.STATE_DASH:
 			return "dash"
 		StateMachineScript.STATE_JUMP:
@@ -512,7 +546,9 @@ func _fallback_animation(frames: SpriteFrames, requested: String) -> String:
 		"dead":
 			candidates = ["hurt", "idle"]
 		_:
-			candidates = ["idle"]
+			# Unknown or unequipped Moves must stay visibly missing rather than
+			# borrowing unrelated idle art.
+			candidates = []
 	for candidate in candidates:
 		if _has_animation(frames, str(candidate)):
 			return str(candidate)

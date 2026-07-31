@@ -5,7 +5,7 @@ const CreatorLabV03PanelScript := preload("res://godot/scripts/creator_lab_v0_3_
 const COMBAT_TICK_RATE := 60
 const MIN_NPC_COUNT := 1
 const MAX_NPC_COUNT := 10
-const DEFAULT_TEMPLATE_ID := "miduo_s64"
+const DEFAULT_TEMPLATE_ID := "miduo"
 const DEFAULT_NPC_TEMPLATE_ID := "skeleton_default_unarmed_s64"
 
 var arena_center := Vector2(320, 205)

@@ -168,7 +168,7 @@ func _slice_dash_exit_to_run() -> void:
 
 func _slice_directional_animation_and_flip() -> void:
 	var miduo := CombatCharacterScript.new()
-	miduo.template_id = "miduo_s64"
+	miduo.template_id = "miduo"
 	miduo.instance_id = "loco_miduo"
 	root.add_child(miduo)
 	await process_frame
@@ -194,7 +194,7 @@ func _slice_directional_animation_and_flip() -> void:
 
 func _slice_cycle_phase() -> void:
 	var miduo := CombatCharacterScript.new()
-	miduo.template_id = "miduo_s64"
+	miduo.template_id = "miduo"
 	miduo.instance_id = "loco_phase"
 	root.add_child(miduo)
 	await process_frame
@@ -218,25 +218,30 @@ func _slice_cycle_phase() -> void:
 
 
 func _slice_resource_and_scene() -> void:
-	var frames: SpriteFrames = ResourceLoader.load("res://godot/resources/sprite_frames/miduo_s64.tres", "SpriteFrames", ResourceLoader.CACHE_MODE_IGNORE)
-	_expect(frames != null, "miduo_s64.tres loads as SpriteFrames")
+	var frames: SpriteFrames = ResourceLoader.load("res://godot/resources/sprite_frames/miduo.tres", "SpriteFrames", ResourceLoader.CACHE_MODE_IGNORE)
+	_expect(frames != null, "miduo.tres loads as SpriteFrames")
 	if frames != null:
 		var names: Array = []
 		for animation_name in frames.get_animation_names():
 			names.append(str(animation_name))
 		var required: Array = []
 		for base in ["idle", "walk", "run"]:
-			required.append(base)
 			for direction in ["s", "se", "e", "ne", "n", "nw", "w", "sw"]:
 				required.append("%s_%s" % [base, direction])
-			required.append_array(["dash", "jump", "hurt", "dead", "basic_punch", "basic_kick"])
+		required.append_array(["dash", "jump", "hurt", "dead", "jab", "high_kick"])
 		for animation_name in required:
-			_expect(names.has(animation_name), "miduo_s64 has animation %s" % animation_name)
+			_expect(names.has(animation_name), "miduo has animation %s" % animation_name)
+		var missing_attack := CombatCharacterScript.new()
+		_expect(
+			missing_attack._resolve_visual_animation(frames, "uppercut").is_empty(),
+			"missing uppercut never substitutes unrelated animation art"
+		)
+		missing_attack.free()
 	var playground: Node = PlaygroundScene.instantiate()
 	root.add_child(playground)
 	await process_frame
 	await physics_frame
-	_expect(str(playground.player.template_id) == "miduo_s64", "playground player defaults to miduo_s64")
+	_expect(str(playground.player.template_id) == "miduo", "playground player defaults to imported miduo")
 	_expect(str(playground.player.animated_sprite.animation) == "idle_e", "player boots onto idle_e (got %s)" % playground.player.animated_sprite.animation)
 	Input.action_press("run")
 	Input.action_press("move_right")

@@ -106,7 +106,11 @@ static func validate_runtime_bundle(bundle: Dictionary) -> Array:
 	errors.append_array(_scan_forbidden_keys(moves, "moves"))
 	errors.append_array(_validate_template_contract(template))
 	errors.append_array(_validate_sprite_set_contract(sprite_set))
-	if not template.get("equipped_moves", []).has("idle"):
+	# Every character must equip an idle move. Character-scoped imports (e.g.
+	# miduo_idle) satisfy this through their explicit template-id prefix.
+	var scoped_idle_id := "%s_idle" % str(template.get("template_id", ""))
+	var equipped_ids: Array = template.get("equipped_moves", [])
+	if not equipped_ids.has("idle") and not equipped_ids.has(scoped_idle_id):
 		errors.append("template must equip idle move")
 	for move_id in moves.keys():
 		errors.append_array(_validate_move(str(move_id), moves[move_id]))
