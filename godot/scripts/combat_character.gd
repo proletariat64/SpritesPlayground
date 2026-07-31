@@ -5,6 +5,11 @@ const MoveExecutorScript := preload("res://godot/scripts/move_executor.gd")
 const StateMachineScript := preload("res://godot/scripts/combat_state_machine.gd")
 const CharacterTemplateScript := preload("res://godot/scripts/character_template.gd")
 const SpriteFramesGeneratorScript := preload("res://godot/scripts/spriteframes_generator.gd")
+const COMBO_BUFFER_MSEC := 650
+const COMBAT_CONTEXT_SECONDS := 2.0
+# Temporary #33 presentation rule until Move reaction metadata exists: heavy hits
+# at or above this damage use the imported fall_down/down/get_up composition.
+const KNOCKDOWN_DAMAGE_THRESHOLD := 12
 
 var template_id: String = "combat_gray_s64"
 var instance_id: String = "character"
@@ -34,6 +39,9 @@ var _contact_hurtbox_ids: Dictionary = {}
 var _ai_elapsed: float = 0.0
 var _ai_decision_in: float = 0.0
 var _ai_vector: Vector2 = Vector2.ZERO
+var _queued_combo_move: String = ""
+var _combo_started_at_msec: int = 0
+var _combat_context_remaining: float = 0.0
 var _rng := RandomNumberGenerator.new()
 
 
@@ -50,6 +58,7 @@ func _ready() -> void:
 	state_machine.name = "state_machine"
 	add_child(state_machine)
 	state_machine.configure(move_executor)
+	move_executor.move_finished.connect(_on_move_finished_for_combo)
 	_load_sprite_frames_for_sprite_set()
 
 	queue_redraw()
@@ -126,6 +135,7 @@ func _apply_template_data(runtime_template: Dictionary) -> void:
 
 func tick_character(delta: float, arena_center: Vector2, arena_radius: Vector2) -> void:
 	_flash_time = maxf(0.0, _flash_time - delta)
+	_combat_context_remaining = maxf(0.0, _combat_context_remaining - delta)
 	if _flash_time <= 0.0:
 		_hit_hurtbox_id = ""
 		_contact_hurtbox_ids.clear()
@@ -133,7 +143,8 @@ func tick_character(delta: float, arena_center: Vector2, arena_radius: Vector2) 
 	var input_vector := Vector2.ZERO
 	var run_requested := false
 	if current_hp <= 0:
-		state_machine.enter_dead()
+		if state_machine.current_state != StateMachineScript.STATE_DEAD:
+			state_machine.enter_dead()
 	elif is_test_dummy:
 		input_vector = Vector2.ZERO
 	elif control_mode == "ai":
@@ -157,6 +168,7 @@ func clamp_to_arena(arena_center: Vector2, arena_radius: Vector2) -> void:
 func take_hit(damage: int, _hitbox_id: String, _source_instance_id: String, resolved_hurtbox_id: String = "", contact_hurtbox_ids: Array = []) -> void:
 	if current_hp <= 0:
 		return
+	mark_combat_engaged()
 	current_hp = maxi(0, current_hp - damage)
 	_flash_time = 0.14
 	_hit_hurtbox_id = resolved_hurtbox_id
@@ -168,7 +180,7 @@ func take_hit(damage: int, _hitbox_id: String, _source_instance_id: String, reso
 	if current_hp <= 0:
 		state_machine.enter_dead()
 	else:
-		state_machine.enter_hurt()
+		state_machine.enter_hurt(damage >= KNOCKDOWN_DAMAGE_THRESHOLD)
 	queue_redraw()
 
 
@@ -178,6 +190,8 @@ func reset_runtime(new_position: Vector2) -> void:
 	_flash_time = 0.0
 	_hit_hurtbox_id = ""
 	_contact_hurtbox_ids.clear()
+	_clear_combo_buffer()
+	_combat_context_remaining = 0.0
 	state_machine.reset_to_idle()
 	_sync_visual_animation()
 	queue_redraw()
@@ -269,17 +283,87 @@ func _apply_manual_actions() -> void:
 	if Input.is_action_just_pressed("dash"):
 		state_machine.request_action("dash")
 	if Input.is_action_just_pressed("jump"):
-		state_machine.request_action("jump")
+		var jump_action := "big_jump" if Input.is_action_pressed("run") else "jump"
+		state_machine.request_action(jump_action)
 	if Input.is_action_just_pressed("basic_punch"):
-		request_attack(_punch_move_id())
+		_handle_punch_input()
 	if Input.is_action_just_pressed("basic_kick"):
-		request_attack(_kick_move_id())
+		_handle_kick_input()
 
 
-func request_attack(move_id: String) -> bool:
-	if not state_machine.can_start_attack():
+func _handle_punch_input() -> void:
+	if Input.is_action_pressed("move_down"):
+		_clear_combo_buffer()
+		request_attack("uppercut")
+		return
+	if state_machine.current_state == StateMachineScript.STATE_ATTACK:
+		_queue_combo("jab", "cross_punch")
+		return
+	_start_combo_first("jab")
+
+
+func _handle_kick_input() -> void:
+	if state_machine.current_state == StateMachineScript.STATE_JUMP:
+		_clear_combo_buffer()
+		request_attack("flying_kick", true)
+		return
+	if Input.is_action_pressed("move_down"):
+		_clear_combo_buffer()
+		request_attack("sweep")
+		return
+	if state_machine.current_state == StateMachineScript.STATE_ATTACK:
+		_queue_combo("high_kick", "roundhouse_kick")
+		return
+	_start_combo_first("high_kick")
+
+
+func _start_combo_first(move_id: String) -> void:
+	_clear_combo_buffer()
+	if request_attack(move_id):
+		_combo_started_at_msec = Time.get_ticks_msec()
+
+
+func _queue_combo(first_move_id: String, continuation_move_id: String) -> void:
+	var elapsed := Time.get_ticks_msec() - _combo_started_at_msec
+	if elapsed > COMBO_BUFFER_MSEC:
+		return
+	var active_move := str(state_machine.current_move)
+	if active_move != _resolve_move_id(first_move_id):
+		return
+	var resolved := _resolve_move_id(continuation_move_id)
+	if move_executor.move_templates.has(resolved):
+		_queued_combo_move = continuation_move_id
+
+
+func _on_move_finished_for_combo(_move_id: String) -> void:
+	if _queued_combo_move.is_empty():
+		return
+	call_deferred("_start_queued_combo")
+
+
+func _start_queued_combo() -> void:
+	var next_move := _queued_combo_move
+	_queued_combo_move = ""
+	_combo_started_at_msec = 0
+	request_attack(next_move)
+
+
+func _clear_combo_buffer() -> void:
+	_queued_combo_move = ""
+	_combo_started_at_msec = 0
+
+
+func request_attack(move_id: String, allow_airborne: bool = false) -> bool:
+	if not state_machine.can_start_attack(allow_airborne):
 		return false
-	return move_executor.start_attack_intent(_resolve_move_id(move_id))
+	var started: bool = move_executor.start_attack_intent(_resolve_move_id(move_id))
+	if started:
+		mark_combat_engaged()
+	return started
+
+
+func mark_combat_engaged() -> void:
+	_combat_context_remaining = COMBAT_CONTEXT_SECONDS
 
 
 # Explicit runtime-facing alias rule: a bare move id (jab) resolves to the
@@ -469,34 +553,75 @@ func _sync_visual_animation() -> void:
 
 
 const LOCOMOTION_BASE_STATES := ["idle", "walk", "run"]
+const LOCOMOTION_DIRECTIONS := ["s", "se", "e", "ne", "n", "nw", "w", "sw"]
 
 
 func _resolve_visual_animation(frames: SpriteFrames, base_name: String) -> Dictionary:
-	if base_name in LOCOMOTION_BASE_STATES:
+	if _is_locomotion_animation_base(base_name):
 		var direction := str(state_machine.get("locomotion_direction"))
-		var directional := "%s_%s" % [base_name, direction]
-		if _has_animation(frames, directional):
-			return {"animation": directional, "flip_h": false}
+		var directional_candidates: Array = []
+		if base_name.begins_with("walk_") or base_name.begins_with("run_"):
+			directional_candidates.append("eden_%s_%s" % [base_name, direction])
+		directional_candidates.append("%s_%s" % [base_name, direction])
+		for directional in directional_candidates:
+			if _has_animation(frames, str(directional)):
+				return {"animation": str(directional), "flip_h": false}
 		if _has_animation(frames, base_name):
 			return {"animation": base_name, "flip_h": state_machine.facing < 0}
+		var mode := "run" if base_name.begins_with("run_") else "walk"
+		if base_name != "idle":
+			var loop_directional := "%s_%s" % [mode, direction]
+			if _has_animation(frames, loop_directional):
+				return {"animation": loop_directional, "flip_h": false}
+			if _has_animation(frames, mode):
+				return {"animation": mode, "flip_h": state_machine.facing < 0}
 		var idle_directional := "idle_%s" % direction
 		if _has_animation(frames, idle_directional):
 			return {"animation": idle_directional, "flip_h": false}
 		if _has_animation(frames, "idle"):
 			return {"animation": "idle", "flip_h": state_machine.facing < 0}
 		return {}
-	var animation_name := base_name
-	if not _has_animation(frames, animation_name):
-		animation_name = _fallback_animation(frames, base_name)
+	var side_resolved := _resolve_two_facing_animation(frames, base_name)
+	if not side_resolved.is_empty():
+		return side_resolved
+	var animation_name := _fallback_animation(frames, base_name)
 	if animation_name.is_empty():
 		return {}
-	return {"animation": animation_name, "flip_h": state_machine.facing < 0}
+	return {"animation": animation_name, "flip_h": false}
+
+
+func _resolve_two_facing_animation(frames: SpriteFrames, base_name: String) -> Dictionary:
+	var facing_value := 1 if state_machine == null else int(state_machine.facing)
+	var side := "w" if facing_value < 0 else "e"
+	var candidates: Array = []
+	if side == "w":
+		candidates = ["%s_w" % base_name]
+	else:
+		candidates = [base_name, "%s_e" % base_name]
+	for candidate in candidates:
+		if _has_animation(frames, str(candidate)):
+			return {"animation": str(candidate), "flip_h": false}
+	# Legacy side-only sets may contain east art without an authored west clip.
+	if side == "w" and _has_animation(frames, base_name):
+		return {"animation": base_name, "flip_h": true}
+	return {}
+
+
+func _is_locomotion_animation_base(animation_name: String) -> bool:
+	return (
+		animation_name in LOCOMOTION_BASE_STATES
+		or animation_name.begins_with("walk_")
+		or animation_name.begins_with("run_")
+	)
 
 
 func _locomotion_base(animation_name: String) -> String:
 	for base in LOCOMOTION_BASE_STATES:
-		if animation_name == base or animation_name.begins_with(base + "_"):
+		if animation_name == base:
 			return base
+		for direction in LOCOMOTION_DIRECTIONS:
+			if animation_name == "%s_%s" % [base, direction]:
+				return base
 	return ""
 
 
@@ -521,37 +646,29 @@ func _animation_for_runtime_state() -> String:
 			return animation_id
 		StateMachineScript.STATE_DASH:
 			return "dash"
-		StateMachineScript.STATE_JUMP:
-			return "jump"
-		StateMachineScript.STATE_HURT:
-			return "hurt"
-		StateMachineScript.STATE_DEAD:
-			return "dead"
+		StateMachineScript.STATE_JUMP, StateMachineScript.STATE_HURT, StateMachineScript.STATE_DEAD:
+			return str(state_machine.presentation_animation_base())
 		StateMachineScript.STATE_WALK:
-			return "walk"
-		StateMachineScript.STATE_RUN:
-			return "run"
+			return str(state_machine.locomotion_animation_base())
+	if _combat_context_remaining > 0.0 and _has_combat_idle_animation():
+		return "fight_idle"
 	return "idle"
 
 
-func _fallback_animation(frames: SpriteFrames, requested: String) -> String:
-	var candidates: Array = []
-	match requested:
-		"dash":
-			candidates = ["run", "walk", "idle"]
-		"jump":
-			candidates = ["idle"]
-		"hurt":
-			candidates = ["hurt_light", "idle"]
-		"dead":
-			candidates = ["hurt", "idle"]
-		_:
-			# Unknown or unequipped Moves must stay visibly missing rather than
-			# borrowing unrelated idle art.
-			candidates = []
-	for candidate in candidates:
-		if _has_animation(frames, str(candidate)):
-			return str(candidate)
+func _has_combat_idle_animation() -> bool:
+	if not has_spriteframes_playback():
+		return false
+	var frames: SpriteFrames = animated_sprite.sprite_frames
+	return (
+		_has_animation(frames, "fight_idle")
+		or _has_animation(frames, "fight_idle_e")
+		or _has_animation(frames, "fight_idle_w")
+	)
+
+
+func _fallback_animation(_frames: SpriteFrames, _requested: String) -> String:
+	# Missing and unequipped actions stay visibly missing. Unrelated animation
+	# substitution would make the import report and live behavior disagree.
 	return ""
 
 

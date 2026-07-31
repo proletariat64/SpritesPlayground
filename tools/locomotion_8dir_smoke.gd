@@ -18,7 +18,8 @@ func _run() -> void:
 	await process_frame
 	_slice_direction_from_intent()
 	_slice_hysteresis()
-	_slice_run_state()
+	_slice_run_mode()
+	_slice_locomotion_phase_matrix()
 	_slice_facing_split()
 	_slice_attack_from_run()
 	_slice_dash_exit_to_run()
@@ -63,6 +64,14 @@ func _dir(state_machine: Node) -> String:
 	return str(state_machine.get("locomotion_direction"))
 
 
+func _mode(state_machine: Node) -> String:
+	return str(state_machine.get("locomotion_mode"))
+
+
+func _phase(state_machine: Node) -> String:
+	return str(state_machine.get("locomotion_phase"))
+
+
 func _slice_direction_from_intent() -> void:
 	var parts := _make_sm()
 	var sm: Node = parts[0]
@@ -103,18 +112,55 @@ func _slice_hysteresis() -> void:
 	_free_sm(parts)
 
 
-func _slice_run_state() -> void:
+func _slice_run_mode() -> void:
 	var parts := _make_sm()
 	var sm: Node = parts[0]
 	sm.tick(DT, Vector2(1, 0), true)
-	_expect(sm.current_state == "run", "input + run_requested enters run (got %s)" % sm.current_state)
+	_expect(sm.current_state == "walk", "run remains in locomotion state walk (got %s)" % sm.current_state)
+	_expect(_mode(sm) == "run", "run_requested selects run mode (got %s)" % _mode(sm))
 	_expect(is_equal_approx(sm.velocity.length(), 150.0), "run velocity is 150 (got %s)" % sm.velocity.length())
 	sm.tick(DT, Vector2(1, 0), false)
-	_expect(sm.current_state == "walk", "releasing run returns to walk (got %s)" % sm.current_state)
+	_expect(sm.current_state == "walk", "releasing run remains in walk state (got %s)" % sm.current_state)
+	_expect(_mode(sm) == "walk", "releasing run selects walk mode (got %s)" % _mode(sm))
 	_expect(is_equal_approx(sm.velocity.length(), 95.0), "walk velocity is 95 (got %s)" % sm.velocity.length())
-	sm.tick(DT, Vector2.ZERO, true)
-	_expect(sm.current_state == "idle", "run_requested with no movement stays idle (got %s)" % sm.current_state)
 	_free_sm(parts)
+
+
+func _slice_locomotion_phase_matrix() -> void:
+	var sectors: Array = [
+		[Vector2(1, 0), "e"],
+		[Vector2(1, 1).normalized(), "se"],
+		[Vector2(0, 1), "s"],
+		[Vector2(-1, 1).normalized(), "sw"],
+		[Vector2(-1, 0), "w"],
+		[Vector2(-1, -1).normalized(), "nw"],
+		[Vector2(0, -1), "n"],
+		[Vector2(1, -1).normalized(), "ne"],
+	]
+	for run_requested in [false, true]:
+		var expected_mode := "run" if run_requested else "walk"
+		for sector in sectors:
+			var parts := _make_sm()
+			var sm: Node = parts[0]
+			var direction: Vector2 = sector[0]
+			sm.tick(DT, direction, run_requested)
+			_expect(sm.current_state == "walk", "%s %s start uses walk state" % [expected_mode, sector[1]])
+			_expect(_mode(sm) == expected_mode, "%s %s selects mode" % [expected_mode, sector[1]])
+			_expect(_phase(sm) == "start", "%s %s presents start (got %s)" % [expected_mode, sector[1], _phase(sm)])
+			for i in 12:
+				sm.tick(DT, direction, run_requested)
+			_expect(_phase(sm) == "loop", "%s %s presents loop (got %s)" % [expected_mode, sector[1], _phase(sm)])
+			sm.tick(DT, -direction, run_requested)
+			_expect(_phase(sm) == "turn", "%s %s presents turn (got %s)" % [expected_mode, sector[1], _phase(sm)])
+			for i in 26:
+				sm.tick(DT, -direction, run_requested)
+			_expect(_phase(sm) == "loop", "%s %s returns to loop after turn" % [expected_mode, sector[1]])
+			sm.tick(DT, Vector2.ZERO, run_requested)
+			_expect(_phase(sm) == "stop", "%s %s presents stop (got %s)" % [expected_mode, sector[1], _phase(sm)])
+			for i in 12:
+				sm.tick(DT, Vector2.ZERO, run_requested)
+			_expect(sm.current_state == "idle", "%s %s stop completes to idle" % [expected_mode, sector[1]])
+			_free_sm(parts)
 
 
 func _slice_facing_split() -> void:
@@ -150,7 +196,8 @@ func _slice_attack_from_run() -> void:
 	var parts := _make_sm()
 	var sm: Node = parts[0]
 	sm.tick(DT, Vector2(1, 0), true)
-	_expect(sm.current_state == "run", "setup: running (got %s)" % sm.current_state)
+	_expect(sm.current_state == "walk", "setup: run mode uses walk state (got %s)" % sm.current_state)
+	_expect(_mode(sm) == "run", "setup: running mode selected")
 	_expect(sm.can_start_attack(), "can start attack while running")
 	_free_sm(parts)
 
@@ -161,7 +208,8 @@ func _slice_dash_exit_to_run() -> void:
 	_expect(sm.request_action("dash"), "setup: dash starts")
 	for i in 30:
 		sm.tick(DT, Vector2(1, 0), true)
-	_expect(sm.current_state == "run", "dash exit with run held returns to run (got %s)" % sm.current_state)
+	_expect(sm.current_state == "walk", "dash exit with run held returns to locomotion walk state (got %s)" % sm.current_state)
+	_expect(_mode(sm) == "run", "dash exit with run held restores run mode")
 	_expect(is_equal_approx(sm.velocity.length(), 150.0), "post-dash run velocity is 150 (got %s)" % sm.velocity.length())
 	_free_sm(parts)
 
@@ -172,10 +220,26 @@ func _slice_directional_animation_and_flip() -> void:
 	miduo.instance_id = "loco_miduo"
 	root.add_child(miduo)
 	await process_frame
-	miduo.state_machine.tick(DT, Vector2(1, -1).normalized())
-	miduo._sync_visual_animation()
-	_expect(str(miduo.animated_sprite.animation) == "walk_ne", "miduo NE walk uses walk_ne (got %s)" % miduo.animated_sprite.animation)
-	_expect(not miduo.animated_sprite.flip_h, "miduo authored directional art is not flipped")
+	var sectors: Array = [
+		[Vector2(1, 0), "e"],
+		[Vector2(1, 1).normalized(), "se"],
+		[Vector2(0, 1), "s"],
+		[Vector2(-1, 1).normalized(), "sw"],
+		[Vector2(-1, 0), "w"],
+		[Vector2(-1, -1).normalized(), "nw"],
+		[Vector2(0, -1), "n"],
+		[Vector2(1, -1).normalized(), "ne"],
+	]
+	for sector in sectors:
+		miduo.reset_runtime(Vector2.ZERO)
+		miduo.state_machine.tick(DT, sector[0])
+		miduo._sync_visual_animation()
+		_expect(str(miduo.animated_sprite.animation) == "eden_walk_start_%s" % sector[1], "miduo %s walk resolves imported start art (got %s)" % [sector[1], miduo.animated_sprite.animation])
+		for i in 12:
+			miduo.state_machine.tick(DT, sector[0])
+		miduo._sync_visual_animation()
+		_expect(str(miduo.animated_sprite.animation) == "eden_walk_loop_%s" % sector[1], "miduo %s walk resolves imported loop art (got %s)" % [sector[1], miduo.animated_sprite.animation])
+		_expect(not miduo.animated_sprite.flip_h, "miduo %s authored directional art is not flipped" % sector[1])
 	var skeleton := CombatCharacterScript.new()
 	skeleton.template_id = "skeleton_default_unarmed_s64"
 	skeleton.instance_id = "loco_skeleton"
@@ -199,21 +263,23 @@ func _slice_cycle_phase() -> void:
 	root.add_child(miduo)
 	await process_frame
 	miduo.state_machine.tick(DT, Vector2(1, 0))
+	for i in 12:
+		miduo.state_machine.tick(DT, Vector2(1, 0))
 	miduo._sync_visual_animation()
-	miduo.animated_sprite.frame = 3
-	miduo.animated_sprite.frame_progress = 0.5
-	miduo.state_machine.tick(DT, Vector2(1, -1).normalized())
+	_expect(str(miduo.animated_sprite.animation) == "eden_walk_loop_e", "walk reaches imported loop phase (got %s)" % miduo.animated_sprite.animation)
+	miduo.state_machine.tick(DT, Vector2(-1, 0))
 	miduo._sync_visual_animation()
-	_expect(str(miduo.animated_sprite.animation) == "walk_ne", "direction change switches to walk_ne (got %s)" % miduo.animated_sprite.animation)
-	_expect(miduo.animated_sprite.frame == 3, "direction change preserves frame 3 (got %s)" % miduo.animated_sprite.frame)
-	_expect(is_equal_approx(miduo.animated_sprite.frame_progress, 0.5), "direction change preserves progress (got %s)" % miduo.animated_sprite.frame_progress)
-	miduo.animated_sprite.frame = 5
-	miduo.animated_sprite.frame_progress = 0.25
-	miduo.state_machine.tick(DT, Vector2(1, 0), true)
+	_expect(str(miduo.animated_sprite.animation) == "eden_walk_turn_w", "direction change presents imported turn phase (got %s)" % miduo.animated_sprite.animation)
+	miduo.state_machine.tick(DT, Vector2(-1, 0), true)
 	miduo._sync_visual_animation()
-	_expect(str(miduo.animated_sprite.animation) == "run_e", "run switches to run_e (got %s)" % miduo.animated_sprite.animation)
-	_expect(miduo.animated_sprite.frame == 5, "walk->run preserves frame 5 (got %s)" % miduo.animated_sprite.frame)
-	_expect(is_equal_approx(miduo.animated_sprite.frame_progress, 0.25), "walk->run preserves progress (got %s)" % miduo.animated_sprite.frame_progress)
+	_expect(str(miduo.animated_sprite.animation) == "eden_run_start_w", "walk to run presents imported run start (got %s)" % miduo.animated_sprite.animation)
+	for i in 12:
+		miduo.state_machine.tick(DT, Vector2(-1, 0), true)
+	miduo._sync_visual_animation()
+	_expect(str(miduo.animated_sprite.animation) == "eden_run_loop_w", "run reaches imported loop phase (got %s)" % miduo.animated_sprite.animation)
+	miduo.state_machine.tick(DT, Vector2.ZERO, true)
+	miduo._sync_visual_animation()
+	_expect(str(miduo.animated_sprite.animation) == "eden_run_stop_w", "run stop presents imported stop phase (got %s)" % miduo.animated_sprite.animation)
 	miduo.free()
 
 
@@ -228,6 +294,10 @@ func _slice_resource_and_scene() -> void:
 		for base in ["idle", "walk", "run"]:
 			for direction in ["s", "se", "e", "ne", "n", "nw", "w", "sw"]:
 				required.append("%s_%s" % [base, direction])
+		for mode in ["walk", "run"]:
+			for phase in ["start", "loop", "stop", "turn"]:
+				for direction in ["s", "se", "e", "ne", "n", "nw", "w", "sw"]:
+					required.append("eden_%s_%s_%s" % [mode, phase, direction])
 		required.append_array(["dash", "jump", "hurt", "dead", "jab", "high_kick"])
 		for animation_name in required:
 			_expect(names.has(animation_name), "miduo has animation %s" % animation_name)
@@ -247,11 +317,12 @@ func _slice_resource_and_scene() -> void:
 	Input.action_press("move_right")
 	for i in 10:
 		await physics_frame
-	_expect(playground.player.state_machine.current_state == "run", "Ctrl + move enters run (got %s)" % playground.player.state_machine.current_state)
+	_expect(playground.player.state_machine.current_state == "walk", "Ctrl + move stays in walk state (got %s)" % playground.player.state_machine.current_state)
+	_expect(_mode(playground.player.state_machine) == "run", "Ctrl + move selects run mode")
 	_expect(is_equal_approx(playground.player.state_machine.velocity.length(), 150.0), "scene run velocity is 150 (got %s)" % playground.player.state_machine.velocity.length())
 	Input.action_release("run")
 	Input.action_release("move_right")
-	for i in 10:
+	for i in 12:
 		await physics_frame
 	_expect(playground.player.state_machine.current_state == "idle", "releasing input returns to idle (got %s)" % playground.player.state_machine.current_state)
 	playground.free()
