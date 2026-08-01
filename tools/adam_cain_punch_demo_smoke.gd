@@ -3,7 +3,7 @@ extends SceneTree
 const DemoScene := preload("res://godot/scenes/AdamCainPunchDemo.tscn")
 const DataStore := preload("res://godot/scripts/prd_v0_3_data_store.gd")
 
-const REPORT_PATH := "res://docs/adam_cain_basic_punch_validation.md"
+const REPORT_PATH := "res://docs/06_testing/test-20260629-adam-cain-basic-punch-validation.md"
 const TICK_RATE := 60
 const DELTA := 1.0 / float(TICK_RATE)
 

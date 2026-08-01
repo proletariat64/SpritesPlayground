@@ -15,8 +15,9 @@ mono_crash.*.json
 # GitNexus local index
 .gitnexus/
 
-# Generated assets and scratch output
+# Generated assets, local dependency archives, and scratch output
 /tmp/
+local_cache/
 temp/*
 !temp/.gitkeep
 generated_assets/*
@@ -92,6 +93,7 @@ Desktop.ini
 
 # Local assistant/editor settings and generated AI context
 .claude/
+.letta/
 .qoder/
 .scratch/
 docs/.obsidian/
@@ -99,3 +101,6 @@ docs/.claudian/
 docs/timeline-weeks/
 AGENT.md
 CLAUDE.md
+
+# Dogsquard local/private agent files
+roster.md

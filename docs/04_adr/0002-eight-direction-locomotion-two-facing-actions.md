@@ -1,3 +1,16 @@
+---
+title: "Separate Eight-Direction Locomotion from Two-Facing Actions"
+doc_type: "adr"
+status: "approved"
+owner: "coding-agent"
+source: "github"
+created: "2026-08-01"
+updated: "2026-08-01"
+related_issue: "#33"
+related_pr: "#36"
+supersedes: ""
+---
+
 # Separate eight-direction locomotion from two-facing actions
 
 Characters use eight compass directions for idle, walk, and run presentation, while dash, jump, hurt, death, and attacks retain persistent east-or-west combat facing. Eden supplies complete eight-direction locomotion art but only east/west action art; separating locomotion direction from combat facing uses the authored assets without inventing missing action directions or changing combat geometry.

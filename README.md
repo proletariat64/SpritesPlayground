@@ -45,27 +45,23 @@ Downloadable archive URL:
 https://github.com/proletariat64/SpritesPlayground/archive/refs/heads/archive/verification-work-2026-06-22.zip
 ```
 
-## Skeleton Layout
+## Repository Layout
 
 ```text
 SpritesPlayground/
-├── README.md
-├── project.godot
+├── dependencies/       pinned external dependency metadata
 ├── docs/
-│   ├── PRD.md
-│   ├── PRODUCT_SCOPE.md
-│   ├── DEVELOPMENT.md
-│   ├── NAMING.md
-│   └── ARCHITECTURE_DECISIONS.md
-├── godot/
-│   ├── scenes/
-│   ├── scripts/
-│   └── resources/
-├── tools/
-│   └── pixellab_generator/
-├── generated_assets/
-└── archive/
-    └── README.md
+│   ├── 02_prd/         active requirement documents
+│   ├── 03_bdd/         acceptance behavior
+│   ├── 04_adr/         active architecture decisions
+│   ├── 05_design/      design references and naming rules
+│   ├── 06_testing/     test plans and generated validation reports
+│   ├── 07_runbooks/    operator and development procedures
+│   └── 90_archive/     superseded historical documents by year/month
+├── godot/              scenes, scripts, and resources
+├── scripts/            repository and environment operations
+├── tests/              Python CLI behavior tests
+└── tools/              project-domain import, generation, and smoke tools
 ```
 
 ## Required Setup
@@ -105,4 +101,4 @@ combat gray s64 template
 - No full wardrobe/dress-up system.
 - No full PixelLab integration inside Godot yet.
 
-See `docs/PRD.md` and GitHub issues for current scope and development acceptance criteria.
+See the canonical [Current Clean PRD](docs/02_prd/prd-20260626-sprites-playground-current-clean.md) and GitHub issues for current scope and development acceptance criteria. Historical PRDs and implementation specifications are preserved under `docs/90_archive/`.

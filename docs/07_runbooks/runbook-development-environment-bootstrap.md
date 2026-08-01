@@ -8,7 +8,7 @@ created: "2026-08-01"
 updated: "2026-08-01"
 related_issue: ""
 related_pr: ""
-supersedes: "docs/DEVELOPMENT.md environment dependency instructions"
+supersedes: "docs/90_archive/2026/06/archived-20260622-development-guide.md environment dependency instructions"
 ---
 
 # Development Environment Bootstrap Runbook

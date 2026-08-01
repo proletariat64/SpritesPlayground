@@ -1,3 +1,16 @@
+---
+title: "Agent Issue Tracker Contract"
+doc_type: "runbook"
+status: "approved"
+owner: "coding-agent"
+source: "agent"
+created: "2026-08-01"
+updated: "2026-08-01"
+related_issue: ""
+related_pr: ""
+supersedes: ""
+---
+
 # Issue tracker: GitHub
 
 Issues and PRDs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
