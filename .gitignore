@@ -22,7 +22,11 @@ temp/*
 generated_assets/*
 !generated_assets/.gitkeep
 demo/
+
+# External Godot addons installed locally
+addons/godot_ai/
 addons/limboai/
+
 *.temp
 *.tmp
 *.cache
