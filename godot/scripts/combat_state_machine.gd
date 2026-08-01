@@ -164,7 +164,7 @@ func tick(delta: float, input_vector: Vector2, run_requested: bool = false) -> v
 				visual_jump_offset = lerpf(_airborne_attack_start_offset, 0.0, attack_progress)
 			else:
 				visual_jump_offset = 0.0
-			_move_executor.tick()
+			_move_executor.tick(delta)
 			return
 		STATE_HURT:
 			visual_jump_offset = 0.0

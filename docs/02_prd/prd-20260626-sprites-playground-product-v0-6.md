@@ -731,6 +731,7 @@ Current verification commands:
 ```bash
 python3 tools/validate_prd_v0_3.py
 godot --headless --path . --script tools/prd_v0_3_runtime_smoke.gd
+godot --headless --path . --script tools/live_animationplayer_timing_smoke.gd
 godot --headless --path . --script tools/creator_lab_v0_3_smoke.gd
 godot --headless --path . --script tools/runtime_smoke.gd
 godot --headless --path . --script tools/spriteframes_generation_smoke.gd
