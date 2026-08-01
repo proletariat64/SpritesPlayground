@@ -19,3 +19,19 @@ _Avoid_: Locomotion direction, eight-direction combat facing
 **Run**:
 Faster manual locomotion requested by holding Ctrl while moving; it uses the same eight locomotion directions as walk.
 _Avoid_: Sprint, dash
+
+**Live gameplay behavior**:
+The authoritative behavior of playable sprites in the Playground. Authoring tools
+must present this behavior rather than define a parallel gameplay truth.
+_Avoid_: Preview behavior, simulated gameplay truth
+
+**Creator Lab preview**:
+An authoring view of how a selected sprite and Move behave under live gameplay
+rules. It is not a separate gameplay simulation.
+_Avoid_: Preview runtime, mock combat
+
+**Authoring draft**:
+The unsaved CharacterTemplate, SpriteSet, and Moves currently edited together in
+Creator Lab. The draft is validated, previewed, applied, or saved as one coherent
+set.
+_Avoid_: Panel state, working copy
