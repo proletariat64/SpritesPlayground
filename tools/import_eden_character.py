@@ -774,6 +774,8 @@ def _build_template(character_id: str, equipped_move_ids: list[str]) -> dict[str
             "radius": {"x": 18, "y": 8},
         },
         "hp": 100,
+        "walk_speed": 95.0,
+        "run_speed": 150.0,
         "equipped_moves": equipped_move_ids,
     }
 
@@ -835,6 +837,9 @@ def _build_move(move_id: str, action_id: str, frame_count: int) -> dict[str, Any
         "move_id": move_id,
         "move_type": move_type,
         "frame_count": frame_count,
+        "startup_frames": active_start,
+        "active_frames": active_end - active_start + 1,
+        "recovery_frames": max(0, frame_count - active_end - 1),
         "active_window": {
             "start_frame": active_start,
             "end_frame": active_end,

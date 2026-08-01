@@ -68,6 +68,18 @@ SpritesPlayground/
     └── README.md
 ```
 
+## Required Setup
+
+SpritesPlayground requires Godot 4.6+ and LimboAI 1.8.0. LimboAI is a build dependency, not vendored project code:
+
+```bash
+python3 tools/install_limboai.py
+python3 tools/install_limboai.py --check
+godot --editor --path .
+```
+
+See `dependencies/limboai.lock.json` and `docs/DEVELOPMENT.md` for the pinned source and build-environment policy.
+
 ## MVP Focus
 
 The first working MVP should prove this loop:

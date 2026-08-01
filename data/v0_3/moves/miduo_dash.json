@@ -1,4 +1,5 @@
 {
+  "active_frames": 4,
   "active_window": {
     "end_frame": 3,
     "start_frame": 0
@@ -11,6 +12,8 @@
   "move_id": "miduo_dash",
   "move_type": "locomotion",
   "multi_hit": false,
+  "recovery_frames": 0,
   "schema_version": "0.3",
+  "startup_frames": 0,
   "state_context_override": "dash"
 }

@@ -19,6 +19,8 @@ var sprite_set_id: String = "gray_dummy_s64"
 var frame_size: int = 80
 var max_hp: int = 100
 var current_hp: int = 100
+var walk_speed: float = 95.0
+var run_speed: float = 150.0
 var control_mode: String = "manual"
 var debug_boxes_visible: bool = true
 var is_test_dummy: bool = false
@@ -56,6 +58,8 @@ func _ready() -> void:
 	state_machine.name = "state_machine"
 	add_child(state_machine)
 	state_machine.configure(move_executor)
+	state_machine.walk_speed = walk_speed
+	state_machine.run_speed = run_speed
 	move_executor.move_finished.connect(_on_move_finished_for_combo)
 
 	ai_controller = CombatAIControllerScript.new()
@@ -103,6 +107,8 @@ func apply_v0_3_runtime_bundle(next_template: Dictionary, _next_sprite_set: Dict
 	sprite_set_id = str(next_template.get("sprite_set_ref", sprite_set_id))
 	max_hp = next_max_hp
 	current_hp = mini(current_hp, max_hp)
+	walk_speed = maxf(1.0, float(next_template.get("walk_speed", 95.0)))
+	run_speed = maxf(1.0, float(next_template.get("run_speed", 150.0)))
 	hurtbox_profile = _v0_3_hurtboxes_to_runtime(next_template.get("hurtboxes", {}))
 	foot_collision_profile = _v0_3_foot_to_runtime(next_template.get("foot_collision", {}))
 	var move_templates := {}
@@ -114,6 +120,8 @@ func apply_v0_3_runtime_bundle(next_template: Dictionary, _next_sprite_set: Dict
 		"sprite_set_id": sprite_set_id,
 		"frame_size": frame_size,
 		"max_hp": max_hp,
+		"walk_speed": walk_speed,
+		"run_speed": run_speed,
 		"hurtbox_profile": hurtbox_profile,
 		"foot_collision_profile": foot_collision_profile,
 		"move_templates": move_templates,
@@ -121,6 +129,8 @@ func apply_v0_3_runtime_bundle(next_template: Dictionary, _next_sprite_set: Dict
 	if move_executor != null:
 		move_executor.configure(move_templates)
 	if state_machine != null:
+		state_machine.walk_speed = walk_speed
+		state_machine.run_speed = run_speed
 		state_machine.reset_to_idle()
 	_load_sprite_frames_for_sprite_set()
 	queue_redraw()
@@ -133,8 +143,13 @@ func _apply_template_data(runtime_template: Dictionary) -> void:
 	frame_size = int(runtime_template["frame_size"])
 	max_hp = int(runtime_template["max_hp"])
 	current_hp = max_hp
+	walk_speed = maxf(1.0, float(runtime_template.get("walk_speed", 95.0)))
+	run_speed = maxf(1.0, float(runtime_template.get("run_speed", 150.0)))
 	hurtbox_profile = runtime_template["hurtbox_profile"].duplicate(true)
 	foot_collision_profile = runtime_template["foot_collision_profile"].duplicate(true)
+	if state_machine != null:
+		state_machine.walk_speed = walk_speed
+		state_machine.run_speed = run_speed
 
 
 func tick_character(delta: float, arena_center: Vector2, arena_radius: Vector2) -> void:
@@ -208,6 +223,16 @@ func active_hitboxes_world() -> Array:
 
 
 func hurtboxes_world() -> Array:
+	# A Move may author frame-scoped defensive geometry. When one of those
+	# windows is active it replaces the character's default profile for that
+	# frame; outside the authored window the stable template profile applies.
+	var attack_hurtboxes: Array = move_executor.active_hurtboxes_world(
+		global_position,
+		state_machine.facing,
+		state_machine.visual_jump_offset
+	)
+	if not attack_hurtboxes.is_empty():
+		return attack_hurtboxes
 	var entries: Array = []
 	for hurtbox_id in hurtbox_profile.keys():
 		var local_rect: Rect2 = hurtbox_profile[hurtbox_id]
@@ -455,32 +480,11 @@ func _v0_3_foot_to_runtime(foot: Dictionary) -> Dictionary:
 
 
 func _v0_3_move_to_runtime(move: Dictionary) -> Dictionary:
-	# ponytail: live MoveExecutor currently consumes frame count, hitbox windows, rects, and damage only.
-	# v0.3 hitstop_frames, multi_hit, events, and sprite-set frame data stay authoring-preview only until live combat consumes them.
-	var windows: Array = []
-	for hitbox in move.get("hitboxes", []):
-		var window: Dictionary = hitbox.get("active_window", {})
-		var rect: Dictionary = hitbox.get("rect", {})
-		windows.append({
-			"from_frame": int(window.get("start_frame", 0)),
-			"to_frame": int(window.get("end_frame", 0)),
-			"hitbox_id": str(hitbox.get("hitbox_id", "")),
-			"damage": int(move.get("damage", 0)),
-			"rect": Rect2(
-				float(rect.get("x", 0.0)),
-				float(rect.get("y", 0.0)),
-				maxf(1.0, float(rect.get("w", 1.0))),
-				maxf(1.0, float(rect.get("h", 1.0)))
-			),
-		})
-	var runtime_move_id := str(move.get("move_id", ""))
-	return {
-		"move_id": runtime_move_id,
-		"animation_id": CharacterTemplateScript.animation_id_for_move(runtime_move_id, template_id),
-		"fps": 60,
-		"total_frames": maxi(1, int(move.get("frame_count", 1))),
-		"hitbox_windows": windows,
-	}
+	return CharacterTemplateScript.v0_3_move_to_runtime(
+		str(move.get("move_id", "")),
+		move,
+		template_id
+	)
 
 
 func _ensure_animated_sprite() -> void:
@@ -694,9 +698,10 @@ func _draw() -> void:
 	if not debug_boxes_visible:
 		return
 
-	for hurtbox_id in hurtbox_profile.keys():
-		var rect: Rect2 = hurtbox_profile[hurtbox_id]
-		rect.position.y += jump_y
+	for hurtbox in hurtboxes_world():
+		var hurtbox_id := str(hurtbox["hurtbox_id"])
+		var rect: Rect2 = hurtbox["rect"]
+		rect.position -= global_position
 		var fill_color := Color(0.1, 0.55, 1.0, 0.18)
 		var line_color := Color(0.1, 0.55, 1.0)
 		var line_width := 1.0

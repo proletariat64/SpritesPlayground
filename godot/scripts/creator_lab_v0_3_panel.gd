@@ -78,10 +78,15 @@ var navigation_list: ItemList
 var values_panel: VBoxContainer
 var detail_panel: VBoxContainer
 var hp_input: LineEdit
+var walk_speed_input: LineEdit
+var run_speed_input: LineEdit
 var sprite_ref_input: LineEdit
 var move_type_input: OptionButton
 var state_context_input: OptionButton
 var frame_count_input: LineEdit
+var startup_frames_input: LineEdit
+var active_frames_input: LineEdit
+var recovery_frames_input: LineEdit
 var active_start_input: LineEdit
 var active_end_input: LineEdit
 var damage_input: LineEdit
@@ -92,6 +97,8 @@ var hurt_inputs := {}
 var foot_inputs := {}
 var hitbox_id_input: LineEdit
 var hitbox_inputs := {}
+var attack_hurtbox_id_input: LineEdit
+var attack_hurtbox_inputs := {}
 var events_text: TextEdit
 var current_nav: String = "character_template"
 var current_hurtbox_id: String = "hurt_head"
@@ -349,6 +356,8 @@ func apply_to_bound_instance() -> bool:
 		instance.set("sprite_set_id", str(template_json.get("sprite_set_ref", "")))
 		instance.set("max_hp", max_hp)
 		instance.set("current_hp", mini(int(_node_property(instance, "current_hp")), max_hp))
+		instance.set("walk_speed", maxf(1.0, float(template_json.get("walk_speed", 95.0))))
+		instance.set("run_speed", maxf(1.0, float(template_json.get("run_speed", 150.0))))
 		instance.set("hurtbox_profile", _runtime_hurtbox_profile())
 		instance.set("foot_collision_profile", _runtime_foot_collision_profile())
 		if instance.has_method("queue_redraw"):
@@ -403,6 +412,12 @@ func validate_current() -> Array:
 
 func set_hp(value: int) -> void:
 	template_json["hp"] = maxi(1, value)
+	_refresh_fields()
+
+
+func set_movement_speeds(walk_speed: float, run_speed: float) -> void:
+	template_json["walk_speed"] = maxf(1.0, walk_speed)
+	template_json["run_speed"] = maxf(1.0, run_speed)
 	_refresh_fields()
 
 
@@ -461,10 +476,18 @@ func set_move_scalar(field: String, value) -> void:
 				move.erase("state_context_override")
 			else:
 				move["state_context_override"] = str(value)
-		"frame_count", "damage", "hitstop_frames":
+		"frame_count", "startup_frames", "active_frames", "recovery_frames", "damage", "hitstop_frames":
 			move[field] = int(value)
 		"multi_hit":
 			move["multi_hit"] = bool(value)
+	_refresh_fields()
+
+
+func set_move_rhythm(startup_frames: int, active_frames: int, recovery_frames: int) -> void:
+	var move := selected_move_json()
+	move["startup_frames"] = maxi(0, startup_frames)
+	move["active_frames"] = maxi(1, active_frames)
+	move["recovery_frames"] = maxi(0, recovery_frames)
 	_refresh_fields()
 
 
@@ -480,6 +503,20 @@ func set_first_hitbox(hitbox_id: String, start_frame: int, end_frame: int, rect:
 		move["hitboxes"].append({})
 	move["hitboxes"][0] = {
 		"hitbox_id": hitbox_id,
+		"active_window": {"start_frame": start_frame, "end_frame": end_frame},
+		"rect": _rect_json(rect),
+	}
+	_refresh_fields()
+
+
+func set_first_attack_hurtbox(hurtbox_id: String, start_frame: int, end_frame: int, rect: Dictionary) -> void:
+	var move := selected_move_json()
+	if not move.has("hurtboxes"):
+		move["hurtboxes"] = []
+	if move["hurtboxes"].is_empty():
+		move["hurtboxes"].append({})
+	move["hurtboxes"][0] = {
+		"hurtbox_id": hurtbox_id,
 		"active_window": {"start_frame": start_frame, "end_frame": end_frame},
 		"rect": _rect_json(rect),
 	}
@@ -717,10 +754,15 @@ func _reset_editor_refs() -> void:
 	sprite_set_select = null
 	coverage_list = null
 	hp_input = null
+	walk_speed_input = null
+	run_speed_input = null
 	sprite_ref_input = null
 	move_type_input = null
 	state_context_input = null
 	frame_count_input = null
+	startup_frames_input = null
+	active_frames_input = null
+	recovery_frames_input = null
 	active_start_input = null
 	active_end_input = null
 	damage_input = null
@@ -731,6 +773,8 @@ func _reset_editor_refs() -> void:
 	foot_inputs = {}
 	hitbox_id_input = null
 	hitbox_inputs = {}
+	attack_hurtbox_id_input = null
+	attack_hurtbox_inputs = {}
 	events_text = null
 	runtime_label = null
 	preview_frame_slider = null
@@ -992,9 +1036,13 @@ func _build_template_detail(parent: VBoxContainer) -> void:
 	var stat_inputs := _add_bound_input_grid(parent, [
 		["sprite", "sprite_ref_input", _on_sprite_ref_submitted, str(template_json.get("sprite_set_ref", "")), 88],
 		["hp", "hp_input", _on_hp_submitted, int(template_json.get("hp", 0))],
+		["walk speed", "walk_speed_input", _on_movement_speed_submitted, float(template_json.get("walk_speed", 95.0))],
+		["run speed", "run_speed_input", _on_movement_speed_submitted, float(template_json.get("run_speed", 150.0))],
 	], 2)
 	sprite_ref_input = stat_inputs["sprite_ref_input"]
 	hp_input = stat_inputs["hp_input"]
+	walk_speed_input = stat_inputs["walk_speed_input"]
+	run_speed_input = stat_inputs["run_speed_input"]
 	move_select = OptionButton.new()
 	_style_control(move_select, 118, 18)
 	for move_id in template_json.get("equipped_moves", []):
@@ -1117,7 +1165,7 @@ func _build_move_summary_detail(parent: VBoxContainer, move: Dictionary) -> void
 		["state", state_context_input],
 	], 2)
 	multi_hit_input = CheckBox.new()
-	multi_hit_input.text = "multi_hit"
+	multi_hit_input.text = "multi_hit (preview-only; not live)"
 	multi_hit_input.button_pressed = bool(move.get("multi_hit", false))
 	multi_hit_input.toggled.connect(_on_multi_hit_toggled)
 	multi_hit_input.add_theme_font_size_override("font_size", 8)
@@ -1127,12 +1175,22 @@ func _build_move_summary_detail(parent: VBoxContainer, move: Dictionary) -> void
 
 func _build_move_timing_detail(parent: VBoxContainer, move: Dictionary) -> void:
 	parent.add_child(_label("Timing", COLOR_MOVE))
+	var active_window: Dictionary = move.get("active_window", {})
+	var fallback_startup := int(active_window.get("start_frame", 0))
+	var fallback_active := maxi(1, int(active_window.get("end_frame", fallback_startup)) - fallback_startup + 1)
+	var fallback_recovery := maxi(0, int(move.get("frame_count", 1)) - fallback_startup - fallback_active)
 	var inputs := _add_bound_input_grid(parent, [
 		["frames", "frame_count_input", _on_frame_count_submitted, int(move.get("frame_count", 0))],
-		["start", "active_start_input", _on_active_start_submitted, int(move.get("active_window", {}).get("start_frame", 0))],
-		["end", "active_end_input", _on_active_end_submitted, int(move.get("active_window", {}).get("end_frame", 0))],
+		["startup", "startup_frames_input", _on_move_rhythm_submitted, int(move.get("startup_frames", fallback_startup))],
+		["active", "active_frames_input", _on_move_rhythm_submitted, int(move.get("active_frames", fallback_active))],
+		["recovery", "recovery_frames_input", _on_move_rhythm_submitted, int(move.get("recovery_frames", fallback_recovery))],
+		["window start", "active_start_input", _on_active_start_submitted, fallback_startup],
+		["window end", "active_end_input", _on_active_end_submitted, int(active_window.get("end_frame", 0))],
 	], 3)
 	frame_count_input = inputs["frame_count_input"]
+	startup_frames_input = inputs["startup_frames_input"]
+	active_frames_input = inputs["active_frames_input"]
+	recovery_frames_input = inputs["recovery_frames_input"]
 	active_start_input = inputs["active_start_input"]
 	active_end_input = inputs["active_end_input"]
 
@@ -1141,11 +1199,11 @@ func _build_move_damage_detail(parent: VBoxContainer, move: Dictionary) -> void:
 	parent.add_child(_label("Damage", COLOR_MOVE))
 	var inputs := _add_bound_input_grid(parent, [
 		["damage", "damage_input", _on_damage_submitted, int(move.get("damage", 0))],
-		["hitstop", "hitstop_input", _on_hitstop_submitted, int(move.get("hitstop_frames", 0))],
+		["hitstop (not live)", "hitstop_input", _on_hitstop_submitted, int(move.get("hitstop_frames", 0))],
 	], 2)
 	damage_input = inputs["damage_input"]
 	hitstop_input = inputs["hitstop_input"]
-	parent.add_child(_hint_label("Hitstop freezes movement, animation, and hitboxes."))
+	parent.add_child(_hint_label("Preview-only: Playground does not currently apply hitstop."))
 
 
 func _build_move_hitbox_detail(parent: VBoxContainer, move: Dictionary) -> void:
@@ -1173,15 +1231,39 @@ func _build_move_hitbox_detail(parent: VBoxContainer, move: Dictionary) -> void:
 		hitbox_id_input.text = "hit_fist_1"
 		_set_inputs(hitbox_inputs, {"start_frame": 0, "end_frame": 0, "x": 0, "y": 0, "w": 1, "h": 1})
 
+	parent.add_child(_label("Attack-frame Hurtbox (live)", COLOR_CHARACTER))
+	attack_hurtbox_id_input = _line_edit(_on_box_fields_submitted)
+	parent.add_child(attack_hurtbox_id_input)
+	attack_hurtbox_inputs = _add_input_grid(parent, ["start_frame", "end_frame", "x", "y", "w", "h"], _on_box_fields_submitted)
+	var attack_hurtboxes: Array = move.get("hurtboxes", [])
+	if attack_hurtboxes.size() > 1:
+		parent.add_child(_hint_label("Editing first attack hurtbox only; %d additional remain unchanged." % (attack_hurtboxes.size() - 1)))
+	if not attack_hurtboxes.is_empty():
+		var hurtbox: Dictionary = attack_hurtboxes[0]
+		attack_hurtbox_id_input.text = str(hurtbox.get("hurtbox_id", "hurt_attack_body"))
+		var window: Dictionary = hurtbox.get("active_window", {})
+		var rect: Dictionary = hurtbox.get("rect", {})
+		_set_inputs(attack_hurtbox_inputs, {
+			"start_frame": window.get("start_frame", 0),
+			"end_frame": window.get("end_frame", 0),
+			"x": rect.get("x", 0), "y": rect.get("y", 0),
+			"w": rect.get("w", 1), "h": rect.get("h", 1),
+		})
+	else:
+		attack_hurtbox_id_input.text = "hurt_attack_body"
+		_set_inputs(attack_hurtbox_inputs, {"start_frame": 0, "end_frame": 0, "x": 0, "y": 0, "w": 1, "h": 1})
+	parent.add_child(_hint_label("Saved attack-frame Hitbox and Hurtbox geometry is consumed by Playground on reload."))
+
 
 func _build_move_events_detail(parent: VBoxContainer, move: Dictionary) -> void:
-	parent.add_child(_label("Frame events JSON", COLOR_MOVE))
+	parent.add_child(_label("Frame events JSON (preview-only; not live)", COLOR_MOVE))
 	events_text = TextEdit.new()
 	events_text.custom_minimum_size = Vector2(188, 102)
 	events_text.add_theme_font_size_override("font_size", 8)
 	events_text.text = JSON.stringify(move.get("events", []), "\t", true)
 	parent.add_child(events_text)
-	parent.add_child(_button("Apply", _on_events_apply_pressed, 58))
+	parent.add_child(_button("Apply Preview Data", _on_events_apply_pressed, 92))
+	parent.add_child(_hint_label("Playground does not currently dispatch generic frame events."))
 
 
 func _build_wardrobe_detail(parent: VBoxContainer) -> void:
@@ -1433,6 +1515,9 @@ func _frame_has_timing_reference(move_id: String, frame_index: int) -> bool:
 	for hitbox in move.get("hitboxes", []):
 		if _window_contains(hitbox.get("active_window", {}), frame_index):
 			return true
+	for hurtbox in move.get("hurtboxes", []):
+		if _window_contains(hurtbox.get("active_window", {}), frame_index):
+			return true
 	for event in move.get("events", []):
 		if int(event.get("frame", -1)) == frame_index:
 			return true
@@ -1451,6 +1536,8 @@ func _shift_timing_after_insert(move_id: String, frame_index: int) -> void:
 	_shift_window_after_insert(move.get("active_window", {}), frame_index)
 	for hitbox in move.get("hitboxes", []):
 		_shift_window_after_insert(hitbox.get("active_window", {}), frame_index)
+	for hurtbox in move.get("hurtboxes", []):
+		_shift_window_after_insert(hurtbox.get("active_window", {}), frame_index)
 	for event in move.get("events", []):
 		if int(event.get("frame", -1)) >= frame_index:
 			event["frame"] = int(event["frame"]) + 1
@@ -1464,6 +1551,8 @@ func _shift_timing_after_delete(move_id: String, frame_index: int) -> void:
 	_shift_window_after_delete(move.get("active_window", {}), frame_index)
 	for hitbox in move.get("hitboxes", []):
 		_shift_window_after_delete(hitbox.get("active_window", {}), frame_index)
+	for hurtbox in move.get("hurtboxes", []):
+		_shift_window_after_delete(hurtbox.get("active_window", {}), frame_index)
 	for event in move.get("events", []):
 		if int(event.get("frame", -1)) > frame_index:
 			event["frame"] = int(event["frame"]) - 1
@@ -2235,6 +2324,13 @@ func _on_hp_submitted() -> void:
 		set_hp(int(hp_input.text))
 
 
+func _on_movement_speed_submitted() -> void:
+	if walk_speed_input == null or run_speed_input == null:
+		return
+	if walk_speed_input.text.is_valid_float() and run_speed_input.text.is_valid_float():
+		set_movement_speeds(float(walk_speed_input.text), float(run_speed_input.text))
+
+
 func _on_move_type_selected(index: int) -> void:
 	if move_type_input == null:
 		return
@@ -2250,6 +2346,17 @@ func _on_state_context_selected(index: int) -> void:
 func _on_frame_count_submitted() -> void:
 	if frame_count_input != null and frame_count_input.text.is_valid_int():
 		set_move_scalar("frame_count", int(frame_count_input.text))
+
+
+func _on_move_rhythm_submitted() -> void:
+	if startup_frames_input == null or active_frames_input == null or recovery_frames_input == null:
+		return
+	if startup_frames_input.text.is_valid_int() and active_frames_input.text.is_valid_int() and recovery_frames_input.text.is_valid_int():
+		set_move_rhythm(
+			int(startup_frames_input.text),
+			int(active_frames_input.text),
+			int(recovery_frames_input.text)
+		)
 
 
 func _on_active_start_submitted() -> void:
@@ -2331,6 +2438,34 @@ func _on_box_fields_submitted() -> void:
 				"y": _number_from(hitbox_inputs, "y"),
 				"w": _number_from(hitbox_inputs, "w"),
 				"h": _number_from(hitbox_inputs, "h"),
+			}),
+		}
+		changed = true
+	if attack_hurtbox_id_input != null and not attack_hurtbox_inputs.is_empty():
+		var hurtbox_id := attack_hurtbox_id_input.text.strip_edges()
+		var hurtbox_id_valid := hurtbox_id.begins_with("hurt_")
+		_set_line_edit_valid(attack_hurtbox_id_input, hurtbox_id_valid)
+		if not hurtbox_id_valid:
+			_set_status("invalid hurtbox_id: must start with hurt_")
+			return
+		if not _validate_number_inputs(attack_hurtbox_inputs, ["start_frame", "end_frame", "x", "y", "w", "h"]):
+			return
+		var move := selected_move_json()
+		if not move.has("hurtboxes"):
+			move["hurtboxes"] = []
+		if move["hurtboxes"].is_empty():
+			move["hurtboxes"].append({})
+		move["hurtboxes"][0] = {
+			"hurtbox_id": hurtbox_id,
+			"active_window": {
+				"start_frame": int(_number_from(attack_hurtbox_inputs, "start_frame")),
+				"end_frame": int(_number_from(attack_hurtbox_inputs, "end_frame")),
+			},
+			"rect": _rect_json({
+				"x": _number_from(attack_hurtbox_inputs, "x"),
+				"y": _number_from(attack_hurtbox_inputs, "y"),
+				"w": _number_from(attack_hurtbox_inputs, "w"),
+				"h": _number_from(attack_hurtbox_inputs, "h"),
 			}),
 		}
 		changed = true

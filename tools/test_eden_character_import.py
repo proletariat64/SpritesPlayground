@@ -124,10 +124,11 @@ class EdenCharacterImportTests(unittest.TestCase):
                 Path(second_dir),
             )
 
-            for output_key in ("template", "sprite_set", "report"):
-                first = Path(first_dir) / first_report["outputs"][output_key]
-                second = Path(second_dir) / second_report["outputs"][output_key]
-                self.assertEqual(first.read_bytes(), second.read_bytes())
+            self.assertEqual(first_report, second_report)
+            self.assertEqual(
+                _snapshot_generated_files(Path(first_dir)),
+                _snapshot_generated_files(Path(second_dir)),
+            )
 
     def test_recolor_is_complete_selective_and_independent(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -204,10 +205,29 @@ class EdenCharacterImportTests(unittest.TestCase):
                 mapping_id="miduo_green_uniform_to_blue_v1",
             )
             outputs.append((root, report))
-        for output_key in ("template", "sprite_set", "report", "palette_mapping"):
-            first = outputs[0][0] / outputs[0][1]["outputs"][output_key]
-            second = outputs[1][0] / outputs[1][1]["outputs"][output_key]
-            self.assertEqual(first.read_bytes(), second.read_bytes())
+        self.assertEqual(outputs[0][1], outputs[1][1])
+        self.assertEqual(
+            _snapshot_generated_files(outputs[0][0]),
+            _snapshot_generated_files(outputs[1][0]),
+        )
+
+
+def _snapshot_generated_files(root: Path) -> dict[str, bytes]:
+    """Capture every importer-owned output byte, including frames and provenance."""
+    generated_roots = (
+        root / "data/imports",
+        root / "data/v0_3/moves",
+        root / "data/v0_3/sprite_sets",
+        root / "data/v0_3/templates",
+        root / "godot/assets/frames",
+    )
+    return {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for generated_root in generated_roots
+        if generated_root.exists()
+        for path in sorted(generated_root.rglob("*"))
+        if path.is_file()
+    }
 
 
 def _palette_from_document(path: Path) -> dict[tuple[int, int, int, int], tuple[int, int, int, int]]:

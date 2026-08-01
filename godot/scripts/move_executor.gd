@@ -91,6 +91,26 @@ func active_hitboxes_world(owner_position: Vector2, facing: int, visual_jump_off
 	return entries
 
 
+func active_hurtboxes_world(owner_position: Vector2, facing: int, visual_jump_offset: float) -> Array:
+	var entries: Array = []
+	if not is_executing():
+		return entries
+	for window in active_move.get("hurtbox_windows", []):
+		var first_frame := int(window.get("from_frame", 0))
+		var last_frame := int(window.get("to_frame", first_frame))
+		if frame_index < first_frame or frame_index > last_frame:
+			continue
+		var local_rect: Rect2 = window.get("rect", Rect2())
+		if facing < 0:
+			local_rect.position.x = -local_rect.position.x - local_rect.size.x
+		local_rect.position.y += visual_jump_offset
+		entries.append({
+			"hurtbox_id": str(window.get("hurtbox_id", "")),
+			"rect": Rect2(owner_position + local_rect.position, local_rect.size),
+		})
+	return entries
+
+
 func can_hit_target(target_instance_id: String, window_index: int) -> bool:
 	var key := "%s:%d:%s" % [active_move_id, window_index, target_instance_id]
 	return not _hit_marks.has(key)

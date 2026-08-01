@@ -37,9 +37,9 @@ dad_basic_kick → hit_leg_1 frames 5-6
 
 Reason: Dad kick, Mama kick, and Miduo kick may share an action category but need different animation timing and hitbox geometry.
 
-## ADR-004: Hurtboxes Belong To Character Body Profiles
+## ADR-004: Body Profiles Own Default Hurtboxes; Moves May Override Active Poses
 
-Every character body profile owns:
+Every character body profile owns the default receiving zones:
 
 ```text
 hurt_head
@@ -47,7 +47,7 @@ hurt_upper_body
 hurt_lower_body
 ```
 
-These are body receiving zones and should not be defined per attack move.
+A MoveTemplate may provide resolved, frame-windowed hurtbox overrides when an action pose materially changes the receiving silhouette. The override is move data, not a second body profile: outside its enabled frames, runtime falls back to the character body profile. This keeps body identity compositional while allowing authored crouches, jumps, and attacks to interact honestly.
 
 ## ADR-005: No Body Anchors Or Bones In MVP
 

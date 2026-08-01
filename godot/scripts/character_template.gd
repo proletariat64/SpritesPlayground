@@ -37,6 +37,8 @@ static func _load_v0_3_template(template_id: String) -> Dictionary:
 		"frame_size": 80,
 		"sprite_set_id": str(template.get("sprite_set_ref", "")),
 		"max_hp": int(template.get("hp", 100)),
+		"walk_speed": float(template.get("walk_speed", 95.0)),
+		"run_speed": float(template.get("run_speed", 150.0)),
 		"hurtbox_profile": _v0_3_hurtboxes_to_runtime(template.get("hurtboxes", {})),
 		"foot_collision_profile": _v0_3_foot_to_runtime(template.get("foot_collision", {})),
 		"move_templates": move_templates,
@@ -44,15 +46,35 @@ static func _load_v0_3_template(template_id: String) -> Dictionary:
 
 
 static func v0_3_move_to_runtime(move_id: String, move: Dictionary, template_id: String = "") -> Dictionary:
+	var has_explicit_rhythm := move.has("startup_frames") and move.has("active_frames") and move.has("recovery_frames")
+	var startup_frames := maxi(0, int(move.get("startup_frames", 0)))
+	var active_frames := maxi(1, int(move.get("active_frames", 1)))
+	var recovery_frames := maxi(0, int(move.get("recovery_frames", 0)))
+	var total_frames := startup_frames + active_frames + recovery_frames if has_explicit_rhythm else maxi(1, int(move.get("frame_count", 1)))
 	var windows: Array = []
 	for hitbox in move.get("hitboxes", []):
 		var window: Dictionary = hitbox.get("active_window", {})
 		var rect: Dictionary = hitbox.get("rect", {})
 		windows.append({
-			"from_frame": int(window.get("start_frame", 0)),
-			"to_frame": int(window.get("end_frame", 0)),
+			"from_frame": startup_frames if has_explicit_rhythm else int(window.get("start_frame", 0)),
+			"to_frame": startup_frames + active_frames - 1 if has_explicit_rhythm else int(window.get("end_frame", 0)),
 			"hitbox_id": str(hitbox.get("hitbox_id", "")),
 			"damage": int(move.get("damage", 0)),
+			"rect": Rect2(
+				float(rect.get("x", 0.0)),
+				float(rect.get("y", 0.0)),
+				maxf(1.0, float(rect.get("w", 1.0))),
+				maxf(1.0, float(rect.get("h", 1.0)))
+			),
+		})
+	var hurtbox_windows: Array = []
+	for hurtbox in move.get("hurtboxes", []):
+		var window: Dictionary = hurtbox.get("active_window", {})
+		var rect: Dictionary = hurtbox.get("rect", {})
+		hurtbox_windows.append({
+			"from_frame": int(window.get("start_frame", startup_frames)),
+			"to_frame": int(window.get("end_frame", startup_frames + active_frames - 1)),
+			"hurtbox_id": str(hurtbox.get("hurtbox_id", "")),
 			"rect": Rect2(
 				float(rect.get("x", 0.0)),
 				float(rect.get("y", 0.0)),
@@ -64,8 +86,12 @@ static func v0_3_move_to_runtime(move_id: String, move: Dictionary, template_id:
 		"move_id": move_id,
 		"animation_id": animation_id_for_move(move_id, template_id),
 		"fps": 60,
-		"total_frames": maxi(1, int(move.get("frame_count", 1))),
+		"total_frames": maxi(1, total_frames),
+		"startup_frames": startup_frames if has_explicit_rhythm else int(move.get("active_window", {}).get("start_frame", 0)),
+		"active_frames": active_frames if has_explicit_rhythm else int(move.get("active_window", {}).get("end_frame", 0)) - int(move.get("active_window", {}).get("start_frame", 0)) + 1,
+		"recovery_frames": recovery_frames if has_explicit_rhythm else maxi(0, total_frames - int(move.get("active_window", {}).get("end_frame", 0)) - 1),
 		"hitbox_windows": windows,
+		"hurtbox_windows": hurtbox_windows,
 	}
 
 

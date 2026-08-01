@@ -48,7 +48,9 @@
       "y": -46
     }
   },
+  "run_speed": 150.0,
   "schema_version": "0.3",
   "sprite_set_ref": "miduo",
-  "template_id": "miduo"
+  "template_id": "miduo",
+  "walk_speed": 95.0
 }

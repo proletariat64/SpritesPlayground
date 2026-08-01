@@ -40,13 +40,33 @@ func _run() -> void:
 	for i in 20:
 		await physics_frame
 
-	playground.player.request_attack("jab")
-	for i in 2:
+	var attack_started: bool = playground.player.request_attack("jab")
+	if not attack_started:
+		push_error("miduo_visual_uat=FAIL jab request was rejected")
+		playground.queue_free()
+		await process_frame
+		quit(1)
+		return
+	var saw_jab := false
+	for i in 120:
 		await physics_frame
+		var attack_move := String(playground.player.state_machine.current_move)
+		var attack_animation := String(playground.player.animated_sprite.animation)
+		if attack_move.ends_with("_jab") and attack_animation.contains("jab"):
+			saw_jab = true
+			break
+	if not saw_jab:
+		push_error("miduo_visual_uat=FAIL jab animation was not presented")
+		playground.queue_free()
+		await process_frame
+		quit(1)
+		return
+	await process_frame
 	await _shot("04_jab.png")
-	print("uat attack_move=%s animation=%s" % [
+	print("uat attack_move=%s animation=%s frame=%d" % [
 		playground.player.state_machine.current_move,
 		playground.player.animated_sprite.animation,
+		playground.player.animated_sprite.frame,
 	])
 	for i in 20:
 		await physics_frame
@@ -57,6 +77,9 @@ func _run() -> void:
 	await _shot("05_creator_lab_miduo.png")
 
 	print("miduo_visual_uat=DONE dir=%s" % ProjectSettings.globalize_path(OUT_DIR))
+	playground.queue_free()
+	await process_frame
+	await process_frame
 	quit(0)
 
 

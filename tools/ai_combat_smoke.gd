@@ -18,20 +18,17 @@ func _run() -> void:
 	errors.append_array(_expect(npc.template_id == "miduo_blue", "default npc uses independent recolor"))
 	errors.append_array(_expect(npc.control_mode == "ai", "default npc is AI controlled"))
 	errors.append_array(_expect(npc.combat_target == playground.player, "npc targets player"))
-	errors.append_array(_expect(npc.ai_backend() in ["limboai", "deterministic_fallback"], "AI backend is explicit"))
+	errors.append_array(_expect(ClassDB.class_exists("LimboHSM") and ClassDB.class_exists("LimboState"), "required LimboAI classes are installed"))
+	errors.append_array(_expect(npc.ai_backend() == "limboai", "NPC uses the required LimboAI backend"))
 
 	var ai_source := FileAccess.get_file_as_string("res://godot/scripts/combat_ai_controller.gd")
 	errors.append_array(_expect(ai_source.contains('ClassDB.instantiate("LimboState")'), "LimboAI path creates real states"))
 	errors.append_array(_expect(ai_source.contains('call("call_on_update"'), "LimboAI states own update callbacks"))
 	errors.append_array(_expect(ai_source.contains('call("add_transition"'), "LimboAI path wires transitions"))
 	errors.append_array(_expect(ai_source.contains('call("initialize", agent)') and ai_source.contains('call("set_active", true)'), "LimboAI HSM is initialized and activated"))
-	if ClassDB.class_exists("LimboHSM") and ClassDB.class_exists("LimboState"):
-		errors.append_array(_expect(npc.ai_backend() == "limboai", "available LimboAI module configures the real backend"))
-		var hsm: Node = npc.ai_controller.get_node_or_null("limbo_ai_intent_hsm")
-		errors.append_array(_expect(hsm != null and hsm.get_child_count() == 2, "LimboAI backend owns two behavior states"))
-	else:
-		errors.append_array(_expect(npc.ai_backend() == "deterministic_fallback", "missing LimboAI module is reported honestly"))
-		errors.append_array(_expect(npc.ai_controller.get_node_or_null("limbo_ai_intent_hsm") == null, "fallback does not expose a facade HSM"))
+	var hsm: Node = npc.ai_controller.get_node_or_null("limbo_ai_intent_hsm")
+	errors.append_array(_expect(hsm != null and hsm.get_child_count() == 2, "LimboAI backend owns two behavior states"))
+	errors.append_array(_expect(not ai_source.contains("_fallback_movement_intent"), "required LimboAI backend has no silent gameplay fallback"))
 
 	var replacement_npc: Node2D = playground.add_npc("miduo_blue")
 	playground.player.control_mode = "ai"
