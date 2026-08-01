@@ -15,7 +15,7 @@ The runnable Godot slice proves movement, attack start, active hitbox overlap, o
 | runtime_tick_rate | 60 | Playground COMBAT_TICK_RATE / smoke Engine setting | present |
 | authoring_fps | 12 | PRD/DDD baseline | design only in this smoke |
 | move_right | D | InputMap in Playground | present |
-| basic_punch | J | InputMap in Playground | present |
+| basic_punch | direct Move request | fixture-owned regression path; current J is Miduo jab | present |
 | light_punch mapping | light_punch -> basic_punch | scenario assumption | mapped, no new MoveData |
 | move state mapping | move -> walk / locomotion | scenario assumption + walk MoveData | mapped |
 | states | idle, walk, attack, hurt, dead | CombatStateMachine | present |
@@ -37,29 +37,29 @@ The runnable Godot slice proves movement, attack start, active hitbox overlap, o
 | Check | Result | Evidence |
 | --- | --- | --- |
 | [d] -> walk and reach | PASS | frames=78 x=245.0->368.5 projected_overlap=true |
-| [j] -> basic_punch/attack | PASS | saw_attack=true active_hitbox=true overlap=true Cain HP 100->92 |
-| rapid [j][j][j] buffer/cancel | FAIL | Cain damage=8; only one hit accepted, no buffer/cancel chain observed |
-| full recovery [j] x3 | PASS | Cain HP 100->76, damage=24, hit HPs=[92, 84, 76] |
+| request basic_punch/attack | PASS | saw_attack=true active_hitbox=true overlap=true Cain HP 100->92 |
+| rapid request x3 buffer/cancel | FAIL | Cain damage=8; only one hit accepted, no buffer/cancel chain observed |
+| full recovery request x3 | PASS | Cain HP 100->76, damage=24, hit HPs=[92, 84, 76] |
 | death entry | PASS | hits=13 expected=13 final HP=0 state=dead |
 
 ## Frame Trace: Single Punch
 
 | frame | Adam state | move | move frame | active | overlap | Cain HP | Cain state | hurtbox |
 | --- | --- | --- | ---: | ---: | --- | ---: | --- | --- |
-| 1 | attack | basic_punch | 1 | 0 | false | 100 | idle |  |
-| 2 | attack | basic_punch | 2 | 0 | false | 100 | idle |  |
-| 3 | attack | basic_punch | 3 | 0 | false | 100 | idle |  |
-| 4 | attack | basic_punch | 4 | 0 | false | 100 | idle |  |
-| 5 | attack | basic_punch | 5 | 0 | false | 100 | idle |  |
-| 6 | attack | basic_punch | 6 | 0 | false | 100 | idle |  |
-| 7 | attack | basic_punch | 7 | 1 | true | 92 | hurt | hurt_head |
-| 8 | attack | basic_punch | 8 | 1 | true | 92 | hurt | hurt_head |
-| 9 | attack | basic_punch | 9 | 1 | true | 92 | hurt | hurt_head |
-| 10 | attack | basic_punch | 10 | 1 | true | 92 | hurt | hurt_head |
-| 11 | attack | basic_punch | 11 | 1 | true | 92 | hurt | hurt_head |
-| 12 | attack | basic_punch | 12 | 1 | true | 92 | hurt | hurt_head |
-| 13 | attack | basic_punch | 13 | 0 | false | 92 | hurt | hurt_head |
-| 14 | attack | basic_punch | 14 | 0 | false | 92 | hurt | hurt_head |
+| 1 | attack | basic_punch | 2 | 0 | false | 100 | idle |  |
+| 2 | attack | basic_punch | 3 | 0 | false | 100 | idle |  |
+| 3 | attack | basic_punch | 4 | 0 | false | 100 | idle |  |
+| 4 | attack | basic_punch | 5 | 0 | false | 100 | idle |  |
+| 5 | attack | basic_punch | 6 | 0 | false | 100 | idle |  |
+| 6 | attack | basic_punch | 7 | 1 | true | 92 | hurt | hurt_head |
+| 7 | attack | basic_punch | 8 | 1 | true | 92 | hurt | hurt_head |
+| 8 | attack | basic_punch | 9 | 1 | true | 92 | hurt | hurt_head |
+| 9 | attack | basic_punch | 10 | 1 | true | 92 | hurt | hurt_head |
+| 10 | attack | basic_punch | 11 | 1 | true | 92 | hurt | hurt_head |
+| 11 | attack | basic_punch | 12 | 1 | true | 92 | hurt | hurt_head |
+| 12 | attack | basic_punch | 13 | 0 | false | 92 | hurt | hurt_head |
+| 13 | attack | basic_punch | 14 | 0 | false | 92 | hurt | hurt_head |
+| 14 | attack | basic_punch | 15 | 0 | false | 92 | hurt | hurt_head |
 
 ## Known Conflicts Checked
 
@@ -77,7 +77,7 @@ The runnable Godot slice proves movement, attack start, active hitbox overlap, o
 | Design Missing | Scenario-level `light_punch` is not a committed MoveData ID. | Existing data only has `basic_punch`. | Keep mapping `light_punch -> basic_punch` in scenario/test wording. |
 | Value Conflict | ATK/DEF/HP seeds conflict across DDD recommendation and scenario. | DDD recommends ATK 10, DEF 0; scenario says DEF 2; data stores damage 8. | Clarify numeric truth table using existing MoveData damage or existing PRD formula, without adding fields in this pass. |
 | Formula Mismatch | Runtime does not compute `max(0, hitbox_atk-hurtbox_def)`. | Playground passes `hitbox.damage` directly to `take_hit`. | Either document this slice as damage-field based, or retune existing data once ATK/DEF fields already exist in the schema. |
-| Runtime Missing | No live input buffer, cancel window, combo string, hitstop, or hitstun in Playground path. | Rapid [j][j][j] produces one hit; `hitstop_frames` is data-only here. | Validate full-recovery repeat only; mark combo/cancel as not implemented until existing runtime modules consume existing values. |
+| Runtime Missing | No live input buffer, cancel window, combo string, hitstop, or hitstun in the legacy basic_punch path. | Rapid direct requests produce one hit; `hitstop_frames` is data-only here. | Validate full-recovery repeat only; mark combo/cancel as not implemented until existing runtime modules consume existing values. |
 | Prototype Mismatch | HTML prototype exposes buffer/combo/system params and behavior defaults not mirrored by live GDScript. | Prototype has InputSystem buffer and CombatSystem combo table; Playground input path is direct. | Treat prototype as authoring surface reference, not gameplay formula truth. |
 
 ## Improvement Notes

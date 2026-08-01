@@ -1,0 +1,974 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle/frame_000.png" id="1_e4c3d0"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle/frame_001.png" id="2_b6d219"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle/frame_002.png" id="3_6caf3e"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle/frame_003.png" id="4_48fbce"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_s/frame_000.png" id="5_b92420"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_s/frame_001.png" id="6_b79c1b"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_s/frame_002.png" id="7_bc91af"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_s/frame_003.png" id="8_7bacf0"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_se/frame_000.png" id="9_48eab0"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_se/frame_001.png" id="10_66a638"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_se/frame_002.png" id="11_5a35cb"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_se/frame_003.png" id="12_6695ea"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_ne/frame_000.png" id="13_fce41f"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_ne/frame_001.png" id="14_efb51f"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_ne/frame_002.png" id="15_3831b3"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_ne/frame_003.png" id="16_c2958a"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_n/frame_000.png" id="17_085921"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_n/frame_001.png" id="18_f50d65"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_n/frame_002.png" id="19_d7f716"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_n/frame_003.png" id="20_d62ed1"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_nw/frame_000.png" id="21_915f74"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_nw/frame_001.png" id="22_2f4dd3"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_nw/frame_002.png" id="23_697d4f"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_nw/frame_003.png" id="24_b260e8"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_w/frame_000.png" id="25_3d9958"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_w/frame_001.png" id="26_1b555f"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_w/frame_002.png" id="27_5eb0d6"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_w/frame_003.png" id="28_8726e0"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_sw/frame_000.png" id="29_fe9b8e"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_sw/frame_001.png" id="30_a545bd"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_sw/frame_002.png" id="31_9e6708"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/idle_sw/frame_003.png" id="32_be6156"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk/frame_000.png" id="33_97d8ee"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk/frame_001.png" id="34_4ee278"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk/frame_002.png" id="35_2f0fb5"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk/frame_003.png" id="36_6ad7ae"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk/frame_004.png" id="37_47707a"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk/frame_005.png" id="38_b6c43a"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk/frame_006.png" id="39_6d574f"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk/frame_007.png" id="40_a62355"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_s/frame_000.png" id="41_6cd385"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_s/frame_001.png" id="42_2da1ab"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_s/frame_002.png" id="43_350d44"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_s/frame_003.png" id="44_30ae20"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_s/frame_004.png" id="45_21100e"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_s/frame_005.png" id="46_0b5bb1"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_s/frame_006.png" id="47_ff1c06"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_s/frame_007.png" id="48_0cc9ef"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_se/frame_000.png" id="49_6e2ba6"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_se/frame_001.png" id="50_c33d84"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_se/frame_002.png" id="51_66e94d"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_se/frame_003.png" id="52_4ec5f8"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_se/frame_004.png" id="53_2155e6"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_se/frame_005.png" id="54_817403"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_se/frame_006.png" id="55_5e9e8c"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_se/frame_007.png" id="56_9cdf75"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_ne/frame_000.png" id="57_50738b"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_ne/frame_001.png" id="58_7cb6e4"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_ne/frame_002.png" id="59_a6dfc5"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_ne/frame_003.png" id="60_6e68c3"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_ne/frame_004.png" id="61_f98cd3"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_ne/frame_005.png" id="62_927b8f"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_ne/frame_006.png" id="63_39558b"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_ne/frame_007.png" id="64_ec9c70"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_n/frame_000.png" id="65_6541e8"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_n/frame_001.png" id="66_28905c"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_n/frame_002.png" id="67_6ef667"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_n/frame_003.png" id="68_16a9b2"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_n/frame_004.png" id="69_c1fe08"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_n/frame_005.png" id="70_3e2f63"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_n/frame_006.png" id="71_d52bac"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_n/frame_007.png" id="72_6528f6"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_nw/frame_000.png" id="73_d95ead"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_nw/frame_001.png" id="74_3680f5"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_nw/frame_002.png" id="75_09bc07"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_nw/frame_003.png" id="76_96b876"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_nw/frame_004.png" id="77_9037e8"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_nw/frame_005.png" id="78_0b5d74"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_nw/frame_006.png" id="79_b3d8bb"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_nw/frame_007.png" id="80_baa4fc"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_w/frame_000.png" id="81_fcf808"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_w/frame_001.png" id="82_6e14b7"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_w/frame_002.png" id="83_14e100"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_w/frame_003.png" id="84_f442d3"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_w/frame_004.png" id="85_f4371e"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_w/frame_005.png" id="86_57f671"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_w/frame_006.png" id="87_427e84"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_w/frame_007.png" id="88_5e6259"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_sw/frame_000.png" id="89_bd1391"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_sw/frame_001.png" id="90_922516"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_sw/frame_002.png" id="91_c5c478"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_sw/frame_003.png" id="92_309144"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_sw/frame_004.png" id="93_1584a0"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_sw/frame_005.png" id="94_f967be"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_sw/frame_006.png" id="95_bc37f3"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/walk_sw/frame_007.png" id="96_263379"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run/frame_000.png" id="97_f243d0"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run/frame_001.png" id="98_b0d09e"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run/frame_002.png" id="99_b680dc"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run/frame_003.png" id="100_923832"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run/frame_004.png" id="101_250a14"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run/frame_005.png" id="102_3c91a3"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run/frame_006.png" id="103_063421"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run/frame_007.png" id="104_6b242c"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_s/frame_000.png" id="105_d8bae0"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_s/frame_001.png" id="106_337b65"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_s/frame_002.png" id="107_16bb3d"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_s/frame_003.png" id="108_0e8b63"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_s/frame_004.png" id="109_cb6559"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_s/frame_005.png" id="110_9bc10a"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_s/frame_006.png" id="111_44515d"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_s/frame_007.png" id="112_4a3e68"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_se/frame_000.png" id="113_135245"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_se/frame_001.png" id="114_7ccf92"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_se/frame_002.png" id="115_46243c"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_se/frame_003.png" id="116_3e70d0"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_se/frame_004.png" id="117_595429"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_se/frame_005.png" id="118_440fd1"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_se/frame_006.png" id="119_74aeb8"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_se/frame_007.png" id="120_a10f19"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_ne/frame_000.png" id="121_05eaf9"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_ne/frame_001.png" id="122_d1b08d"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_ne/frame_002.png" id="123_643f8d"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_ne/frame_003.png" id="124_e4eece"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_ne/frame_004.png" id="125_3aaf1f"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_ne/frame_005.png" id="126_64aa24"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_ne/frame_006.png" id="127_5df740"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_ne/frame_007.png" id="128_480c40"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_n/frame_000.png" id="129_744c0d"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_n/frame_001.png" id="130_8a0a33"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_n/frame_002.png" id="131_d05938"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_n/frame_003.png" id="132_08a3f9"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_n/frame_004.png" id="133_4b0856"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_n/frame_005.png" id="134_34ede2"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_n/frame_006.png" id="135_3d405a"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_n/frame_007.png" id="136_dcbe3b"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_nw/frame_000.png" id="137_edc851"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_nw/frame_001.png" id="138_02ebb2"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_nw/frame_002.png" id="139_3d121a"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_nw/frame_003.png" id="140_488f03"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_nw/frame_004.png" id="141_de71c1"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_nw/frame_005.png" id="142_728172"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_nw/frame_006.png" id="143_0a35f5"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_nw/frame_007.png" id="144_2525b4"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_w/frame_000.png" id="145_fd6178"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_w/frame_001.png" id="146_91b097"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_w/frame_002.png" id="147_61ae6a"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_w/frame_003.png" id="148_e69915"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_w/frame_004.png" id="149_8dc554"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_w/frame_005.png" id="150_3d06aa"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_w/frame_006.png" id="151_718d7d"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_w/frame_007.png" id="152_87c761"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_sw/frame_000.png" id="153_5f8af8"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_sw/frame_001.png" id="154_1540c3"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_sw/frame_002.png" id="155_9e28fb"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_sw/frame_003.png" id="156_2a9e4d"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_sw/frame_004.png" id="157_04c13b"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_sw/frame_005.png" id="158_1703e4"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_sw/frame_006.png" id="159_953b8f"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/run_sw/frame_007.png" id="160_a58746"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/dash/frame_000.png" id="161_0718f7"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/dash/frame_001.png" id="162_a2e7dd"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/dash/frame_002.png" id="163_384764"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/dash/frame_003.png" id="164_d8ccea"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/jump/frame_000.png" id="165_9fd6cb"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/jump/frame_001.png" id="166_6b0a87"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/jump/frame_002.png" id="167_571274"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/hurt/frame_000.png" id="168_286d71"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/hurt/frame_001.png" id="169_3bc929"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/hurt/frame_002.png" id="170_e0d751"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/dead/frame_000.png" id="171_a26033"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/dead/frame_001.png" id="172_f30b2c"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/dead/frame_002.png" id="173_81a3f1"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/dead/frame_003.png" id="174_621caf"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/dead/frame_004.png" id="175_29a3a6"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/dead/frame_005.png" id="176_a6b853"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/basic_punch/frame_000.png" id="177_ca75ce"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/basic_punch/frame_001.png" id="178_286e91"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/basic_punch/frame_002.png" id="179_fd736d"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/basic_punch/frame_003.png" id="180_d39374"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/basic_kick/frame_000.png" id="181_7345fd"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/basic_kick/frame_001.png" id="182_d46ce5"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/basic_kick/frame_002.png" id="183_b98356"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/basic_kick/frame_003.png" id="184_8c4b37"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/basic_kick/frame_004.png" id="185_82fff4"]
+[ext_resource type="Texture2D" path="res://godot/assets/frames/miduo_s64/basic_kick/frame_005.png" id="186_59dc64"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_e4c3d0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_b6d219")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_6caf3e")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_48fbce")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_b92420")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_b79c1b")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_bc91af")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_7bacf0")
+}],
+"loop": 1,
+"name": &"idle_s",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("9_48eab0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_66a638")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_5a35cb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_6695ea")
+}],
+"loop": 1,
+"name": &"idle_se",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_e4c3d0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_b6d219")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_6caf3e")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_48fbce")
+}],
+"loop": 1,
+"name": &"idle_e",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("13_fce41f")
+}, {
+"duration": 1.0,
+"texture": ExtResource("14_efb51f")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_3831b3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_c2958a")
+}],
+"loop": 1,
+"name": &"idle_ne",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("17_085921")
+}, {
+"duration": 1.0,
+"texture": ExtResource("18_f50d65")
+}, {
+"duration": 1.0,
+"texture": ExtResource("19_d7f716")
+}, {
+"duration": 1.0,
+"texture": ExtResource("20_d62ed1")
+}],
+"loop": 1,
+"name": &"idle_n",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("21_915f74")
+}, {
+"duration": 1.0,
+"texture": ExtResource("22_2f4dd3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("23_697d4f")
+}, {
+"duration": 1.0,
+"texture": ExtResource("24_b260e8")
+}],
+"loop": 1,
+"name": &"idle_nw",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("25_3d9958")
+}, {
+"duration": 1.0,
+"texture": ExtResource("26_1b555f")
+}, {
+"duration": 1.0,
+"texture": ExtResource("27_5eb0d6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("28_8726e0")
+}],
+"loop": 1,
+"name": &"idle_w",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("29_fe9b8e")
+}, {
+"duration": 1.0,
+"texture": ExtResource("30_a545bd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("31_9e6708")
+}, {
+"duration": 1.0,
+"texture": ExtResource("32_be6156")
+}],
+"loop": 1,
+"name": &"idle_sw",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("33_97d8ee")
+}, {
+"duration": 1.0,
+"texture": ExtResource("34_4ee278")
+}, {
+"duration": 1.0,
+"texture": ExtResource("35_2f0fb5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("36_6ad7ae")
+}, {
+"duration": 1.0,
+"texture": ExtResource("37_47707a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("38_b6c43a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("39_6d574f")
+}, {
+"duration": 1.0,
+"texture": ExtResource("40_a62355")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("41_6cd385")
+}, {
+"duration": 1.0,
+"texture": ExtResource("42_2da1ab")
+}, {
+"duration": 1.0,
+"texture": ExtResource("43_350d44")
+}, {
+"duration": 1.0,
+"texture": ExtResource("44_30ae20")
+}, {
+"duration": 1.0,
+"texture": ExtResource("45_21100e")
+}, {
+"duration": 1.0,
+"texture": ExtResource("46_0b5bb1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("47_ff1c06")
+}, {
+"duration": 1.0,
+"texture": ExtResource("48_0cc9ef")
+}],
+"loop": 1,
+"name": &"walk_s",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("49_6e2ba6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("50_c33d84")
+}, {
+"duration": 1.0,
+"texture": ExtResource("51_66e94d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("52_4ec5f8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("53_2155e6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("54_817403")
+}, {
+"duration": 1.0,
+"texture": ExtResource("55_5e9e8c")
+}, {
+"duration": 1.0,
+"texture": ExtResource("56_9cdf75")
+}],
+"loop": 1,
+"name": &"walk_se",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("33_97d8ee")
+}, {
+"duration": 1.0,
+"texture": ExtResource("34_4ee278")
+}, {
+"duration": 1.0,
+"texture": ExtResource("35_2f0fb5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("36_6ad7ae")
+}, {
+"duration": 1.0,
+"texture": ExtResource("37_47707a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("38_b6c43a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("39_6d574f")
+}, {
+"duration": 1.0,
+"texture": ExtResource("40_a62355")
+}],
+"loop": 1,
+"name": &"walk_e",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("57_50738b")
+}, {
+"duration": 1.0,
+"texture": ExtResource("58_7cb6e4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("59_a6dfc5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("60_6e68c3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("61_f98cd3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("62_927b8f")
+}, {
+"duration": 1.0,
+"texture": ExtResource("63_39558b")
+}, {
+"duration": 1.0,
+"texture": ExtResource("64_ec9c70")
+}],
+"loop": 1,
+"name": &"walk_ne",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("65_6541e8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("66_28905c")
+}, {
+"duration": 1.0,
+"texture": ExtResource("67_6ef667")
+}, {
+"duration": 1.0,
+"texture": ExtResource("68_16a9b2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("69_c1fe08")
+}, {
+"duration": 1.0,
+"texture": ExtResource("70_3e2f63")
+}, {
+"duration": 1.0,
+"texture": ExtResource("71_d52bac")
+}, {
+"duration": 1.0,
+"texture": ExtResource("72_6528f6")
+}],
+"loop": 1,
+"name": &"walk_n",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("73_d95ead")
+}, {
+"duration": 1.0,
+"texture": ExtResource("74_3680f5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("75_09bc07")
+}, {
+"duration": 1.0,
+"texture": ExtResource("76_96b876")
+}, {
+"duration": 1.0,
+"texture": ExtResource("77_9037e8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("78_0b5d74")
+}, {
+"duration": 1.0,
+"texture": ExtResource("79_b3d8bb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("80_baa4fc")
+}],
+"loop": 1,
+"name": &"walk_nw",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("81_fcf808")
+}, {
+"duration": 1.0,
+"texture": ExtResource("82_6e14b7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("83_14e100")
+}, {
+"duration": 1.0,
+"texture": ExtResource("84_f442d3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("85_f4371e")
+}, {
+"duration": 1.0,
+"texture": ExtResource("86_57f671")
+}, {
+"duration": 1.0,
+"texture": ExtResource("87_427e84")
+}, {
+"duration": 1.0,
+"texture": ExtResource("88_5e6259")
+}],
+"loop": 1,
+"name": &"walk_w",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("89_bd1391")
+}, {
+"duration": 1.0,
+"texture": ExtResource("90_922516")
+}, {
+"duration": 1.0,
+"texture": ExtResource("91_c5c478")
+}, {
+"duration": 1.0,
+"texture": ExtResource("92_309144")
+}, {
+"duration": 1.0,
+"texture": ExtResource("93_1584a0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("94_f967be")
+}, {
+"duration": 1.0,
+"texture": ExtResource("95_bc37f3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("96_263379")
+}],
+"loop": 1,
+"name": &"walk_sw",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("97_f243d0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("98_b0d09e")
+}, {
+"duration": 1.0,
+"texture": ExtResource("99_b680dc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("100_923832")
+}, {
+"duration": 1.0,
+"texture": ExtResource("101_250a14")
+}, {
+"duration": 1.0,
+"texture": ExtResource("102_3c91a3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("103_063421")
+}, {
+"duration": 1.0,
+"texture": ExtResource("104_6b242c")
+}],
+"loop": 1,
+"name": &"run",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("105_d8bae0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("106_337b65")
+}, {
+"duration": 1.0,
+"texture": ExtResource("107_16bb3d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("108_0e8b63")
+}, {
+"duration": 1.0,
+"texture": ExtResource("109_cb6559")
+}, {
+"duration": 1.0,
+"texture": ExtResource("110_9bc10a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("111_44515d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("112_4a3e68")
+}],
+"loop": 1,
+"name": &"run_s",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("113_135245")
+}, {
+"duration": 1.0,
+"texture": ExtResource("114_7ccf92")
+}, {
+"duration": 1.0,
+"texture": ExtResource("115_46243c")
+}, {
+"duration": 1.0,
+"texture": ExtResource("116_3e70d0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("117_595429")
+}, {
+"duration": 1.0,
+"texture": ExtResource("118_440fd1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("119_74aeb8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("120_a10f19")
+}],
+"loop": 1,
+"name": &"run_se",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("97_f243d0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("98_b0d09e")
+}, {
+"duration": 1.0,
+"texture": ExtResource("99_b680dc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("100_923832")
+}, {
+"duration": 1.0,
+"texture": ExtResource("101_250a14")
+}, {
+"duration": 1.0,
+"texture": ExtResource("102_3c91a3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("103_063421")
+}, {
+"duration": 1.0,
+"texture": ExtResource("104_6b242c")
+}],
+"loop": 1,
+"name": &"run_e",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("121_05eaf9")
+}, {
+"duration": 1.0,
+"texture": ExtResource("122_d1b08d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("123_643f8d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("124_e4eece")
+}, {
+"duration": 1.0,
+"texture": ExtResource("125_3aaf1f")
+}, {
+"duration": 1.0,
+"texture": ExtResource("126_64aa24")
+}, {
+"duration": 1.0,
+"texture": ExtResource("127_5df740")
+}, {
+"duration": 1.0,
+"texture": ExtResource("128_480c40")
+}],
+"loop": 1,
+"name": &"run_ne",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("129_744c0d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("130_8a0a33")
+}, {
+"duration": 1.0,
+"texture": ExtResource("131_d05938")
+}, {
+"duration": 1.0,
+"texture": ExtResource("132_08a3f9")
+}, {
+"duration": 1.0,
+"texture": ExtResource("133_4b0856")
+}, {
+"duration": 1.0,
+"texture": ExtResource("134_34ede2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("135_3d405a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("136_dcbe3b")
+}],
+"loop": 1,
+"name": &"run_n",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("137_edc851")
+}, {
+"duration": 1.0,
+"texture": ExtResource("138_02ebb2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("139_3d121a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("140_488f03")
+}, {
+"duration": 1.0,
+"texture": ExtResource("141_de71c1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("142_728172")
+}, {
+"duration": 1.0,
+"texture": ExtResource("143_0a35f5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("144_2525b4")
+}],
+"loop": 1,
+"name": &"run_nw",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("145_fd6178")
+}, {
+"duration": 1.0,
+"texture": ExtResource("146_91b097")
+}, {
+"duration": 1.0,
+"texture": ExtResource("147_61ae6a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("148_e69915")
+}, {
+"duration": 1.0,
+"texture": ExtResource("149_8dc554")
+}, {
+"duration": 1.0,
+"texture": ExtResource("150_3d06aa")
+}, {
+"duration": 1.0,
+"texture": ExtResource("151_718d7d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("152_87c761")
+}],
+"loop": 1,
+"name": &"run_w",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("153_5f8af8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("154_1540c3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("155_9e28fb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("156_2a9e4d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("157_04c13b")
+}, {
+"duration": 1.0,
+"texture": ExtResource("158_1703e4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("159_953b8f")
+}, {
+"duration": 1.0,
+"texture": ExtResource("160_a58746")
+}],
+"loop": 1,
+"name": &"run_sw",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("161_0718f7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("162_a2e7dd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("163_384764")
+}, {
+"duration": 1.0,
+"texture": ExtResource("164_d8ccea")
+}],
+"loop": 0,
+"name": &"dash",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("165_9fd6cb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("166_6b0a87")
+}, {
+"duration": 1.0,
+"texture": ExtResource("167_571274")
+}],
+"loop": 0,
+"name": &"jump",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("168_286d71")
+}, {
+"duration": 1.0,
+"texture": ExtResource("169_3bc929")
+}, {
+"duration": 1.0,
+"texture": ExtResource("170_e0d751")
+}],
+"loop": 0,
+"name": &"hurt",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("171_a26033")
+}, {
+"duration": 1.0,
+"texture": ExtResource("172_f30b2c")
+}, {
+"duration": 1.0,
+"texture": ExtResource("173_81a3f1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("174_621caf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("175_29a3a6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("176_a6b853")
+}],
+"loop": 0,
+"name": &"dead",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("177_ca75ce")
+}, {
+"duration": 1.0,
+"texture": ExtResource("178_286e91")
+}, {
+"duration": 1.0,
+"texture": ExtResource("179_fd736d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("180_d39374")
+}],
+"loop": 0,
+"name": &"basic_punch",
+"speed": 12
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("181_7345fd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("182_d46ce5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("183_b98356")
+}, {
+"duration": 1.0,
+"texture": ExtResource("184_8c4b37")
+}, {
+"duration": 1.0,
+"texture": ExtResource("185_82fff4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("186_59dc64")
+}],
+"loop": 0,
+"name": &"basic_kick",
+"speed": 12
+}]

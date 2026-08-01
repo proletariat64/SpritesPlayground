@@ -1,0 +1,56 @@
+{
+  "equipped_moves": [
+    "miduo_idle",
+    "miduo_walk",
+    "miduo_run",
+    "miduo_dash",
+    "miduo_jump",
+    "miduo_big_jump",
+    "miduo_knockdown",
+    "miduo_fight_idle",
+    "miduo_jab",
+    "miduo_cross_punch",
+    "miduo_high_kick",
+    "miduo_roundhouse_kick",
+    "miduo_flying_kick",
+    "miduo_sweep",
+    "miduo_hurt",
+    "miduo_dead"
+  ],
+  "foot_collision": {
+    "center": {
+      "x": 0,
+      "y": -4
+    },
+    "radius": {
+      "x": 18,
+      "y": 8
+    }
+  },
+  "hp": 100,
+  "hurtboxes": {
+    "hurt_head": {
+      "h": 18,
+      "w": 24,
+      "x": -12,
+      "y": -64
+    },
+    "hurt_lower_body": {
+      "h": 22,
+      "w": 28,
+      "x": -14,
+      "y": -22
+    },
+    "hurt_upper_body": {
+      "h": 24,
+      "w": 32,
+      "x": -16,
+      "y": -46
+    }
+  },
+  "run_speed": 150.0,
+  "schema_version": "0.3",
+  "sprite_set_ref": "miduo",
+  "template_id": "miduo",
+  "walk_speed": 95.0
+}

@@ -1,0 +1,668 @@
+{
+  "atlas": {
+    "bytes": 922454,
+    "file": "atlas.png",
+    "height": 9280,
+    "layout": "behavior_segments_top_to_bottom",
+    "segments": [
+      {
+        "behavior_id": "bhv_idle_breath",
+        "height": 640,
+        "width": 320,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "behavior_id": "bhv_walk_start",
+        "height": 640,
+        "width": 160,
+        "x": 0,
+        "y": 640
+      },
+      {
+        "behavior_id": "bhv_walk_loop",
+        "height": 640,
+        "width": 640,
+        "x": 0,
+        "y": 1280
+      },
+      {
+        "behavior_id": "bhv_walk_stop",
+        "height": 640,
+        "width": 160,
+        "x": 0,
+        "y": 1920
+      },
+      {
+        "behavior_id": "bhv_walk_turn",
+        "height": 640,
+        "width": 320,
+        "x": 0,
+        "y": 2560
+      },
+      {
+        "behavior_id": "bhv_run_start",
+        "height": 640,
+        "width": 160,
+        "x": 0,
+        "y": 3200
+      },
+      {
+        "behavior_id": "bhv_run_loop",
+        "height": 640,
+        "width": 640,
+        "x": 0,
+        "y": 3840
+      },
+      {
+        "behavior_id": "bhv_run_stop",
+        "height": 640,
+        "width": 160,
+        "x": 0,
+        "y": 4480
+      },
+      {
+        "behavior_id": "bhv_run_turn",
+        "height": 640,
+        "width": 320,
+        "x": 0,
+        "y": 5120
+      },
+      {
+        "behavior_id": "bhv_dash",
+        "height": 160,
+        "width": 320,
+        "x": 0,
+        "y": 5760
+      },
+      {
+        "behavior_id": "bhv_jump_start",
+        "height": 160,
+        "width": 240,
+        "x": 0,
+        "y": 5920
+      },
+      {
+        "behavior_id": "bhv_jump_air",
+        "height": 160,
+        "width": 80,
+        "x": 0,
+        "y": 6080
+      },
+      {
+        "behavior_id": "bhv_land",
+        "height": 160,
+        "width": 240,
+        "x": 0,
+        "y": 6240
+      },
+      {
+        "behavior_id": "bhv_big_jump_start",
+        "height": 160,
+        "width": 240,
+        "x": 0,
+        "y": 6400
+      },
+      {
+        "behavior_id": "bhv_big_jump_air",
+        "height": 160,
+        "width": 80,
+        "x": 0,
+        "y": 6560
+      },
+      {
+        "behavior_id": "bhv_big_jump_land",
+        "height": 160,
+        "width": 240,
+        "x": 0,
+        "y": 6720
+      },
+      {
+        "behavior_id": "bhv_fall_down",
+        "height": 160,
+        "width": 480,
+        "x": 0,
+        "y": 6880
+      },
+      {
+        "behavior_id": "bhv_down",
+        "height": 160,
+        "width": 80,
+        "x": 0,
+        "y": 7040
+      },
+      {
+        "behavior_id": "bhv_get_up",
+        "height": 160,
+        "width": 400,
+        "x": 0,
+        "y": 7200
+      },
+      {
+        "behavior_id": "bhv_fight_idle",
+        "height": 160,
+        "width": 480,
+        "x": 0,
+        "y": 7360
+      },
+      {
+        "behavior_id": "bhv_jab",
+        "height": 160,
+        "width": 320,
+        "x": 0,
+        "y": 7520
+      },
+      {
+        "behavior_id": "bhv_cross_punch",
+        "height": 160,
+        "width": 400,
+        "x": 0,
+        "y": 7680
+      },
+      {
+        "behavior_id": "bhv_high_kick",
+        "height": 160,
+        "width": 480,
+        "x": 0,
+        "y": 7840
+      },
+      {
+        "behavior_id": "bhv_roundhouse_kick",
+        "height": 160,
+        "width": 480,
+        "x": 0,
+        "y": 8000
+      },
+      {
+        "behavior_id": "bhv_flying_kick",
+        "height": 160,
+        "width": 480,
+        "x": 0,
+        "y": 8160
+      },
+      {
+        "behavior_id": "bhv_sweep",
+        "height": 160,
+        "width": 480,
+        "x": 0,
+        "y": 8320
+      },
+      {
+        "behavior_id": "bhv_hurt",
+        "height": 160,
+        "width": 240,
+        "x": 0,
+        "y": 8480
+      },
+      {
+        "behavior_id": "bhv_pickup",
+        "height": 160,
+        "width": 400,
+        "x": 0,
+        "y": 8640
+      },
+      {
+        "behavior_id": "bhv_throw_object",
+        "height": 160,
+        "width": 400,
+        "x": 0,
+        "y": 8800
+      },
+      {
+        "behavior_id": "bhv_push",
+        "height": 160,
+        "width": 480,
+        "x": 0,
+        "y": 8960
+      },
+      {
+        "behavior_id": "bhv_pull",
+        "height": 160,
+        "width": 480,
+        "x": 0,
+        "y": 9120
+      }
+    ],
+    "sha256": "sha256:faf32d2c56a8e308322098fd26b4deb50672eb7f7d732a8d5adba9a430e9abd3",
+    "width": 640
+  },
+  "behavior_order": [
+    "bhv_idle_breath",
+    "bhv_walk_start",
+    "bhv_walk_loop",
+    "bhv_walk_stop",
+    "bhv_walk_turn",
+    "bhv_run_start",
+    "bhv_run_loop",
+    "bhv_run_stop",
+    "bhv_run_turn",
+    "bhv_dash",
+    "bhv_jump_start",
+    "bhv_jump_air",
+    "bhv_land",
+    "bhv_big_jump_start",
+    "bhv_big_jump_air",
+    "bhv_big_jump_land",
+    "bhv_fall_down",
+    "bhv_down",
+    "bhv_get_up",
+    "bhv_fight_idle",
+    "bhv_jab",
+    "bhv_cross_punch",
+    "bhv_high_kick",
+    "bhv_roundhouse_kick",
+    "bhv_flying_kick",
+    "bhv_sweep",
+    "bhv_hurt",
+    "bhv_pickup",
+    "bhv_throw_object",
+    "bhv_push",
+    "bhv_pull"
+  ],
+  "behaviors": [
+    {
+      "behavior_id": "bhv_idle_breath",
+      "manifest": "behaviors/bhv_idle_breath/behavior.json",
+      "manifest_sha256": "sha256:842c340b8d3ebbb5576b496382686e7bef87932cc005939659688fb60b51ef01"
+    },
+    {
+      "behavior_id": "bhv_walk_start",
+      "manifest": "behaviors/bhv_walk_start/behavior.json",
+      "manifest_sha256": "sha256:a6a4932d64c74a82b9cfcdf386869cd00e8474b0221659852369317c0a0a3421"
+    },
+    {
+      "behavior_id": "bhv_walk_loop",
+      "manifest": "behaviors/bhv_walk_loop/behavior.json",
+      "manifest_sha256": "sha256:e76f813252a6d6681a6693108fe4837f152f92db4f76e0b070127ac9511c2acd"
+    },
+    {
+      "behavior_id": "bhv_walk_stop",
+      "manifest": "behaviors/bhv_walk_stop/behavior.json",
+      "manifest_sha256": "sha256:ca7323db1be4194e67eea2a98d765ff0a8c5a8635f89a61ae8c05611384e99ac"
+    },
+    {
+      "behavior_id": "bhv_walk_turn",
+      "manifest": "behaviors/bhv_walk_turn/behavior.json",
+      "manifest_sha256": "sha256:50cfd467d03dfbec7c5bba5b6da900d9554360fbc6a74c8c1ae78e75f8cd644b"
+    },
+    {
+      "behavior_id": "bhv_run_start",
+      "manifest": "behaviors/bhv_run_start/behavior.json",
+      "manifest_sha256": "sha256:1f272bbb2e232a8c4f7a0a3308b4be795e887b0939272702675bc74f08bca712"
+    },
+    {
+      "behavior_id": "bhv_run_loop",
+      "manifest": "behaviors/bhv_run_loop/behavior.json",
+      "manifest_sha256": "sha256:57205b7517d8ca2814aefb640ab5e4856d1655847d54ffc8c69da4d3b22b083a"
+    },
+    {
+      "behavior_id": "bhv_run_stop",
+      "manifest": "behaviors/bhv_run_stop/behavior.json",
+      "manifest_sha256": "sha256:dbc25d876cb7db23eb2b38a8e67c03572574816a62cda103e42371371b4a0409"
+    },
+    {
+      "behavior_id": "bhv_run_turn",
+      "manifest": "behaviors/bhv_run_turn/behavior.json",
+      "manifest_sha256": "sha256:74831a7540a9ae3ff3060e8d6afcf7e343ea7cadb2508c847d31ea056fa83991"
+    },
+    {
+      "behavior_id": "bhv_dash",
+      "manifest": "behaviors/bhv_dash/behavior.json",
+      "manifest_sha256": "sha256:5a4db42506a7a187c2733fb1cb86dafd9da65391d7ef791ad4633e981101bc39"
+    },
+    {
+      "behavior_id": "bhv_jump_start",
+      "manifest": "behaviors/bhv_jump_start/behavior.json",
+      "manifest_sha256": "sha256:50a4e78bea0b3c53f25590be612211a88ba0436f73132d35e7410b6aa2f7a85d"
+    },
+    {
+      "behavior_id": "bhv_jump_air",
+      "manifest": "behaviors/bhv_jump_air/behavior.json",
+      "manifest_sha256": "sha256:007c179496be450095243a83a3afa98faad4af608b32199ee7ac475c1d63fc20"
+    },
+    {
+      "behavior_id": "bhv_land",
+      "manifest": "behaviors/bhv_land/behavior.json",
+      "manifest_sha256": "sha256:0ce0c8bec0134e586c9dbcca63b7d07d6caf08f375cb99278e0881840bfbeb84"
+    },
+    {
+      "behavior_id": "bhv_big_jump_start",
+      "manifest": "behaviors/bhv_big_jump_start/behavior.json",
+      "manifest_sha256": "sha256:d3a160be47fa0d71ba29e5b644861990d22ea8ee66da407ff4e530547d39f51b"
+    },
+    {
+      "behavior_id": "bhv_big_jump_air",
+      "manifest": "behaviors/bhv_big_jump_air/behavior.json",
+      "manifest_sha256": "sha256:be67498528a348d89da704f0fc7f2e409ef1f2c523d43db5afc88c059ce5fe7d"
+    },
+    {
+      "behavior_id": "bhv_big_jump_land",
+      "manifest": "behaviors/bhv_big_jump_land/behavior.json",
+      "manifest_sha256": "sha256:52919dcec565dc24a1c43702411615ceb44615c3ab8122f01b7f270b9184b2f2"
+    },
+    {
+      "behavior_id": "bhv_fall_down",
+      "manifest": "behaviors/bhv_fall_down/behavior.json",
+      "manifest_sha256": "sha256:b9b9f0debeaaa1b095606d91e66da320abfcfe097ff0fd255f9676c95954e98c"
+    },
+    {
+      "behavior_id": "bhv_down",
+      "manifest": "behaviors/bhv_down/behavior.json",
+      "manifest_sha256": "sha256:85805333d215ceb06e75306c350e7f3c846a448d6f974772f5c564c4a34dd5e5"
+    },
+    {
+      "behavior_id": "bhv_get_up",
+      "manifest": "behaviors/bhv_get_up/behavior.json",
+      "manifest_sha256": "sha256:3703db07e02510d81c8fbdd6a6ff83e8e464092965f24bbecc6463c7f9426f38"
+    },
+    {
+      "behavior_id": "bhv_fight_idle",
+      "manifest": "behaviors/bhv_fight_idle/behavior.json",
+      "manifest_sha256": "sha256:9759d49b900799cf9fee00c4f8dd4180b21dae26b1478580533eeae2e5afa830"
+    },
+    {
+      "behavior_id": "bhv_jab",
+      "manifest": "behaviors/bhv_jab/behavior.json",
+      "manifest_sha256": "sha256:c6b770481740a6fd5ed88033fb27d9ba4da8a976e8e2128d845bb9a3c627d4d9"
+    },
+    {
+      "behavior_id": "bhv_cross_punch",
+      "manifest": "behaviors/bhv_cross_punch/behavior.json",
+      "manifest_sha256": "sha256:8ddb4628143e78fc6aae3b84473466dd895a562c03a2da4af764fd84333fbf77"
+    },
+    {
+      "behavior_id": "bhv_high_kick",
+      "manifest": "behaviors/bhv_high_kick/behavior.json",
+      "manifest_sha256": "sha256:cd8255220d7794338d786851616a38d2af59dbe38f14f691ebcdc38be7695335"
+    },
+    {
+      "behavior_id": "bhv_roundhouse_kick",
+      "manifest": "behaviors/bhv_roundhouse_kick/behavior.json",
+      "manifest_sha256": "sha256:5a6b2bff5b3e3b598f725fa8fd7b8454f7baee4bbf5867018a732e772b1b5e6a"
+    },
+    {
+      "behavior_id": "bhv_flying_kick",
+      "manifest": "behaviors/bhv_flying_kick/behavior.json",
+      "manifest_sha256": "sha256:86f3fc1785baf91ab3bb878ee078c1c5da3789fc064728e16e964f99f77ab7f1"
+    },
+    {
+      "behavior_id": "bhv_sweep",
+      "manifest": "behaviors/bhv_sweep/behavior.json",
+      "manifest_sha256": "sha256:202027bd0887ee4aeea00624add20ea65617a974fee09bd737d7c915dbbc49f1"
+    },
+    {
+      "behavior_id": "bhv_hurt",
+      "manifest": "behaviors/bhv_hurt/behavior.json",
+      "manifest_sha256": "sha256:df31f4bd7e7d16510e0fcf8e7804d4daf850065517bf87f3c43c8737674ac4e1"
+    },
+    {
+      "behavior_id": "bhv_pickup",
+      "manifest": "behaviors/bhv_pickup/behavior.json",
+      "manifest_sha256": "sha256:918eecf65dc1274fb19f81a905bb6e0e3e6785d4f75d4338c8d76a25a5b9201e"
+    },
+    {
+      "behavior_id": "bhv_throw_object",
+      "manifest": "behaviors/bhv_throw_object/behavior.json",
+      "manifest_sha256": "sha256:f92db31fd34880989da9b6ab0ace5e944be9bcaf0b27c5f5539a048d0057061b"
+    },
+    {
+      "behavior_id": "bhv_push",
+      "manifest": "behaviors/bhv_push/behavior.json",
+      "manifest_sha256": "sha256:fea6df37b90b03e9695d667e6e97ed7036b15967057996ba94c604a0f9182fce"
+    },
+    {
+      "behavior_id": "bhv_pull",
+      "manifest": "behaviors/bhv_pull/behavior.json",
+      "manifest_sha256": "sha256:2c13058013020934cd9aac0d62f32d7aaa308ebe2ee8f2df185cff14f609ebbe"
+    }
+  ],
+  "coverage": {
+    "complete": true,
+    "exported_unit_keys": [
+      "bhv_idle_breath__dir_s",
+      "bhv_idle_breath__dir_se",
+      "bhv_idle_breath__dir_e",
+      "bhv_idle_breath__dir_ne",
+      "bhv_idle_breath__dir_n",
+      "bhv_idle_breath__dir_nw",
+      "bhv_idle_breath__dir_w",
+      "bhv_idle_breath__dir_sw",
+      "bhv_walk_start__dir_s",
+      "bhv_walk_start__dir_se",
+      "bhv_walk_start__dir_e",
+      "bhv_walk_start__dir_ne",
+      "bhv_walk_start__dir_n",
+      "bhv_walk_start__dir_nw",
+      "bhv_walk_start__dir_w",
+      "bhv_walk_start__dir_sw",
+      "bhv_walk_loop__dir_s",
+      "bhv_walk_loop__dir_se",
+      "bhv_walk_loop__dir_e",
+      "bhv_walk_loop__dir_ne",
+      "bhv_walk_loop__dir_n",
+      "bhv_walk_loop__dir_nw",
+      "bhv_walk_loop__dir_w",
+      "bhv_walk_loop__dir_sw",
+      "bhv_walk_stop__dir_s",
+      "bhv_walk_stop__dir_se",
+      "bhv_walk_stop__dir_e",
+      "bhv_walk_stop__dir_ne",
+      "bhv_walk_stop__dir_n",
+      "bhv_walk_stop__dir_nw",
+      "bhv_walk_stop__dir_w",
+      "bhv_walk_stop__dir_sw",
+      "bhv_walk_turn__dir_s",
+      "bhv_walk_turn__dir_se",
+      "bhv_walk_turn__dir_e",
+      "bhv_walk_turn__dir_ne",
+      "bhv_walk_turn__dir_n",
+      "bhv_walk_turn__dir_nw",
+      "bhv_walk_turn__dir_w",
+      "bhv_walk_turn__dir_sw",
+      "bhv_run_start__dir_s",
+      "bhv_run_start__dir_se",
+      "bhv_run_start__dir_e",
+      "bhv_run_start__dir_ne",
+      "bhv_run_start__dir_n",
+      "bhv_run_start__dir_nw",
+      "bhv_run_start__dir_w",
+      "bhv_run_start__dir_sw",
+      "bhv_run_loop__dir_s",
+      "bhv_run_loop__dir_se",
+      "bhv_run_loop__dir_e",
+      "bhv_run_loop__dir_ne",
+      "bhv_run_loop__dir_n",
+      "bhv_run_loop__dir_nw",
+      "bhv_run_loop__dir_w",
+      "bhv_run_loop__dir_sw",
+      "bhv_run_stop__dir_s",
+      "bhv_run_stop__dir_se",
+      "bhv_run_stop__dir_e",
+      "bhv_run_stop__dir_ne",
+      "bhv_run_stop__dir_n",
+      "bhv_run_stop__dir_nw",
+      "bhv_run_stop__dir_w",
+      "bhv_run_stop__dir_sw",
+      "bhv_run_turn__dir_s",
+      "bhv_run_turn__dir_se",
+      "bhv_run_turn__dir_e",
+      "bhv_run_turn__dir_ne",
+      "bhv_run_turn__dir_n",
+      "bhv_run_turn__dir_nw",
+      "bhv_run_turn__dir_w",
+      "bhv_run_turn__dir_sw",
+      "bhv_dash__dir_e",
+      "bhv_dash__dir_w",
+      "bhv_jump_start__dir_e",
+      "bhv_jump_start__dir_w",
+      "bhv_jump_air__dir_e",
+      "bhv_jump_air__dir_w",
+      "bhv_land__dir_e",
+      "bhv_land__dir_w",
+      "bhv_big_jump_start__dir_e",
+      "bhv_big_jump_start__dir_w",
+      "bhv_big_jump_air__dir_e",
+      "bhv_big_jump_air__dir_w",
+      "bhv_big_jump_land__dir_e",
+      "bhv_big_jump_land__dir_w",
+      "bhv_fall_down__dir_e",
+      "bhv_fall_down__dir_w",
+      "bhv_down__dir_e",
+      "bhv_down__dir_w",
+      "bhv_get_up__dir_e",
+      "bhv_get_up__dir_w",
+      "bhv_fight_idle__dir_e",
+      "bhv_fight_idle__dir_w",
+      "bhv_jab__dir_e",
+      "bhv_jab__dir_w",
+      "bhv_cross_punch__dir_e",
+      "bhv_cross_punch__dir_w",
+      "bhv_high_kick__dir_e",
+      "bhv_high_kick__dir_w",
+      "bhv_roundhouse_kick__dir_e",
+      "bhv_roundhouse_kick__dir_w",
+      "bhv_flying_kick__dir_e",
+      "bhv_flying_kick__dir_w",
+      "bhv_sweep__dir_e",
+      "bhv_sweep__dir_w",
+      "bhv_hurt__dir_e",
+      "bhv_hurt__dir_w",
+      "bhv_pickup__dir_e",
+      "bhv_pickup__dir_w",
+      "bhv_throw_object__dir_e",
+      "bhv_throw_object__dir_w",
+      "bhv_push__dir_e",
+      "bhv_push__dir_w",
+      "bhv_pull__dir_e",
+      "bhv_pull__dir_w"
+    ],
+    "omitted_optional_unit_keys": [],
+    "required_unit_keys": [
+      "bhv_idle_breath__dir_s",
+      "bhv_idle_breath__dir_se",
+      "bhv_idle_breath__dir_e",
+      "bhv_idle_breath__dir_ne",
+      "bhv_idle_breath__dir_n",
+      "bhv_idle_breath__dir_nw",
+      "bhv_idle_breath__dir_w",
+      "bhv_idle_breath__dir_sw",
+      "bhv_walk_start__dir_s",
+      "bhv_walk_start__dir_se",
+      "bhv_walk_start__dir_e",
+      "bhv_walk_start__dir_ne",
+      "bhv_walk_start__dir_n",
+      "bhv_walk_start__dir_nw",
+      "bhv_walk_start__dir_w",
+      "bhv_walk_start__dir_sw",
+      "bhv_walk_loop__dir_s",
+      "bhv_walk_loop__dir_se",
+      "bhv_walk_loop__dir_e",
+      "bhv_walk_loop__dir_ne",
+      "bhv_walk_loop__dir_n",
+      "bhv_walk_loop__dir_nw",
+      "bhv_walk_loop__dir_w",
+      "bhv_walk_loop__dir_sw",
+      "bhv_walk_stop__dir_s",
+      "bhv_walk_stop__dir_se",
+      "bhv_walk_stop__dir_e",
+      "bhv_walk_stop__dir_ne",
+      "bhv_walk_stop__dir_n",
+      "bhv_walk_stop__dir_nw",
+      "bhv_walk_stop__dir_w",
+      "bhv_walk_stop__dir_sw",
+      "bhv_walk_turn__dir_s",
+      "bhv_walk_turn__dir_se",
+      "bhv_walk_turn__dir_e",
+      "bhv_walk_turn__dir_ne",
+      "bhv_walk_turn__dir_n",
+      "bhv_walk_turn__dir_nw",
+      "bhv_walk_turn__dir_w",
+      "bhv_walk_turn__dir_sw",
+      "bhv_run_start__dir_s",
+      "bhv_run_start__dir_se",
+      "bhv_run_start__dir_e",
+      "bhv_run_start__dir_ne",
+      "bhv_run_start__dir_n",
+      "bhv_run_start__dir_nw",
+      "bhv_run_start__dir_w",
+      "bhv_run_start__dir_sw",
+      "bhv_run_loop__dir_s",
+      "bhv_run_loop__dir_se",
+      "bhv_run_loop__dir_e",
+      "bhv_run_loop__dir_ne",
+      "bhv_run_loop__dir_n",
+      "bhv_run_loop__dir_nw",
+      "bhv_run_loop__dir_w",
+      "bhv_run_loop__dir_sw",
+      "bhv_run_stop__dir_s",
+      "bhv_run_stop__dir_se",
+      "bhv_run_stop__dir_e",
+      "bhv_run_stop__dir_ne",
+      "bhv_run_stop__dir_n",
+      "bhv_run_stop__dir_nw",
+      "bhv_run_stop__dir_w",
+      "bhv_run_stop__dir_sw",
+      "bhv_run_turn__dir_s",
+      "bhv_run_turn__dir_se",
+      "bhv_run_turn__dir_e",
+      "bhv_run_turn__dir_ne",
+      "bhv_run_turn__dir_n",
+      "bhv_run_turn__dir_nw",
+      "bhv_run_turn__dir_w",
+      "bhv_run_turn__dir_sw",
+      "bhv_dash__dir_e",
+      "bhv_dash__dir_w",
+      "bhv_jump_start__dir_e",
+      "bhv_jump_start__dir_w",
+      "bhv_jump_air__dir_e",
+      "bhv_jump_air__dir_w",
+      "bhv_land__dir_e",
+      "bhv_land__dir_w",
+      "bhv_big_jump_start__dir_e",
+      "bhv_big_jump_start__dir_w",
+      "bhv_big_jump_air__dir_e",
+      "bhv_big_jump_air__dir_w",
+      "bhv_big_jump_land__dir_e",
+      "bhv_big_jump_land__dir_w",
+      "bhv_fall_down__dir_e",
+      "bhv_fall_down__dir_w",
+      "bhv_down__dir_e",
+      "bhv_down__dir_w",
+      "bhv_get_up__dir_e",
+      "bhv_get_up__dir_w",
+      "bhv_fight_idle__dir_e",
+      "bhv_fight_idle__dir_w",
+      "bhv_jab__dir_e",
+      "bhv_jab__dir_w",
+      "bhv_cross_punch__dir_e",
+      "bhv_cross_punch__dir_w",
+      "bhv_high_kick__dir_e",
+      "bhv_high_kick__dir_w",
+      "bhv_roundhouse_kick__dir_e",
+      "bhv_roundhouse_kick__dir_w",
+      "bhv_flying_kick__dir_e",
+      "bhv_flying_kick__dir_w",
+      "bhv_sweep__dir_e",
+      "bhv_sweep__dir_w",
+      "bhv_hurt__dir_e",
+      "bhv_hurt__dir_w",
+      "bhv_pickup__dir_e",
+      "bhv_pickup__dir_w",
+      "bhv_throw_object__dir_e",
+      "bhv_throw_object__dir_w",
+      "bhv_push__dir_e",
+      "bhv_push__dir_w",
+      "bhv_pull__dir_e",
+      "bhv_pull__dir_w"
+    ]
+  },
+  "manifest_type": "eden_package",
+  "manifest_version": 4,
+  "sprite": {
+    "class": "s64",
+    "frame_height": 80,
+    "frame_width": 80,
+    "name": "sprite-s64-miduo"
+  },
+  "task_id": "tsk_local_22c30f0eed014a34adc16a3f0b3805be"
+}

@@ -13,9 +13,13 @@ func _run() -> void:
 	root.add_child(playground)
 	await process_frame
 	await physics_frame
+	# Legacy runtime checks pin NPCs as stationary targets; AI behavior has its own
+	# public Playground seam in ai_combat_smoke.gd.
+	playground.dummy.is_test_dummy = true
+	playground.player.set_combat_target(playground.dummy)
 
-	var punch_ok: bool = await _run_move_hit_smoke(playground, "basic_punch", 8)
-	var kick_ok: bool = await _run_move_hit_smoke(playground, "basic_kick", 10)
+	var punch_ok: bool = await _run_move_hit_smoke(playground, "jab", 6)
+	var kick_ok: bool = await _run_move_hit_smoke(playground, "high_kick", 10)
 	var lethal_ok: bool = await _run_lethal_smoke(playground)
 	var non_goal_ok: bool = await _run_non_goal_attack_lockout_smoke(playground)
 	var ai_ok: bool = await _run_ai_stress_smoke(playground)
@@ -69,9 +73,9 @@ func _run_move_hit_smoke(playground: Node, move_id: String, expected_damage: int
 
 func _run_lethal_smoke(playground: Node) -> bool:
 	playground.player.reset_runtime(Vector2(245, 245))
-	playground.dummy.reset_runtime(_target_position_for("basic_kick"))
+	playground.dummy.reset_runtime(_target_position_for("high_kick"))
 	playground.dummy.current_hp = 10
-	playground.player.request_attack("basic_kick")
+	playground.player.request_attack("high_kick")
 	for i in 45:
 		await physics_frame
 	return playground.dummy.current_hp == 0 and playground.dummy.state_machine.current_state == "dead"
@@ -81,14 +85,14 @@ func _run_non_goal_attack_lockout_smoke(playground: Node) -> bool:
 	playground.player.reset_runtime(Vector2(245, 245))
 	playground.dummy.reset_runtime(_target_position_for("basic_punch"))
 	playground.player.state_machine.request_action("dash")
-	var dash_blocked: bool = not playground.player.request_attack("basic_punch")
+	var dash_blocked: bool = not playground.player.request_attack("jab")
 	for i in 20:
 		await physics_frame
 
 	playground.player.reset_runtime(Vector2(245, 245))
 	playground.dummy.reset_runtime(_target_position_for("basic_kick"))
 	playground.player.state_machine.request_action("jump")
-	var jump_blocked: bool = not playground.player.request_attack("basic_kick")
+	var jump_blocked: bool = not playground.player.request_attack("jab")
 	for i in 30:
 		await physics_frame
 	return dash_blocked and jump_blocked
@@ -134,6 +138,7 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(copy_path))
 
 	panel.load_template_id("combat_gray_s64")
+	playground.player.apply_template_id("combat_gray_s64")
 	playground.select_player_character()
 	var player_bound: bool = (
 		str(panel.bound_instance_id) == "player_1"
@@ -143,14 +148,14 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 	playground.select_dummy_character()
 	var dummy_bound: bool = (
 		str(panel.bound_instance_id) == "npc_001"
-		and str(panel.bound_template_id) == "skeleton_default_unarmed_s64"
+		and str(panel.bound_template_id) == "miduo_blue"
 		and not str(panel.bound_control_mode).is_empty()
 	)
 	var hud_text := str(playground.debug_label.text)
 	var hud_ok := (
 		hud_text.contains("SEL")
 		and hud_text.contains("npc_001")
-		and hud_text.contains("tpl:skeleton_default_unarmed_s64")
+		and hud_text.contains("tpl:miduo_blue")
 		and hud_text.contains("mode:")
 	)
 	playground.select_player_character()
@@ -347,8 +352,8 @@ func _run_npc_collection_smoke(playground: Node) -> bool:
 		and playground.all_characters().size() == 2
 		and playground.dummy == initial_dummy
 		and str(playground.dummy.instance_id) == "npc_001"
-		and str(playground.dummy.template_id) == "skeleton_default_unarmed_s64"
-		and str(playground.dummy.sprite_set_id) == "skeleton_default_unarmed_s64"
+		and str(playground.dummy.template_id) == "miduo_blue"
+		and str(playground.dummy.sprite_set_id) == "miduo_blue"
 	)
 
 	var max_count: int = playground.MAX_NPC_COUNT
@@ -484,22 +489,27 @@ func _run_all_character_pairwise_hits_smoke(playground: Node) -> bool:
 		return false
 	await process_frame
 
+	# Pin both character templates so this smoke cannot pass only because an earlier
+	# Creator Lab slice changed the bound runtime character.
+	playground.player.apply_template_id("miduo")
 	playground.player.reset_runtime(Vector2(245, 245))
 	for npc in playground.npcs:
-		npc.reset_runtime(_target_position_for("basic_punch"))
-	playground.player.request_attack("basic_punch")
+		npc.reset_runtime(_target_position_for("jab"))
+	playground.player.request_attack("jab")
 	for _frame in 8:
 		playground.player.state_machine.tick(1.0 / 60.0, Vector2.ZERO)
 		playground._process_all_hits()
 
 	var player_hit_all := true
 	for npc in playground.npcs:
-		if npc.current_hp != npc.max_hp - 8:
+		if npc.current_hp != npc.max_hp - 6:
 			player_hit_all = false
 
 	playground.reset_playground()
 	var npc_attacker: Node2D = playground.npcs[0]
+	npc_attacker.apply_template_id("skeleton_default_unarmed_s64")
 	npc_attacker.reset_runtime(Vector2(245, 245))
+	npc_attacker.state_machine.facing = 1
 	playground.player.reset_runtime(_target_position_for("basic_punch"))
 	npc_attacker.request_attack("basic_punch")
 	for _frame in 8:
@@ -655,6 +665,8 @@ func _ensure_npc_count(playground: Node, expected_count: int) -> bool:
 		var target: Node2D = playground.npcs[playground.npc_count() - 1]
 		if not playground.remove_npc(target):
 			return false
+	for npc in playground.npcs:
+		npc.is_test_dummy = true
 	return playground.npc_count() == expected_count
 
 

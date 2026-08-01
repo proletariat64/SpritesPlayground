@@ -1,0 +1,55 @@
+{
+  "active_frames": 2,
+  "active_window": {
+    "end_frame": 3,
+    "start_frame": 2
+  },
+  "damage": 9,
+  "events": [
+    {
+      "event_type": "enable_hitbox",
+      "frame": 2,
+      "payload": {
+        "hitbox_id": "hit_sweep"
+      }
+    },
+    {
+      "event_type": "disable_hitbox",
+      "frame": 3,
+      "payload": {
+        "hitbox_id": "hit_sweep"
+      }
+    },
+    {
+      "event_type": "apply_hitstop",
+      "frame": 3,
+      "payload": {
+        "frames": 3
+      }
+    }
+  ],
+  "frame_count": 6,
+  "hitboxes": [
+    {
+      "active_window": {
+        "end_frame": 3,
+        "start_frame": 2
+      },
+      "hitbox_id": "hit_sweep",
+      "rect": {
+        "h": 16,
+        "w": 34,
+        "x": 8,
+        "y": -22
+      }
+    }
+  ],
+  "hitstop_frames": 3,
+  "move_id": "miduo_sweep",
+  "move_type": "combat",
+  "multi_hit": false,
+  "recovery_frames": 2,
+  "schema_version": "0.3",
+  "startup_frames": 2,
+  "state_context_override": "idle"
+}

@@ -1,0 +1,184 @@
+{
+  "behavior": {
+    "behavior_id": "bhv_fight_idle",
+    "direction_order": [
+      "dir_e",
+      "dir_w"
+    ],
+    "frames_per_direction": 6,
+    "playback": {
+      "fps": 12,
+      "type": "loop"
+    }
+  },
+  "coverage": {
+    "complete": true,
+    "unit_keys": [
+      "bhv_fight_idle__dir_e",
+      "bhv_fight_idle__dir_w"
+    ]
+  },
+  "directions": [
+    {
+      "direction_id": "dir_e",
+      "frames": [
+        {
+          "bytes": 2185,
+          "file": "frames/dir_e/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:2b309d4613490420eb9932c62129a624f9dd526b8831866559ee0684b125bf70",
+          "width": 80,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "bytes": 2056,
+          "file": "frames/dir_e/001.png",
+          "height": 80,
+          "index": 1,
+          "sha256": "sha256:013115438243e986dd0ef702e001c86c7a87d001515fd4508c4c57c9b644f315",
+          "width": 80,
+          "x": 80,
+          "y": 0
+        },
+        {
+          "bytes": 2459,
+          "file": "frames/dir_e/002.png",
+          "height": 80,
+          "index": 2,
+          "sha256": "sha256:500d21a507fec4f12708deb0c752418ed446806adec80486498fee09364b4826",
+          "width": 80,
+          "x": 160,
+          "y": 0
+        },
+        {
+          "bytes": 2214,
+          "file": "frames/dir_e/003.png",
+          "height": 80,
+          "index": 3,
+          "sha256": "sha256:c87ffae40cd0c6908bf22bed1bb094caa1c57b414e79c8aad54884aeb82705ad",
+          "width": 80,
+          "x": 240,
+          "y": 0
+        },
+        {
+          "bytes": 2339,
+          "file": "frames/dir_e/004.png",
+          "height": 80,
+          "index": 4,
+          "sha256": "sha256:2a3094cab5a43e0fdd911aab2d470316956c914333d1b0610c826847562bda41",
+          "width": 80,
+          "x": 320,
+          "y": 0
+        },
+        {
+          "bytes": 2145,
+          "file": "frames/dir_e/005.png",
+          "height": 80,
+          "index": 5,
+          "sha256": "sha256:14a41bfd1314362923eba9c1260eaca1dc773efd3c91a51deb70e08c3cd7c47c",
+          "width": 80,
+          "x": 400,
+          "y": 0
+        }
+      ],
+      "mirrored_from": null,
+      "row": 0,
+      "source": "authored"
+    },
+    {
+      "direction_id": "dir_w",
+      "frames": [
+        {
+          "bytes": 2199,
+          "file": "frames/dir_w/000.png",
+          "height": 80,
+          "index": 0,
+          "sha256": "sha256:da3d6f038c71ea1f47ff382944ef85beb5f5d553dcf00a0aed8e1ef88d7374d8",
+          "width": 80,
+          "x": 0,
+          "y": 80
+        },
+        {
+          "bytes": 2045,
+          "file": "frames/dir_w/001.png",
+          "height": 80,
+          "index": 1,
+          "sha256": "sha256:1883efa3c2c02828d777293334a4f2262038c5c210f8a50c93646d3c68b08892",
+          "width": 80,
+          "x": 80,
+          "y": 80
+        },
+        {
+          "bytes": 2477,
+          "file": "frames/dir_w/002.png",
+          "height": 80,
+          "index": 2,
+          "sha256": "sha256:ada1d0aaccad689202eb0d1a20b7ced0bdd6015732a21aca9fdc8074890fc043",
+          "width": 80,
+          "x": 160,
+          "y": 80
+        },
+        {
+          "bytes": 2237,
+          "file": "frames/dir_w/003.png",
+          "height": 80,
+          "index": 3,
+          "sha256": "sha256:a7881ff63a7513caa00010252ed3cbf8e97ad9b06ade25337ed5cc2682a381fe",
+          "width": 80,
+          "x": 240,
+          "y": 80
+        },
+        {
+          "bytes": 2343,
+          "file": "frames/dir_w/004.png",
+          "height": 80,
+          "index": 4,
+          "sha256": "sha256:72dfb14dd7ce2a922fddbcde2d3335a5e05165f3e7dd2b2c96ad75cd1e8c71e4",
+          "width": 80,
+          "x": 320,
+          "y": 80
+        },
+        {
+          "bytes": 2158,
+          "file": "frames/dir_w/005.png",
+          "height": 80,
+          "index": 5,
+          "sha256": "sha256:a2adb354f9eff3cb2bacc4837d999239ee668efaa2efe41c42413b37c3d63a57",
+          "width": 80,
+          "x": 400,
+          "y": 80
+        }
+      ],
+      "mirrored_from": "dir_e",
+      "row": 1,
+      "source": "mirrored"
+    }
+  ],
+  "layout": {
+    "columns": 6,
+    "height": 160,
+    "order": "directions_top_to_bottom_frames_left_to_right",
+    "rows": 2,
+    "segment_bytes": 20514,
+    "segment_file": "segment.png",
+    "segment_sha256": "sha256:23566ae3ef53ce184a2970633b365ce4d55ab64d7df191041d130902419e06d7",
+    "type": "direction_rows",
+    "width": 480
+  },
+  "manifest_type": "eden_behavior",
+  "manifest_version": 4,
+  "preview": {
+    "bytes": 20514,
+    "file": "preview.png",
+    "sha256": "sha256:23566ae3ef53ce184a2970633b365ce4d55ab64d7df191041d130902419e06d7"
+  },
+  "sprite": {
+    "class": "s64",
+    "frame_height": 80,
+    "frame_width": 80,
+    "name": "sprite-s64-miduo"
+  },
+  "task_id": "tsk_local_22c30f0eed014a34adc16a3f0b3805be"
+}

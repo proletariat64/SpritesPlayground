@@ -70,12 +70,21 @@
       "type": "integer",
       "minimum": 1
     },
+    "walk_speed": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "run_speed": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
     "equipped_moves": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
       "contains": {
-        "const": "idle"
+        "type": "string",
+        "pattern": "^(?:[a-z][a-z0-9_]*_)?idle$"
       },
       "items": {
         "type": "string",

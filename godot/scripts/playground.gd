@@ -5,8 +5,8 @@ const CreatorLabV03PanelScript := preload("res://godot/scripts/creator_lab_v0_3_
 const COMBAT_TICK_RATE := 60
 const MIN_NPC_COUNT := 1
 const MAX_NPC_COUNT := 10
-const DEFAULT_TEMPLATE_ID := "combat_gray_s64"
-const DEFAULT_NPC_TEMPLATE_ID := "skeleton_default_unarmed_s64"
+const DEFAULT_TEMPLATE_ID := "miduo"
+const DEFAULT_NPC_TEMPLATE_ID := "miduo_blue"
 
 var arena_center := Vector2(320, 205)
 var arena_radius := Vector2(280, 125)
@@ -60,6 +60,7 @@ func _process_input() -> void:
 		get_viewport().gui_release_focus()
 	if Input.is_action_just_pressed("toggle_ai") and player != null:
 		player.control_mode = "ai" if player.control_mode == "manual" else "manual"
+		player.set_combat_target(dummy if player.control_mode == "ai" else null)
 		_ai_started_at_msec = Time.get_ticks_msec()
 	if Input.is_action_just_pressed("toggle_boxes") and player != null:
 		var next_visible: bool = not player.debug_boxes_visible
@@ -174,7 +175,9 @@ func add_npc(template_id: String = "", select_new: bool = false) -> Node2D:
 	npc_template_id = resolved_template
 	var instance_id := _next_npc_instance_id()
 	var spawn_position := _spawn_npc_position(npc_count())
-	var npc: Node2D = _spawn_character(resolved_template, instance_id, spawn_position, true)
+	var npc: Node2D = _spawn_character(resolved_template, instance_id, spawn_position, false)
+	npc.control_mode = "ai"
+	npc.set_combat_target(player)
 	characters.append(npc)
 	npcs.append(npc)
 	_sync_character_aliases()
@@ -212,6 +215,8 @@ func remove_npc(character: Node2D) -> bool:
 		remove_child(character)
 		character.queue_free()
 	_sync_character_aliases()
+	if player != null and player.control_mode == "ai":
+		player.set_combat_target(dummy)
 	_update_character_depth_order()
 	playground_status = "removed %s %d/%d" % [removed_id, npc_count(), MAX_NPC_COUNT]
 	_update_debug_gui()
@@ -234,6 +239,8 @@ func reset_playground() -> void:
 		player.control_mode = "manual"
 	for i in npcs.size():
 		npcs[i].reset_runtime(_spawn_npc_position(i))
+		npcs[i].control_mode = "ai"
+		npcs[i].set_combat_target(player)
 	_sync_character_aliases()
 	_clamp_all_characters_to_arena()
 	_update_character_depth_order()
@@ -470,7 +477,7 @@ func _update_debug_gui() -> void:
 			p["mode"].substr(0, 3),
 			boxes_status,
 		],
-		"[color=#86d7ff]SEL[/color] %s tpl:%s set:%s st:%s mv:%s f:%s hp:%s mode:%s" % [
+		"[color=#86d7ff]SEL[/color] %s tpl:%s set:%s st:%s mv:%s f:%s hp:%s mode:%s ai:%s" % [
 			s.get("instance_id", "none"),
 			s.get("template_id", ""),
 			s.get("sprite_set_id", ""),
@@ -479,8 +486,9 @@ func _update_debug_gui() -> void:
 			s.get("frame", 0),
 			s.get("hp", ""),
 			s.get("mode", ""),
+			s.get("ai_backend", "deterministic_fallback"),
 		],
-		"[color=#c7d2fe]wasd[/color] move  j/k atk  sh dash  sp jump  tab ai  b box  c lab v0.3  v preview  r reset  %s" % playground_status,
+		"[color=#c7d2fe]wasd[/color] move  ctrl run  j/k atk  sh dash  sp jump  tab ai  b box  c lab v0.3  v preview  r reset  %s" % playground_status,
 	])
 
 
@@ -503,6 +511,7 @@ func _ensure_input_actions() -> void:
 	_bind_key_action("move_right", [KEY_D, KEY_RIGHT])
 	_bind_key_action("move_up", [KEY_W, KEY_UP])
 	_bind_key_action("move_down", [KEY_S, KEY_DOWN])
+	_bind_key_action("run", [KEY_CTRL])
 	_bind_key_action("dash", [KEY_SHIFT])
 	_bind_key_action("jump", [KEY_SPACE])
 	_bind_key_action("basic_punch", [KEY_J])

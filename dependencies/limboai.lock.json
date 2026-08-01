@@ -1,0 +1,11 @@
+{
+  "name": "LimboAI",
+  "version": "1.8.0",
+  "source_url": "https://github.com/limbonaut/limboai",
+  "license": "MIT",
+  "godot_compatibility": ">=4.6",
+  "asset_name": "limboai+v1.8.0.gdextension-4.6.zip",
+  "download_url": "https://github.com/limbonaut/limboai/releases/download/v1.8.0/limboai%2Bv1.8.0.gdextension-4.6.zip",
+  "sha256": "f95ef170ee41cb587cc720bdd1ea5f496ada1d4017456348c01f308495973c40",
+  "install_path": "addons/limboai"
+}

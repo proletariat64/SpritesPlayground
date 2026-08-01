@@ -4,6 +4,17 @@
 
 This repository is currently a skeleton. Do not add generated sprite assets directly to main until the MVP data contracts are stable.
 
+## Required Runtime Dependencies
+
+Godot 4.6+ and the pinned LimboAI GDExtension are required for development, tests, and runtime builds. Install the dependency into each build environment before opening or running the project:
+
+```bash
+python3 tools/install_limboai.py
+python3 tools/install_limboai.py --check
+```
+
+The version, source URL, and SHA-256 checksum are locked in `dependencies/limboai.lock.json`. The installer copies only the current platform's binaries by default; use `--all-platforms` when assembling a multi-platform build environment. `addons/limboai/` is deliberately gitignored: do not commit third-party LimboAI binaries or source unless this project intentionally maintains a fork.
+
 ## Branching
 
 Recommended:

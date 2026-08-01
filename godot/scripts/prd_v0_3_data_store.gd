@@ -106,7 +106,11 @@ static func validate_runtime_bundle(bundle: Dictionary) -> Array:
 	errors.append_array(_scan_forbidden_keys(moves, "moves"))
 	errors.append_array(_validate_template_contract(template))
 	errors.append_array(_validate_sprite_set_contract(sprite_set))
-	if not template.get("equipped_moves", []).has("idle"):
+	# Every character must equip an idle move. Character-scoped imports (e.g.
+	# miduo_idle) satisfy this through their explicit template-id prefix.
+	var scoped_idle_id := "%s_idle" % str(template.get("template_id", ""))
+	var equipped_ids: Array = template.get("equipped_moves", [])
+	if not equipped_ids.has("idle") and not equipped_ids.has(scoped_idle_id):
 		errors.append("template must equip idle move")
 	for move_id in moves.keys():
 		errors.append_array(_validate_move(str(move_id), moves[move_id]))
@@ -158,10 +162,14 @@ static func _validate_move(move_id: String, move: Dictionary) -> Array:
 			"move_type": true,
 			"state_context_override": true,
 			"frame_count": true,
+			"startup_frames": true,
+			"active_frames": true,
+			"recovery_frames": true,
 			"active_window": true,
 			"damage": true,
 			"hitstop_frames": true,
 			"hitboxes": true,
+			"hurtboxes": true,
 			"multi_hit": true,
 			"events": true,
 		},
@@ -181,6 +189,20 @@ static func _validate_move(move_id: String, move: Dictionary) -> Array:
 	if frame_count < 1:
 		errors.append("move %s frame_count must be >= 1" % move_id)
 		return errors
+	var rhythm_fields := ["startup_frames", "active_frames", "recovery_frames"]
+	var has_rhythm := false
+	for field in rhythm_fields:
+		has_rhythm = has_rhythm or move.has(field)
+	if has_rhythm:
+		for field in rhythm_fields:
+			if not move.has(field):
+				errors.append("move %s explicit rhythm must include %s" % [move_id, field])
+		if int(move.get("startup_frames", -1)) < 0:
+			errors.append("move %s startup_frames must be >= 0" % move_id)
+		if int(move.get("active_frames", 0)) < 1:
+			errors.append("move %s active_frames must be >= 1" % move_id)
+		if int(move.get("recovery_frames", -1)) < 0:
+			errors.append("move %s recovery_frames must be >= 0" % move_id)
 	errors.append_array(_validate_frame_window(move_id, "active_window", move.get("active_window", {}), frame_count))
 	for i in move.get("hitboxes", []).size():
 		var hitbox: Dictionary = move["hitboxes"][i]
@@ -193,6 +215,17 @@ static func _validate_move(move_id: String, move: Dictionary) -> Array:
 			errors.append("move %s hitboxes[%d].hitbox_id must match ^hit_[a-z0-9_]+$" % [move_id, i])
 		errors.append_array(_validate_frame_window(move_id, "hitboxes[%d].active_window" % i, hitbox.get("active_window", {}), frame_count))
 		errors.append_array(_validate_rect(hitbox.get("rect", {}), "move %s hitboxes[%d].rect" % [move_id, i]))
+	for i in move.get("hurtboxes", []).size():
+		var hurtbox: Dictionary = move["hurtboxes"][i]
+		errors.append_array(_validate_exact_keys(
+			hurtbox,
+			{"hurtbox_id": true, "active_window": true, "rect": true},
+			"move %s hurtboxes[%d]" % [move_id, i]
+		))
+		if not str(hurtbox.get("hurtbox_id", "")).begins_with("hurt_"):
+			errors.append("move %s hurtboxes[%d].hurtbox_id must start with hurt_" % [move_id, i])
+		errors.append_array(_validate_frame_window(move_id, "hurtboxes[%d].active_window" % i, hurtbox.get("active_window", {}), frame_count))
+		errors.append_array(_validate_rect(hurtbox.get("rect", {}), "move %s hurtboxes[%d].rect" % [move_id, i]))
 	for i in move.get("events", []).size():
 		var event: Dictionary = move["events"][i]
 		errors.append_array(_validate_exact_keys(
@@ -218,6 +251,8 @@ static func _validate_template_contract(template: Dictionary) -> Array:
 			"hurtboxes": true,
 			"foot_collision": true,
 			"hp": true,
+			"walk_speed": true,
+			"run_speed": true,
 			"equipped_moves": true,
 		},
 		"template"
@@ -230,6 +265,10 @@ static func _validate_template_contract(template: Dictionary) -> Array:
 		errors.append("sprite_set_ref must be lowercase snake_case")
 	if int(template.get("hp", 0)) < 1:
 		errors.append("template hp must be >= 1")
+	if float(template.get("walk_speed", 95.0)) <= 0.0:
+		errors.append("template walk_speed must be > 0")
+	if float(template.get("run_speed", 150.0)) <= 0.0:
+		errors.append("template run_speed must be > 0")
 	for hurtbox_id in template.get("hurtboxes", {}).keys():
 		if not str(hurtbox_id).begins_with("hurt_"):
 			errors.append("hurtbox id %s must start with hurt_" % hurtbox_id)
@@ -419,18 +458,23 @@ static func _normalize_template(data: Dictionary) -> Dictionary:
 	var normalized := data.duplicate(true)
 	if normalized.has("hp"):
 		normalized["hp"] = int(normalized["hp"])
+	for field in ["walk_speed", "run_speed"]:
+		if normalized.has(field):
+			normalized[field] = float(normalized[field])
 	return normalized
 
 
 static func _normalize_move(data: Dictionary) -> Dictionary:
 	var normalized := data.duplicate(true)
-	for field in ["frame_count", "damage", "hitstop_frames"]:
+	for field in ["frame_count", "startup_frames", "active_frames", "recovery_frames", "damage", "hitstop_frames"]:
 		if normalized.has(field):
 			normalized[field] = int(normalized[field])
 	if normalized.has("active_window"):
 		_normalize_window(normalized["active_window"])
 	for hitbox in normalized.get("hitboxes", []):
 		_normalize_window(hitbox["active_window"])
+	for hurtbox in normalized.get("hurtboxes", []):
+		_normalize_window(hurtbox["active_window"])
 	for event in normalized.get("events", []):
 		if event.has("frame"):
 			event["frame"] = int(event["frame"])

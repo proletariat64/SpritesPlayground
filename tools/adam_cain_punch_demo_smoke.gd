@@ -25,6 +25,9 @@ func _run() -> void:
 	var playground: Node = demo.get_node("Playground")
 	var adam: Node2D = playground.player
 	var cain: Node2D = playground.dummy
+	# This regression slice owns its historical fixtures; Playground defaults may change.
+	adam.apply_template_id("combat_gray_s64")
+	cain.apply_template_id("skeleton_default_unarmed_s64")
 	adam.instance_id = "adam"
 	cain.instance_id = "cain"
 	cain.is_test_dummy = true
@@ -70,7 +73,7 @@ func _collect_value_surface(adam: Node2D, cain: Node2D) -> Dictionary:
 		"runtime_tick_rate": TICK_RATE,
 		"authoring_fps": 12,
 		"move_right": "D",
-		"basic_punch": "J",
+		"basic_punch": "direct Move request (current J is Miduo jab)",
 		"light_punch_mapping": "light_punch -> basic_punch",
 		"move_state_mapping": "move -> walk / locomotion",
 		"states": ["idle", "walk", "attack", "hurt", "dead"],
@@ -139,7 +142,7 @@ func _run_move_right_walk(playground: Node, adam: Node2D, cain: Node2D) -> Dicti
 func _run_single_punch(playground: Node, adam: Node2D, cain: Node2D) -> Dictionary:
 	_reset_pair(playground, adam, cain, Vector2(245, 245), Vector2(282, 245))
 	var hp_before: int = int(cain.current_hp)
-	await _tap_action("basic_punch")
+	await _request_basic_punch(adam)
 	var frames: Array = []
 	var saw_attack := false
 	var saw_active := false
@@ -175,17 +178,17 @@ func _run_rapid_j_chain(playground: Node, adam: Node2D, cain: Node2D) -> Diction
 	_reset_pair(playground, adam, cain, Vector2(245, 245), Vector2(282, 245))
 	var hp_before: int = int(cain.current_hp)
 	var start_count: int = 0
-	await _tap_action("basic_punch")
+	await _request_basic_punch(adam)
 	for frame in 3:
 		await physics_frame
 		if adam.state_machine.current_state == "attack" and adam.state_machine.current_frame() == 0:
 			start_count += 1
 	_record_trace("rapid_j_after_first", 3, adam, cain)
-	await _tap_action("basic_punch")
+	await _request_basic_punch(adam)
 	for frame in 2:
 		await physics_frame
 	_record_trace("rapid_j_after_second", 5, adam, cain)
-	await _tap_action("basic_punch")
+	await _request_basic_punch(adam)
 	for frame in 12:
 		await physics_frame
 	_record_trace("rapid_j_after_third", 17, adam, cain)
@@ -206,7 +209,7 @@ func _run_recovered_three_hits(playground: Node, adam: Node2D, cain: Node2D) -> 
 	var hp_before: int = int(cain.current_hp)
 	var hit_hps: Array = []
 	for i in 3:
-		await _tap_action("basic_punch")
+		await _request_basic_punch(adam)
 		await _wait_until_pair_ready(adam, cain, 48)
 		hit_hps.append(cain.current_hp)
 		_record_trace("recovered_hit_%d" % (i + 1), i + 1, adam, cain)
@@ -225,7 +228,7 @@ func _run_death_entry(playground: Node, adam: Node2D, cain: Node2D) -> Dictionar
 	_reset_pair(playground, adam, cain, Vector2(245, 245), Vector2(282, 245))
 	var hits: int = 0
 	while cain.current_hp > 0 and hits < 16:
-		await _tap_action("basic_punch")
+		await _request_basic_punch(adam)
 		await _wait_until_pair_ready(adam, cain, 48)
 		hits += 1
 	var expected_hits: int = int(ceil(float(cain.max_hp) / 8.0))
@@ -249,10 +252,9 @@ func _reset_pair(playground: Node, adam: Node2D, cain: Node2D, adam_position: Ve
 	playground._tick_combat(DELTA)
 
 
-func _tap_action(action_id: String) -> void:
-	Input.action_press(action_id)
+func _request_basic_punch(attacker: Node2D) -> void:
+	attacker.request_attack("basic_punch")
 	await physics_frame
-	Input.action_release(action_id)
 
 
 func _wait_until_idle_or_dead(character: Node2D, max_frames: int) -> void:
@@ -345,7 +347,7 @@ func _build_report() -> String:
 	lines.append("| runtime_tick_rate | %s | Playground COMBAT_TICK_RATE / smoke Engine setting | present |" % values["runtime_tick_rate"])
 	lines.append("| authoring_fps | %s | PRD/DDD baseline | design only in this smoke |" % values["authoring_fps"])
 	lines.append("| move_right | D | InputMap in Playground | present |")
-	lines.append("| basic_punch | J | InputMap in Playground | present |")
+	lines.append("| basic_punch | direct Move request | fixture-owned regression path; current J is Miduo jab | present |")
 	lines.append("| light_punch mapping | light_punch -> basic_punch | scenario assumption | mapped, no new MoveData |")
 	lines.append("| move state mapping | move -> walk / locomotion | scenario assumption + walk MoveData | mapped |")
 	lines.append("| states | idle, walk, attack, hurt, dead | CombatStateMachine | present |")
@@ -367,9 +369,9 @@ func _build_report() -> String:
 	lines.append("| Check | Result | Evidence |")
 	lines.append("| --- | --- | --- |")
 	lines.append("| [d] -> walk and reach | %s | frames=%s x=%s->%s projected_overlap=%s |" % [_pass_fail(move_right["passed"]), move_right["frames"], _num(move_right["start_x"]), _num(move_right["end_x"]), move_right["projected_hitbox_reaches_cain"]])
-	lines.append("| [j] -> basic_punch/attack | %s | saw_attack=%s active_hitbox=%s overlap=%s Cain HP %s->%s |" % [_pass_fail(single["passed"]), single["saw_attack"], single["saw_active_hitbox"], single["saw_overlap"], single["hp_before"], single["hp_after"]])
-	lines.append("| rapid [j][j][j] buffer/cancel | FAIL | Cain damage=%s; only one hit accepted, no buffer/cancel chain observed |" % rapid["damage"])
-	lines.append("| full recovery [j] x3 | %s | Cain HP %s->%s, damage=%s, hit HPs=%s |" % [_pass_fail(recovered["passed"]), recovered["hp_before"], recovered["hp_after"], recovered["damage"], str(recovered["hit_hps"])])
+	lines.append("| request basic_punch/attack | %s | saw_attack=%s active_hitbox=%s overlap=%s Cain HP %s->%s |" % [_pass_fail(single["passed"]), single["saw_attack"], single["saw_active_hitbox"], single["saw_overlap"], single["hp_before"], single["hp_after"]])
+	lines.append("| rapid request x3 buffer/cancel | FAIL | Cain damage=%s; only one hit accepted, no buffer/cancel chain observed |" % rapid["damage"])
+	lines.append("| full recovery request x3 | %s | Cain HP %s->%s, damage=%s, hit HPs=%s |" % [_pass_fail(recovered["passed"]), recovered["hp_before"], recovered["hp_after"], recovered["damage"], str(recovered["hit_hps"])])
 	lines.append("| death entry | %s | hits=%s expected=%s final HP=%s state=%s |" % [_pass_fail(death["passed"]), death["hits"], death["expected_hits"], death["hp_after"], death["state_after"]])
 	lines.append("")
 	lines.append("## Frame Trace: Single Punch")
@@ -405,7 +407,7 @@ func _build_report() -> String:
 	lines.append("| Design Missing | Scenario-level `light_punch` is not a committed MoveData ID. | Existing data only has `basic_punch`. | Keep mapping `light_punch -> basic_punch` in scenario/test wording. |")
 	lines.append("| Value Conflict | ATK/DEF/HP seeds conflict across DDD recommendation and scenario. | DDD recommends ATK 10, DEF 0; scenario says DEF 2; data stores damage 8. | Clarify numeric truth table using existing MoveData damage or existing PRD formula, without adding fields in this pass. |")
 	lines.append("| Formula Mismatch | Runtime does not compute `max(0, hitbox_atk-hurtbox_def)`. | Playground passes `hitbox.damage` directly to `take_hit`. | Either document this slice as damage-field based, or retune existing data once ATK/DEF fields already exist in the schema. |")
-	lines.append("| Runtime Missing | No live input buffer, cancel window, combo string, hitstop, or hitstun in Playground path. | Rapid [j][j][j] produces one hit; `hitstop_frames` is data-only here. | Validate full-recovery repeat only; mark combo/cancel as not implemented until existing runtime modules consume existing values. |")
+	lines.append("| Runtime Missing | No live input buffer, cancel window, combo string, hitstop, or hitstun in the legacy basic_punch path. | Rapid direct requests produce one hit; `hitstop_frames` is data-only here. | Validate full-recovery repeat only; mark combo/cancel as not implemented until existing runtime modules consume existing values. |")
 	lines.append("| Prototype Mismatch | HTML prototype exposes buffer/combo/system params and behavior defaults not mirrored by live GDScript. | Prototype has InputSystem buffer and CombatSystem combo table; Playground input path is direct. | Treat prototype as authoring surface reference, not gameplay formula truth. |")
 	lines.append("")
 	lines.append("## Improvement Notes")
