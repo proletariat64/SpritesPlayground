@@ -10,7 +10,7 @@ related_issue: ""
 related_pr: ""
 supersedes: ""
 original_path: "docs/IMPLEMENTATION_SPEC_V0_3_CREATOR_LAB.md"
-superseded_by: "docs/02_prd/prd-20260626-sprites-playground-current-clean.md"
+superseded_by: "docs/02_prd/prd-20260626-sprites-playground-product-v0-6.md"
 ---
 
 # Implementation Spec: Creator Lab v0.3 Integration

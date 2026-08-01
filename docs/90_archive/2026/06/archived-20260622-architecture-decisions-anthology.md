@@ -10,7 +10,7 @@ related_issue: ""
 related_pr: ""
 supersedes: ""
 original_path: "docs/ARCHITECTURE_DECISIONS.md"
-superseded_by: "docs/02_prd/prd-20260626-sprites-playground-current-clean.md and docs/04_adr/"
+superseded_by: "docs/02_prd/prd-20260626-sprites-playground-product-v0-6.md and docs/04_adr/"
 ---
 
 # Architecture Decisions

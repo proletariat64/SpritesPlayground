@@ -1,19 +1,25 @@
 ---
-title: "Archived: World Rules and Environment PRD Draft"
-doc_type: "archive"
-status: "archived"
-owner: "coding-agent"
+title: "World Rules, No.0, and Adam PRD Supplement v0.6.3"
+doc_type: "prd"
+status: "approved"
+owner: "user"
 source: "manual"
 created: "2026-06-26"
 updated: "2026-08-01"
 related_issue: ""
 related_pr: ""
-supersedes: ""
+supersedes: "docs/90_archive/2026/06/archived-20260626-prd-world-rules-and-environment.md"
+version: "0.6.3"
+supplements: "docs/02_prd/prd-20260626-sprites-playground-product-v0-6.md"
+precedence: "Takes precedence for Stage 0, No.0, Adam, and LimboAI-first architecture when it conflicts with Product PRD v0.6."
 original_path: "docs/New PRD.md"
-superseded_by: "docs/02_prd/prd-20260626-sprites-playground-current-clean.md"
 ---
 
-# "And God said, Let there be light: and there was light." World Rules & Environment
+# World Rules, No.0, and Adam PRD Supplement v0.6.3
+
+> Version note: this active v0.6.3 supplement restores the latest content formerly stored as `docs/New PRD.md`. It supplements Product PRD v0.6 and takes precedence for Stage 0, No.0, Adam, and LimboAI-first architecture.
+
+## "And God said, Let there be light: and there was light." World Rules & Environment
 
 These are the fundamental rules of the playground world: a clear target and simplified rule set that unifies sprite behavior. It includes:
 
@@ -23,7 +29,7 @@ These are the fundamental rules of the playground world: a clear target and simp
 
 ## **World Rules**
 
-the god of this world is a lazy god. he is lazy and sharp.  never do things for un predicable future, one line is he never use 2,  use exisiting wheels unleast it doesnt fit.
+the god of this world is a lazy god. he is lazy and sharp.  never do things for un predicable future, one line is he never use 2,  use existing wheels unleast it doesnt fit.
 
 Sprites gain abilities by equipping different components. Once a sprite has a component, it gains the corresponding ability, but it is also constrained by that component's rules. If a sprite does not equip that component, it is not affected by those rules. For example, if Ugo does not equip the Health component, then Ugo cannot be hurt, cannot die, and will not have the related hurt/death behavior or visuals.
 
@@ -31,17 +37,16 @@ We define rules to specify which sprites are allowed to equip which components, 
 
 No reinvented wheels. Use proven tools first. The lazy god never builds the same thing twice.
 
-
 World Rules 负责：
 
 - 时间如何流动
 - 坐标和分辨率如何解释
 - pixel art 如何显示
 - 碰撞体积系统
-	- 碰撞如何判断
+  - 碰撞如何判断
 - 有伤害生命值系统 伤害如何结算
 - 有生命值系统
-- 
+-
 - There are only mankind sprite
 - sprite size 如何分类 --不是世界规则
 
@@ -54,7 +59,6 @@ World Rules 不负责：
 - 单个 sprite 的具体动画帧内容
 
 ## World Environment Variables
-
 
 **Environment Variables** they parameterize World Rules into the specific fixed default values for this repository;
 
@@ -71,6 +75,7 @@ World Rules 不负责：
 | `logical_pixel_size` | `2×2`                             | Scale factor: 1 logical pixel = 2×2 screen pixels.           |
 | `sprite_palette`     | `Lospec EDG64`                    | Sprite color palette constraint for visual consistency.      |
 | `scene_palette`      | `unrestricted`                    | Scene/background palette has no restrictions.                |
+
 # "Let Us make man like Us": the origin (No. 0)
 
 ## Definition
@@ -460,7 +465,6 @@ NO      = not used in current PRD
 | interact | NO | NO | NO | ALLOWED: pickup / talk / trigger | ev_interact | no | no | interact clip |
 | debug_probe | NO | NO | NO | DEBUG: inspect boxes/timing | ev_debug_probe | optional test only | optional test only | optional |
 
-
 ## Move Comparison Fields
 
 Every row in the matrix should be comparable using the same fields:
@@ -482,6 +486,7 @@ Every row in the matrix should be comparable using the same fields:
 ## Move Execution BehaviorTree
 
 `bt_execute_move.tres` is the common attack-move executor.
+
 ````
 ```
 ```md

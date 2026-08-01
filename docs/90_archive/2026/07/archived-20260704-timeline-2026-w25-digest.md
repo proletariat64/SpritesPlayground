@@ -10,7 +10,7 @@ related_issue: ""
 related_pr: ""
 supersedes: ""
 original_path: "docs/timeline-weeks/digests/2026-W25-digest.md"
-superseded_by: "docs/02_prd/prd-20260626-sprites-playground-current-clean.md"
+superseded_by: "docs/02_prd/prd-20260626-sprites-playground-product-v0-6.md"
 ---
 
 # Week 1 (W25): Jun 21 – Jun 21 — The Stage Becomes Playable

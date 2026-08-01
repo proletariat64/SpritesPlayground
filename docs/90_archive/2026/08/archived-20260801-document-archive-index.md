@@ -9,12 +9,17 @@ updated: "2026-08-01"
 related_issue: ""
 related_pr: ""
 supersedes: ""
-superseded_by: "docs/02_prd/prd-20260626-sprites-playground-current-clean.md"
+superseded_by: "docs/02_prd/prd-20260626-sprites-playground-product-v0-6.md"
 ---
 
 # Document Archive Index
 
-The user designated `docs/02_prd/prd-20260626-sprites-playground-current-clean.md` as the sole canonical product PRD on 2026-08-01.
+On 2026-08-01, the former Current Clean PRD was revised to Product PRD v0.6 and the latest former `docs/New PRD.md` content was restored from the archive as Supplement PRD v0.6.3. The active product requirement set is therefore:
+
+- `docs/02_prd/prd-20260626-sprites-playground-product-v0-6.md`
+- `docs/02_prd/prd-20260626-world-rules-no0-adam-v0-6-3-supplement.md`
+
+Use v0.6.3 for Stage 0, No.0, Adam, and LimboAI-first architecture precedence; use v0.6 for product/data structure, Creator Lab, Playground validation, and acceptance boundaries.
 
 ## June 2026
 
@@ -34,7 +39,8 @@ Each archived document retains its original body and adds governance metadata co
 
 ## Active References
 
-- Canonical product requirements: `docs/02_prd/prd-20260626-sprites-playground-current-clean.md`
+- Product PRD v0.6: `docs/02_prd/prd-20260626-sprites-playground-product-v0-6.md`
+- Supplement PRD v0.6.3: `docs/02_prd/prd-20260626-world-rules-no0-adam-v0-6-3-supplement.md`
 - Current ADRs: `docs/04_adr/`
 - Current test records and plans: `docs/06_testing/`
 - Current operating procedures: `docs/07_runbooks/`

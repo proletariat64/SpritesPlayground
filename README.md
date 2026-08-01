@@ -101,4 +101,4 @@ combat gray s64 template
 - No full wardrobe/dress-up system.
 - No full PixelLab integration inside Godot yet.
 
-See the canonical [Current Clean PRD](docs/02_prd/prd-20260626-sprites-playground-current-clean.md) and GitHub issues for current scope and development acceptance criteria. Historical PRDs and implementation specifications are preserved under `docs/90_archive/`.
+See the active PRD pair — [Product PRD v0.6](docs/02_prd/prd-20260626-sprites-playground-product-v0-6.md) and [World Rules/No.0/Adam Supplement v0.6.3](docs/02_prd/prd-20260626-world-rules-no0-adam-v0-6-3-supplement.md) — plus GitHub issues for current scope and development acceptance criteria. Historical PRDs and implementation specifications are preserved under `docs/90_archive/`.

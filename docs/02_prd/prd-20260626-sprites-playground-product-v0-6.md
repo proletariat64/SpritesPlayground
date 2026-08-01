@@ -1,5 +1,5 @@
 ---
-title: "SpritesPlayground PRD - Current Clean Version"
+title: "SpritesPlayground Product PRD v0.6"
 doc_type: "prd"
 status: "approved"
 owner: "user"
@@ -8,11 +8,15 @@ created: "2026-06-26"
 updated: "2026-08-01"
 related_issue: ""
 related_pr: ""
-supersedes: "archived SpritesPlayground PRDs under docs/90_archive/2026/06/"
-authority_decision: "Sole canonical product PRD by user decision on 2026-08-01"
+supersedes: "docs/02_prd/prd-20260626-sprites-playground-current-clean.md"
+version: "0.6"
+supplemented_by: "docs/02_prd/prd-20260626-world-rules-no0-adam-v0-6-3-supplement.md"
+precedence: "Use v0.6.3 supplement for Stage 0, No.0, Adam, and LimboAI-first architecture; use this document for product/data structure, Creator Lab, Playground validation, and acceptance boundaries."
 ---
 
-# SpritesPlayground PRD：Current Clean Version
+# SpritesPlayground Product PRD v0.6
+
+> Version note: this document is the v0.6 product/data/validation PRD derived from the former Current Clean PRD. When it conflicts with `docs/02_prd/prd-20260626-world-rules-no0-adam-v0-6-3-supplement.md` on Stage 0, No.0, Adam, or LimboAI-first architecture, the v0.6.3 supplement takes precedence.
 
 ## 0. Product Boundary
 
