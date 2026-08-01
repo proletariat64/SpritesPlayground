@@ -95,7 +95,7 @@ func _valid_combatants() -> bool:
 func _install_limbo_hsm_if_available() -> void:
 	_remove_limbo_hsm()
 	if not ClassDB.class_exists("LimboHSM") or not ClassDB.class_exists("LimboState"):
-		push_error("LimboAI 1.8.0 is required; run: python3 tools/install_limboai.py")
+		push_error("LimboAI 1.8.0 is required; run: python3 scripts/install_limboai.py")
 		return
 	var candidate_hsm = ClassDB.instantiate("LimboHSM")
 	var approach_state = ClassDB.instantiate("LimboState")

@@ -70,15 +70,17 @@ SpritesPlayground/
 
 ## Required Setup
 
-SpritesPlayground requires Godot 4.6+ and LimboAI 1.8.0. LimboAI is a build dependency, not vendored project code:
+A development/debug/UAT checkout requires `uv`, Pi, and Godot `4.7.stable.official.5b4e0cb0f`. Ensure or verify the complete pinned environment with:
 
 ```bash
-python3 tools/install_limboai.py
-python3 tools/install_limboai.py --check
+python3 scripts/bootstrap_dev.py
+python3 scripts/bootstrap_dev.py --check
 godot --editor --path .
 ```
 
-See `dependencies/limboai.lock.json` and `docs/DEVELOPMENT.md` for the pinned source and build-environment policy.
+The bootstrap checks before installing: healthy components are skipped without network access, missing or damaged add-ons are restored from pinned artifacts, and only missing external Pi resources are passed to `pi install`. LimboAI 1.8.0 is required by development, tests, and exported runtime. Godot AI 3.0.7 is required for development, debugging, and UAT only; its verified export plugin strips `_mcp_game_helper` from exported runtime settings.
+
+Third-party add-ons and Pi package trees are not committed to Git. Project-owned `AGENTS.md`, `.pi/settings.json`, and `.pi/skills/` are tracked; credentials, sessions, and caches remain local. See `dependencies/`, the [bootstrap runbook](docs/07_runbooks/runbook-development-environment-bootstrap.md), and the [bootstrap test plan](docs/06_testing/test-20260801-development-environment-bootstrap.md).
 
 ## MVP Focus
 

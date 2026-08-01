@@ -10,12 +10,15 @@ import platform
 import shutil
 import sys
 import tempfile
+import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path, PurePosixPath
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 LOCK_PATH = PROJECT_ROOT / "dependencies" / "limboai.lock.json"
+USER_AGENT = "SpritesPlayground-bootstrap"
+HTTP_TIMEOUT_SECONDS = 120
 COMMON_FILES = {
     "LICENSE.md",
     "LOGO_LICENSE.md",
@@ -47,13 +50,20 @@ def _detect_platform() -> str:
 
 
 def _load_lock() -> dict[str, str]:
-    return json.loads(LOCK_PATH.read_text(encoding="utf-8"))
+    try:
+        return json.loads(LOCK_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise SystemExit(f"Cannot read LimboAI lock at {LOCK_PATH}: {error}") from error
 
 
 def _download(url: str, destination: Path) -> None:
-    print(f"Downloading {url}")
-    with urllib.request.urlopen(url) as response, destination.open("wb") as output:
-        shutil.copyfileobj(response, output)
+    print(f"Downloading {url}", flush=True)
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT_SECONDS) as response, destination.open("wb") as output:
+            shutil.copyfileobj(response, output)
+    except (urllib.error.URLError, OSError) as error:
+        raise SystemExit(f"Cannot download pinned LimboAI archive: {error}") from error
 
 
 def _verify_archive(archive: Path, expected_sha256: str) -> None:
@@ -116,7 +126,9 @@ def main() -> int:
     parser.add_argument("--all-platforms", action="store_true", help="Install every binary shipped in the pinned archive")
     parser.add_argument("--archive", type=Path, help="Use a previously downloaded release archive")
     parser.add_argument("--project-root", type=Path, default=PROJECT_ROOT, help="Installation root (defaults to this checkout)")
-    parser.add_argument("--check", action="store_true", help="Verify the required local installation without downloading")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--check", action="store_true", help="Verify without installing or downloading")
+    mode.add_argument("--repair", action="store_true", help="Reinstall even when the current installation is healthy")
     args = parser.parse_args()
 
     lock = _load_lock()
@@ -125,6 +137,14 @@ def main() -> int:
     if args.check:
         _check(install_path, lock, target_platform, args.all_platforms)
         return 0
+    if not args.repair:
+        try:
+            _check(install_path, lock, target_platform, args.all_platforms)
+        except (OSError, SystemExit) as error:
+            print(f"LimboAI needs repair: {error}")
+        else:
+            print(f"LimboAI v{lock['version']} already healthy; skipping installation")
+            return 0
 
     with tempfile.TemporaryDirectory(prefix="limboai-install-") as temp_dir_name:
         temp_dir = Path(temp_dir_name)
@@ -136,9 +156,12 @@ def main() -> int:
         extracted = _extract(archive, extracted_root, target_platform, args.all_platforms)
         if extracted == 0:
             raise SystemExit("Pinned LimboAI archive did not contain the expected add-on files")
-        install_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.rmtree(install_path, ignore_errors=True)
-        shutil.copytree(extracted_root, install_path)
+        try:
+            install_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.rmtree(install_path, ignore_errors=True)
+            shutil.copytree(extracted_root, install_path)
+        except OSError as error:
+            raise SystemExit(f"Cannot replace LimboAI installation at {install_path}: {error}") from error
 
     _check(install_path, lock, target_platform, args.all_platforms)
     print(f"Installed {extracted} files; addons/limboai remains build-local and gitignored")

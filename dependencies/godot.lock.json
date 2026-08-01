@@ -1,0 +1,7 @@
+{
+  "name": "Godot Engine",
+  "version": "4.7.stable.official.5b4e0cb0f",
+  "command": "godot",
+  "source_url": "https://godotengine.org/download/archive/4.7-stable/",
+  "role": "pinned editor and runtime development toolchain"
+}

@@ -64,6 +64,13 @@ venv/
 # Node/package managers
 node_modules/
 npm-debug.log*
+
+# Pi package installs, credentials, sessions, and generated artifacts
+.pi/npm/
+.pi/git/
+.pi/sessions/
+.pi/auth.json
+.pi-subagents/
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
@@ -90,6 +97,5 @@ Desktop.ini
 docs/.obsidian/
 docs/.claudian/
 docs/timeline-weeks/
-AGENTS.md
 AGENT.md
 CLAUDE.md

@@ -1,0 +1,13 @@
+{
+  "name": "Godot AI",
+  "version": "3.0.7",
+  "source_url": "https://github.com/hi-godot/godot-ai",
+  "release_url": "https://github.com/hi-godot/godot-ai/releases/tag/v3.0.7",
+  "license": "MIT",
+  "asset_name": "godot-ai-plugin.zip",
+  "download_url": "https://github.com/hi-godot/godot-ai/releases/download/v3.0.7/godot-ai-plugin.zip",
+  "sha256": "44116c8731c5411ab6ba84297604c9abe81786ec8f6a097b3a1bdee8fac54818",
+  "install_path": "addons/godot_ai",
+  "role": "required development, debugging, and UAT tool; excluded from exported game runtime",
+  "required_export_contract": "registered EditorExportPlugin strips autoload/_mcp_game_helper"
+}
