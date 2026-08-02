@@ -603,48 +603,50 @@ func set_move_events(events: Array) -> void:
 	_finish_authoring_draft_edit(accepted, false, "events applied")
 
 
-func insert_empty_frame_slot(sequence_id: String, frame_index: int, shift_timing: bool = false) -> bool:
-	if not shift_timing:
-		_set_status("frame insert blocked: choose shift timing")
-		return false
-	if not sprite_set_json.get("frame_sequences", {}).has(sequence_id):
-		_set_status("frame insert failed: missing sequence %s" % sequence_id)
-		return false
-	var sequence: Array = sprite_set_json["frame_sequences"][sequence_id]
-	var insert_index := clampi(frame_index, 0, sequence.size())
-	sequence.insert(insert_index, _slot_uri("empty", sequence_id, insert_index))
-	_shift_timing_after_insert(_move_id_for_sequence(sequence_id), insert_index)
-	_refresh_after_slot_edit("inserted empty frame")
-	return true
+func insert_empty_frame_slot(sequence_id: String, frame_index: int, shift_timing: bool) -> bool:
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.insert_frame_slot(
+		sequence_id,
+		frame_index,
+		_slot_uri("empty", sequence_id, frame_index),
+		shift_timing
+	)
+	_loading_authoring_draft = false
+	var success_status := "inserted empty frame; shifted timing" if shift_timing else "inserted empty frame; kept timing"
+	_finish_authoring_draft_edit(accepted, false, success_status)
+	_surface_authoring_draft_operation_error(accepted)
+	return accepted
 
 
 func remove_frame_slot(sequence_id: String, frame_index: int) -> bool:
-	if not sprite_set_json.get("frame_sequences", {}).has(sequence_id):
-		_set_status("frame remove failed: missing sequence %s" % sequence_id)
-		return false
-	var sequence: Array = sprite_set_json["frame_sequences"][sequence_id]
-	if frame_index < 0 or frame_index >= sequence.size():
-		_set_status("frame remove failed: frame out of range")
-		return false
-	var move_id := _move_id_for_sequence(sequence_id)
-	if _frame_has_timing_reference(move_id, frame_index):
-		_set_status("frame remove blocked: timing metadata references frame %d" % frame_index)
-		return false
-	sequence.remove_at(frame_index)
-	_shift_timing_after_delete(move_id, frame_index)
-	_refresh_after_slot_edit("removed frame")
-	return true
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.delete_frame_slot(sequence_id, frame_index)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted, false, "removed frame")
+	_surface_authoring_draft_operation_error(accepted)
+	return accepted
 
 
 func replace_frame_slot(sequence_id: String, frame_index: int, frame_path: String) -> bool:
-	return _set_frame_slot(sequence_id, frame_index, frame_path, "replaced frame")
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.replace_frame_slot(sequence_id, frame_index, frame_path)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted, false, "replaced frame")
+	_surface_authoring_draft_operation_error(accepted)
+	return accepted
 
 
 func mark_frame_slot(sequence_id: String, frame_index: int, slot_state: String) -> bool:
-	if not ["empty", "missing", "placeholder"].has(slot_state):
-		_set_status("frame mark failed: invalid slot state %s" % slot_state)
-		return false
-	return _set_frame_slot(sequence_id, frame_index, _slot_uri(slot_state, sequence_id, frame_index), "marked frame %s" % slot_state)
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.mark_frame_slot(sequence_id, frame_index, slot_state)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted, false, "marked frame %s" % slot_state)
+	_surface_authoring_draft_operation_error(accepted)
+	return accepted
 
 
 func wardrobe_coverage() -> Dictionary:
@@ -1075,7 +1077,9 @@ func _build_action_preview_detail(parent: VBoxContainer) -> void:
 	var slot_row := HBoxContainer.new()
 	slot_row.add_theme_constant_override("separation", 3)
 	parent.add_child(slot_row)
+	slot_row.add_child(_button("Ins<Keep", _on_frame_slot_insert_before_keep_pressed, 70))
 	slot_row.add_child(_button("Ins<+Shift", _on_frame_slot_insert_before_shift_pressed, 70))
+	slot_row.add_child(_button("Ins>Keep", _on_frame_slot_insert_after_keep_pressed, 70))
 	slot_row.add_child(_button("Ins>+Shift", _on_frame_slot_insert_after_shift_pressed, 70))
 	slot_row.add_child(_button("Remove", _on_frame_slot_remove_pressed, 52))
 	slot_row.add_child(_button("Empty", _on_frame_slot_mark_empty_pressed, 44))
@@ -1572,111 +1576,8 @@ func _current_frame_slot_text() -> String:
 	return ""
 
 
-func _set_frame_slot(sequence_id: String, frame_index: int, frame_path: String, status_text: String) -> bool:
-	if not sprite_set_json.get("frame_sequences", {}).has(sequence_id):
-		_set_status("frame edit failed: missing sequence %s" % sequence_id)
-		return false
-	_ensure_sequence_frame(sequence_id, frame_index)
-	sprite_set_json["frame_sequences"][sequence_id][frame_index] = frame_path
-	_refresh_after_slot_edit(status_text)
-	return true
-
-
-func _ensure_sequence_frame(sequence_id: String, frame_index: int) -> void:
-	var sequence: Array = sprite_set_json["frame_sequences"][sequence_id]
-	while sequence.size() <= frame_index:
-		sequence.append(_slot_uri("empty", sequence_id, sequence.size()))
-
-
 func _slot_uri(slot_state: String, sequence_id: String, frame_index: int) -> String:
 	return "%s://%s/%s/frame_%03d.png" % [slot_state, str(sprite_set_json.get("sprite_set_id", "sprite_set")), sequence_id, frame_index]
-
-
-func _move_id_for_sequence(sequence_id: String) -> String:
-	if coverage.is_empty():
-		refresh_action_coverage()
-	for row in coverage.get("rows", []):
-		if str(row.get("frame_sequence_ref", "")) == sequence_id:
-			return str(row.get("backing_move_id", ""))
-	if moves_json.has(sequence_id):
-		return sequence_id
-	return ""
-
-
-func _frame_has_timing_reference(move_id: String, frame_index: int) -> bool:
-	if move_id.is_empty() or not moves_json.has(move_id):
-		return false
-	var move: Dictionary = moves_json[move_id]
-	if _window_contains(move.get("active_window", {}), frame_index):
-		return true
-	for hitbox in move.get("hitboxes", []):
-		if _window_contains(hitbox.get("active_window", {}), frame_index):
-			return true
-	for hurtbox in move.get("hurtboxes", []):
-		if _window_contains(hurtbox.get("active_window", {}), frame_index):
-			return true
-	for event in move.get("events", []):
-		if int(event.get("frame", -1)) == frame_index:
-			return true
-	return false
-
-
-func _window_contains(window: Dictionary, frame_index: int) -> bool:
-	return frame_index >= int(window.get("start_frame", 0)) and frame_index <= int(window.get("end_frame", -1))
-
-
-func _shift_timing_after_insert(move_id: String, frame_index: int) -> void:
-	if move_id.is_empty() or not moves_json.has(move_id):
-		return
-	var move: Dictionary = moves_json[move_id]
-	move["frame_count"] = maxi(1, int(move.get("frame_count", 1)) + 1)
-	_shift_window_after_insert(move.get("active_window", {}), frame_index)
-	for hitbox in move.get("hitboxes", []):
-		_shift_window_after_insert(hitbox.get("active_window", {}), frame_index)
-	for hurtbox in move.get("hurtboxes", []):
-		_shift_window_after_insert(hurtbox.get("active_window", {}), frame_index)
-	for event in move.get("events", []):
-		if int(event.get("frame", -1)) >= frame_index:
-			event["frame"] = int(event["frame"]) + 1
-
-
-func _shift_timing_after_delete(move_id: String, frame_index: int) -> void:
-	if move_id.is_empty() or not moves_json.has(move_id):
-		return
-	var move: Dictionary = moves_json[move_id]
-	move["frame_count"] = maxi(1, int(move.get("frame_count", 1)) - 1)
-	_shift_window_after_delete(move.get("active_window", {}), frame_index)
-	for hitbox in move.get("hitboxes", []):
-		_shift_window_after_delete(hitbox.get("active_window", {}), frame_index)
-	for hurtbox in move.get("hurtboxes", []):
-		_shift_window_after_delete(hurtbox.get("active_window", {}), frame_index)
-	for event in move.get("events", []):
-		if int(event.get("frame", -1)) > frame_index:
-			event["frame"] = int(event["frame"]) - 1
-
-
-func _shift_window_after_insert(window: Dictionary, frame_index: int) -> void:
-	if window.is_empty():
-		return
-	if int(window.get("start_frame", 0)) >= frame_index:
-		window["start_frame"] = int(window["start_frame"]) + 1
-	if int(window.get("end_frame", 0)) >= frame_index:
-		window["end_frame"] = int(window["end_frame"]) + 1
-
-
-func _shift_window_after_delete(window: Dictionary, frame_index: int) -> void:
-	if window.is_empty():
-		return
-	if int(window.get("start_frame", 0)) > frame_index:
-		window["start_frame"] = int(window["start_frame"]) - 1
-	if int(window.get("end_frame", 0)) > frame_index:
-		window["end_frame"] = int(window["end_frame"]) - 1
-
-
-func _refresh_after_slot_edit(status_text: String) -> void:
-	refresh_action_coverage()
-	_refresh_fields()
-	_set_status(status_text)
 
 
 func _coverage_row_color(row: Dictionary) -> Color:
@@ -1899,6 +1800,14 @@ func _finish_authoring_draft_edit(accepted: bool, refresh_options: bool = false,
 		_set_errors(diagnostics)
 	elif not success_status.is_empty():
 		_set_status(success_status)
+
+
+func _surface_authoring_draft_operation_error(accepted: bool) -> void:
+	if accepted:
+		return
+	var operation_error := str(_authoring_draft.last_operation_error())
+	if not operation_error.is_empty():
+		_set_status(operation_error)
 
 
 func _sync_authoring_draft_from_legacy_if_needed() -> bool:
@@ -2391,8 +2300,16 @@ func _on_preview_reset_pressed() -> void:
 	preview_reset()
 
 
+func _on_frame_slot_insert_before_keep_pressed() -> void:
+	insert_empty_frame_slot(_current_sequence_ref(), preview_frame, false)
+
+
 func _on_frame_slot_insert_before_shift_pressed() -> void:
 	insert_empty_frame_slot(_current_sequence_ref(), preview_frame, true)
+
+
+func _on_frame_slot_insert_after_keep_pressed() -> void:
+	insert_empty_frame_slot(_current_sequence_ref(), preview_frame + 1, false)
 
 
 func _on_frame_slot_insert_after_shift_pressed() -> void:

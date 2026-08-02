@@ -5,6 +5,8 @@ const DraftScript := preload("res://godot/scripts/creator_lab_authoring_draft.gd
 
 const TEMPLATE_ID := "combat_gray_s64"
 const MOVE_ID := "basic_punch"
+const MOVE_SEQUENCE_ID := "basic_punch"
+const REPAIR_SLOT := "empty://combat_gray_s64/basic_punch/frame_008.png"
 
 var _errors: Array = []
 
@@ -14,8 +16,6 @@ func _init() -> void:
 
 
 func _run() -> void:
-	_run_expanded_scalar_slice()
-
 	var draft = _new_draft()
 	var missing_methods: Array = []
 	for method_name in [
@@ -24,12 +24,14 @@ func _run() -> void:
 		"edit_first_hitbox",
 		"edit_first_attack_hurtbox",
 		"edit_move_events",
+		"insert_frame_slot",
 	]:
 		if not draft.has_method(method_name):
 			missing_methods.append(method_name)
 			_expect(false, "Authoring Draft exposes public %s" % method_name)
 
 	if missing_methods.is_empty():
+		_run_expanded_scalar_slice()
 		_run_complete_move_edit_slice()
 		_run_atomic_rejection_slice()
 		_run_invalid_retention_and_repair_slice()
@@ -59,10 +61,22 @@ func _run_expanded_scalar_slice() -> void:
 		"frame_count edit is visible in the current Draft"
 	)
 	_expect(
-		_move(frame_count_edit, true).get("frame_count", -1) == 9,
-		"valid frame_count edit advances the Preview snapshot"
+		_move(frame_count_edit, true).get("frame_count", -1) == 8,
+		"frame_count-only edit retains the previous valid Preview snapshot"
 	)
 	_expect(bool(frame_count_edit.get("dirty", false)), "frame_count edit marks the Draft dirty")
+	_expect(not frame_count_edit.get("diagnostics", []).is_empty(), "frame_count-only edit diagnoses the mapped sequence mismatch")
+	_expect(not bool(frame_count_edit.get("can_save", true)), "frame_count-only mismatch blocks Save")
+	_expect(not bool(frame_count_edit.get("can_apply", true)), "frame_count-only mismatch blocks Apply")
+	_expect(
+		draft.insert_frame_slot(MOVE_SEQUENCE_ID, 8, REPAIR_SLOT, false),
+		"explicit Keep insertion repairs the mapped sequence length without shifting Move timing"
+	)
+	var repaired_frame_count: Dictionary = draft.snapshot()
+	_expect(repaired_frame_count.get("diagnostics", []).is_empty(), "coherent sequence repair clears frame_count diagnostics")
+	_expect(bool(repaired_frame_count.get("can_save", false)), "coherent sequence repair restores Save eligibility")
+	_expect(bool(repaired_frame_count.get("can_apply", false)), "coherent sequence repair restores Apply eligibility")
+	_expect(_move(repaired_frame_count, true).get("frame_count", -1) == 9, "coherent sequence repair advances the valid Preview")
 
 	draft = _new_draft()
 	_expect(
@@ -110,6 +124,10 @@ func _run_complete_move_edit_slice() -> void:
 		"Draft edits the first attack hurtbox"
 	)
 	_expect(draft.edit_move_events(MOVE_ID, _events("hit_draft_fist", 2, 4)), "Draft edits Move events")
+	_expect(
+		draft.insert_frame_slot(MOVE_SEQUENCE_ID, 8, REPAIR_SLOT, false),
+		"complete Move edit repairs its mapped frame sequence through explicit Keep"
+	)
 
 	var snapshot: Dictionary = draft.snapshot()
 	var current := _move(snapshot)
@@ -194,12 +212,15 @@ func _run_invalid_retention_and_repair_slice() -> void:
 	_expect(not draft.snapshot().get("diagnostics", []).is_empty(), "events remain diagnostic after box repairs")
 	_expect(draft.snapshot().get("preview_bundle", {}) == trusted_preview, "Preview remains trusted until all references are repaired")
 
-	_expect(draft.edit_move_events(MOVE_ID, _events("hit_fist_1", 3, 4)), "invalid Draft accepts the final event repair")
+	_expect(draft.edit_move_events(MOVE_ID, _events("hit_fist_1", 3, 4)), "invalid Draft accepts the event-window repair")
+	_expect(not draft.snapshot().get("diagnostics", []).is_empty(), "mapped sequence mismatch remains after timing-reference repairs")
+	_expect(draft.snapshot().get("preview_bundle", {}) == trusted_preview, "sequence mismatch still retains the latest valid Preview")
+	_expect(draft.edit_move_scalar(MOVE_ID, "frame_count", 8), "Draft repairs frame count to the unchanged mapped sequence length")
 	var repaired: Dictionary = draft.snapshot()
 	_expect(repaired.get("diagnostics", []).is_empty(), "complete timing repair makes the Draft valid")
 	_expect(bool(repaired.get("can_save", false)), "repaired Draft can Save")
 	_expect(bool(repaired.get("can_apply", false)), "repaired Draft can Apply")
-	_expect(int(_move(repaired, true).get("frame_count", -1)) == 5, "repaired valid frame count advances Preview")
+	_expect(int(_move(repaired, true).get("frame_count", -1)) == 8, "repaired valid frame count advances Preview")
 	_expect(repaired.get("preview_bundle", {}) == repaired.get("bundle", {}), "repaired valid Draft becomes the trusted Preview")
 
 

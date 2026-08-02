@@ -170,14 +170,28 @@ func _run_character_template_draft_slice() -> void:
 
 	var alternate_bundle := DataStore.load_runtime_bundle(ALTERNATE_TEMPLATE_ID)
 	var alternate_template: Dictionary = alternate_bundle.get("template", {})
-	var alternate_moves: Dictionary = alternate_bundle.get("moves", {})
+	var alternate_moves: Dictionary = alternate_bundle.get("moves", {}).duplicate(true)
+	# The alternate SpriteSet intentionally uses longer idle art and shorter hurt art.
+	# Build coherent unsaved Move documents so the two-step relationship swap can
+	# prove last-valid retention between its document edits.
+	alternate_moves["idle"]["frame_count"] = 6
+	alternate_moves["hurt"]["frame_count"] = 2
+	alternate_moves["hurt"]["active_window"]["end_frame"] = 1
+	alternate_moves["hurt"]["events"][0]["frame"] = 1
 	var alternate_move_ids: Array = alternate_template.get("equipped_moves", []).duplicate(true)
+	var valid_before_relationship_swap: Dictionary = draft.snapshot().get("preview_bundle", {}).duplicate(true)
 	_expect(
 		draft.set_equipped_moves(alternate_move_ids, alternate_moves),
 		"Draft owns equipped Move ids and documents as one edit"
 	)
 	var equipped_snapshot: Dictionary = draft.snapshot()
-	_expect(equipped_snapshot.get("diagnostics", []).is_empty(), "coherent equipped Move edit validates")
+	_expect(not equipped_snapshot.get("diagnostics", []).is_empty(), "first relationship document exposes temporary frame-count mismatches")
+	_expect(not bool(equipped_snapshot.get("can_save", true)), "temporary relationship mismatch blocks Save")
+	_expect(not bool(equipped_snapshot.get("can_apply", true)), "temporary relationship mismatch blocks Apply")
+	_expect(
+		equipped_snapshot.get("preview_bundle", {}) == valid_before_relationship_swap,
+		"first relationship document retains the latest valid Preview"
+	)
 	_expect(
 		equipped_snapshot.get("bundle", {}).get("template", {}).get("equipped_moves", []) == alternate_move_ids
 		and equipped_snapshot.get("bundle", {}).get("moves", {}) == alternate_moves,

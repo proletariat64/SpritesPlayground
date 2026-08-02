@@ -1,6 +1,8 @@
 extends RefCounted
 class_name PrdV03DocumentRules
 
+const ActionCatalog := preload("res://godot/scripts/creator_lab_action_catalog.gd")
+
 const FORBIDDEN_KEYS := {
 	"action": true,
 	"actions": true,
@@ -62,6 +64,41 @@ static func validate_runtime_bundle(bundle: Dictionary) -> Array:
 		var sequence_ref := str(clip.get("frame_sequence_ref", ""))
 		if not sequences.has(sequence_ref):
 			errors.append("animation clip %s missing frame sequence %s" % [clip_id, sequence_ref])
+	errors.append_array(_validate_mapped_sequence_lengths(mapping, clips, sequences, moves))
+	return errors
+
+
+static func _validate_mapped_sequence_lengths(mapping: Dictionary, clips: Dictionary, sequences: Dictionary, moves: Dictionary) -> Array:
+	var errors: Array = []
+	var checked_pairs: Dictionary = {}
+	for action_key in mapping.keys():
+		var action_id := str(action_key)
+		var clip_id := str(mapping[action_key])
+		if not clips.has(clip_id) or typeof(clips[clip_id]) != TYPE_DICTIONARY:
+			continue
+		var sequence_ref := str(clips[clip_id].get("frame_sequence_ref", ""))
+		if not sequences.has(sequence_ref) or typeof(sequences[sequence_ref]) != TYPE_ARRAY:
+			continue
+
+		var backing_move_id := ActionCatalog.backing_move_id(ActionCatalog.action_for(action_id))
+		if backing_move_id.is_empty() or not moves.has(backing_move_id):
+			backing_move_id = action_id
+		if not moves.has(backing_move_id) or typeof(moves[backing_move_id]) != TYPE_DICTIONARY:
+			continue
+
+		var checked_sequences: Dictionary = checked_pairs.get(backing_move_id, {})
+		if checked_sequences.has(sequence_ref):
+			continue
+		checked_sequences[sequence_ref] = true
+		checked_pairs[backing_move_id] = checked_sequences
+
+		var sequence_frame_count: int = sequences[sequence_ref].size()
+		var move_frame_count := int(moves[backing_move_id].get("frame_count", 0))
+		if sequence_frame_count != move_frame_count:
+			errors.append(
+				"action %s sequence %s has %d frame slots, but backing move %s has frame_count %d"
+				% [action_id, sequence_ref, sequence_frame_count, backing_move_id, move_frame_count]
+			)
 	return errors
 
 

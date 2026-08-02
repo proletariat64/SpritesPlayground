@@ -295,25 +295,9 @@ func _run_panel_tracer(persisted_move_before: String) -> void:
 	var clips: Dictionary = panel.sprite_set_json.get("animation_clips", {})
 	var clip_id := str(mapping.get(MOVE_ID, ""))
 	var sequence_ref := str(clips.get(clip_id, {}).get("frame_sequence_ref", ""))
-	var held_sequences: Dictionary = panel.sprite_set_json.get("frame_sequences", {})
-	var held_sequence: Array = held_sequences.get(sequence_ref, [])
-	var sequence_size_before := held_sequence.size()
+	var sequence_size_before: int = panel.sprite_set_json.get("frame_sequences", {}).get(sequence_ref, []).size()
 	var frame_count_before := int(panel.selected_move_json().get("frame_count", 0))
-	_expect(not sequence_ref.is_empty() and sequence_size_before > 0, "remaining SpriteSet bridge exposes the selected Move frame sequence")
-	_expect(
-		panel.insert_empty_frame_slot(sequence_ref, sequence_size_before, true),
-		"public frame-slot edit accepts an explicit timing shift through the remaining legacy bridge"
-	)
-	_expect(
-		is_same(held_sequence, panel.sprite_set_json.get("frame_sequences", {}).get(sequence_ref, [])),
-		"accepted legacy import preserves a held nested frame-sequence alias"
-	)
-	_expect(
-		held_sequence.size() == sequence_size_before + 1
-		and int(panel.selected_move_json().get("frame_count", 0)) == frame_count_before + 1,
-		"accepted legacy frame-slot import keeps sequence and Move timing changes coherent"
-	)
-
+	_expect(not sequence_ref.is_empty() and sequence_size_before > 0, "legacy import rollback fixture exposes the selected Move frame sequence")
 	var accepted_preview: Dictionary = panel.preview_observation().duplicate(true)
 	var accepted_preview_frame_count: int = panel.preview_frame_count()
 	panel.sprite_set_json.clear()
@@ -329,8 +313,8 @@ func _run_panel_tracer(persisted_move_before: String) -> void:
 	)
 	_expect(
 		str(panel.sprite_set_json.get("sprite_set_id", "")) == str(panel.template_json.get("sprite_set_ref", ""))
-		and panel.sprite_set_json.get("frame_sequences", {}).get(sequence_ref, []).size() == sequence_size_before + 1
-		and int(panel.selected_move_json().get("frame_count", 0)) == frame_count_before + 1,
+		and panel.sprite_set_json.get("frame_sequences", {}).get(sequence_ref, []).size() == sequence_size_before
+		and int(panel.selected_move_json().get("frame_count", 0)) == frame_count_before,
 		"rejected legacy import rolls Panel aliases back to the accepted Draft snapshot"
 	)
 	_expect(

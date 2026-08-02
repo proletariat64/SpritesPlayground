@@ -132,6 +132,7 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 		return false
 
 	var original_punch := V03DataStoreScript.load_move("basic_punch").duplicate(true)
+	var original_sprite_set := V03DataStoreScript.load_sprite_set("combat_gray_s64").duplicate(true)
 	var copy_id := "combat_gray_s64_runtime_smoke_copy"
 	var copy_path := V03DataStoreScript.template_path(copy_id)
 	if FileAccess.file_exists(copy_path):
@@ -161,7 +162,7 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 	playground.select_player_character()
 	panel.copy_template(copy_id)
 	if str(panel.template_json["template_id"]) != copy_id:
-		_restore_creator_smoke(original_punch, copy_path)
+		_restore_creator_smoke(original_punch, original_sprite_set, copy_path)
 		return false
 
 	panel.set_hp(101)
@@ -169,6 +170,7 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 	panel.set_foot_collision({"x": 1, "y": -5}, {"x": 19, "y": 9})
 	panel.select_move("basic_punch")
 	panel.set_move_scalar("frame_count", 9)
+	var frame_sequence_repair_ok: bool = panel.insert_empty_frame_slot("basic_punch", 8, false)
 	panel.set_move_active_window(2, 6)
 	panel.set_move_scalar("damage", 9)
 	panel.set_move_scalar("hitstop_frames", 4)
@@ -181,7 +183,8 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 	var live_hurt: Rect2 = playground.player.hurtbox_profile["hurt_head"]
 	var live_foot: Dictionary = playground.player.foot_collision_profile
 	var live_apply_ok := (
-		bound_apply_ok
+		frame_sequence_repair_ok
+		and bound_apply_ok
 		and int(playground.player.max_hp) == 101
 		and str(playground.player.template_id) == copy_id
 		and str(playground.player.sprite_set_id) == str(panel.template_json["sprite_set_ref"])
@@ -232,7 +235,7 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 	var runtime_summary: Dictionary = panel.runtime_summary()
 	var runtime_ok: bool = start_errors.is_empty() and int(runtime_summary["active_hitbox_count"]) == 1
 
-	_restore_creator_smoke(original_punch, copy_path)
+	_restore_creator_smoke(original_punch, original_sprite_set, copy_path)
 	playground.player.apply_template_id("combat_gray_s64")
 	if not (player_bound and dummy_bound and hud_ok and live_apply_ok and live_bridge_ok and invalid_apply_ok and exact_ok and wardrobe_ok and toggle_ok and runtime_ok):
 		print("creator_lab_smoke player_bound=%s dummy_bound=%s hud_ok=%s live_apply_ok=%s live_bridge_ok=%s invalid_apply=%s exact_ok=%s wardrobe_ok=%s toggle_ok=%s runtime_ok=%s" % [player_bound, dummy_bound, hud_ok, live_apply_ok, live_bridge_ok, invalid_apply_ok, exact_ok, wardrobe_ok, toggle_ok, runtime_ok])
@@ -644,8 +647,9 @@ func _run_input_focus_smoke(playground: Node) -> bool:
 	return focused_before and closed_focus_released
 
 
-func _restore_creator_smoke(original_punch: Dictionary, copy_path: String) -> void:
+func _restore_creator_smoke(original_punch: Dictionary, original_sprite_set: Dictionary, copy_path: String) -> void:
 	V03DataStoreScript.save_move(original_punch)
+	V03DataStoreScript.save_sprite_set(original_sprite_set)
 	if FileAccess.file_exists(copy_path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(copy_path))
 
