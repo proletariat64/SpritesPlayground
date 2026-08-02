@@ -39,7 +39,7 @@ class EdenCharacterImportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             project_root = Path(temp_dir)
             # Pre-existing shared moves owned by other characters must survive import.
-            shared_move = project_root / "data/v0_3/moves/idle.json"
+            shared_move = project_root / "data/v0_6/moves/idle.json"
             shared_move.parent.mkdir(parents=True)
             shared_move.write_text('{"move_id": "idle"}\n', encoding="utf-8")
 
@@ -71,9 +71,9 @@ class EdenCharacterImportTests(unittest.TestCase):
 
             # Character-scoped move files exist; shared move files are untouched.
             self.assertTrue(
-                (project_root / "data/v0_3/moves/miduo_jab.json").is_file()
+                (project_root / "data/v0_6/moves/miduo_jab.json").is_file()
             )
-            self.assertFalse((project_root / "data/v0_3/moves/jab.json").exists())
+            self.assertFalse((project_root / "data/v0_6/moves/jab.json").exists())
             self.assertEqual(
                 shared_move.read_text(encoding="utf-8"), '{"move_id": "idle"}\n'
             )
@@ -135,8 +135,8 @@ class EdenCharacterImportTests(unittest.TestCase):
             project_root = Path(temp_dir)
             import_character(self.package_root, "Miduo", project_root)
             palette = _palette_from_document(MIDUO_BLUE_MAPPING)
-            source_template = project_root / "data/v0_3/templates/miduo.json"
-            source_move = project_root / "data/v0_3/moves/miduo_jab.json"
+            source_template = project_root / "data/v0_6/templates/miduo.json"
+            source_move = project_root / "data/v0_6/moves/miduo_jab.json"
             source_template_before = source_template.read_bytes()
             source_move_before = source_move.read_bytes()
 
@@ -165,10 +165,10 @@ class EdenCharacterImportTests(unittest.TestCase):
             )
 
             target_template = json.loads(
-                (project_root / "data/v0_3/templates/miduo_blue.json").read_text()
+                (project_root / "data/v0_6/templates/miduo_blue.json").read_text()
             )
             target_sprite_set = json.loads(
-                (project_root / "data/v0_3/sprite_sets/miduo_blue.json").read_text()
+                (project_root / "data/v0_6/sprite_sets/miduo_blue.json").read_text()
             )
             self.assertEqual(target_template["template_id"], "miduo_blue")
             self.assertEqual(target_template["sprite_set_ref"], "miduo_blue")
@@ -180,9 +180,9 @@ class EdenCharacterImportTests(unittest.TestCase):
             )
 
             target_template["hp"] = 333
-            target_template_path = project_root / "data/v0_3/templates/miduo_blue.json"
+            target_template_path = project_root / "data/v0_6/templates/miduo_blue.json"
             target_template_path.write_text(json.dumps(target_template), encoding="utf-8")
-            target_move_path = project_root / "data/v0_3/moves/miduo_blue_jab.json"
+            target_move_path = project_root / "data/v0_6/moves/miduo_blue_jab.json"
             target_move = json.loads(target_move_path.read_text())
             target_move["damage"] = 77
             target_move_path.write_text(json.dumps(target_move), encoding="utf-8")
@@ -216,9 +216,9 @@ def _snapshot_generated_files(root: Path) -> dict[str, bytes]:
     """Capture every importer-owned output byte, including frames and provenance."""
     generated_roots = (
         root / "data/imports",
-        root / "data/v0_3/moves",
-        root / "data/v0_3/sprite_sets",
-        root / "data/v0_3/templates",
+        root / "data/v0_6/moves",
+        root / "data/v0_6/sprite_sets",
+        root / "data/v0_6/templates",
         root / "godot/assets/frames",
     )
     return {

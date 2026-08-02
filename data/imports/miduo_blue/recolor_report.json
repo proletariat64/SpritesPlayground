@@ -48,8 +48,8 @@
     "palette_mapping": "data/imports/miduo_blue/palette_mapping.json",
     "provenance": "data/imports/miduo_blue",
     "report": "data/imports/miduo_blue/recolor_report.json",
-    "sprite_set": "data/v0_3/sprite_sets/miduo_blue.json",
-    "template": "data/v0_3/templates/miduo_blue.json"
+    "sprite_set": "data/v0_6/sprite_sets/miduo_blue.json",
+    "template": "data/v0_6/templates/miduo_blue.json"
   },
   "recolored_pixel_count": 73112,
   "schema_version": 1,

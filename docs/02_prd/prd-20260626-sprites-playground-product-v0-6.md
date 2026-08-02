@@ -730,12 +730,39 @@ Current verification commands:
 
 ```bash
 python3 tools/validate_prd_v0_3.py
-godot --headless --path . --script tools/prd_v0_3_runtime_smoke.gd
-godot --headless --path . --script tools/creator_lab_v0_3_smoke.gd
+python3 -m unittest tests.test_legacy_seams -v
+godot --headless --path . --script tools/v0_6_data_root_smoke.gd
 godot --headless --path . --script tools/runtime_smoke.gd
+godot --headless --path . --script tools/creator_lab_authoring_draft_smoke.gd
+godot --headless --path . --script tools/creator_lab_authoring_draft_lifecycle_smoke.gd
+godot --headless --path . --script tools/creator_lab_character_template_draft_smoke.gd
+godot --headless --path . --script tools/creator_lab_move_authoring_draft_smoke.gd
+godot --headless --path . --script tools/creator_lab_sprite_set_authoring_draft_smoke.gd
+godot --headless --path . --script tools/creator_lab_dirty_switching_smoke.gd
+godot --headless --path . --script tools/creator_lab_real_preview_smoke.gd
+godot --headless --path . --script tools/creator_lab_runtime_spriteframes_smoke.gd
+godot --headless --path . --script tools/creator_lab_v0_3_smoke.gd
+godot --headless --path . --script tools/authored_data_persistence_smoke.gd
+godot --headless --path . --script tools/collision_tuning_smoke.gd
+godot --headless --path . --script tools/stats_timing_persistence_smoke.gd
+godot --headless --path . --script tools/miduo_import_smoke.gd
+godot --headless --path . --script tools/miduo_recolor_smoke.gd
 godot --headless --path . --script tools/spriteframes_generation_smoke.gd
 godot --headless --path . --script tools/spriteframes_runtime_smoke.gd
+godot --headless --path . --script tools/locomotion_8dir_smoke.gd
+godot --headless --path . --script tools/action_presentation_smoke.gd
+godot --headless --path . --script tools/live_animationplayer_timing_smoke.gd
+godot --headless --path . --script tools/live_move_events_smoke.gd
+godot --headless --path . --script tools/input_event_controls_smoke.gd
+godot --headless --path . --script tools/ai_combat_smoke.gd
+godot --headless --path . --script tools/adam_cain_punch_demo_smoke.gd
 ```
+
+`runtime_smoke.gd` is the authoritative live-gameplay surface gate;
+`creator_lab_authoring_draft_smoke.gd` is the authoritative Authoring draft surface gate.
+CI installs the locked Godot 4.7 binary plus the pinned LimboAI and Godot AI add-ons,
+imports the project headlessly, runs those two surfaces first, then runs the listed
+regressions serially so persistence fixtures cannot overlap.
 
 ---
 
@@ -744,9 +771,9 @@ godot --headless --path . --script tools/spriteframes_runtime_smoke.gd
 Current data roots:
 
 ```text
-data/v0_3/templates/*.json
-data/v0_3/moves/*.json
-data/v0_3/sprite_sets/*.json
+data/v0_6/templates/*.json
+data/v0_6/moves/*.json
+data/v0_6/sprite_sets/*.json
 data/schemas/v0_3/*.schema.json
 godot/resources/sprite_frames/*.tres
 ```

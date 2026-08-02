@@ -14,8 +14,9 @@ func _init() -> void:
 func _run() -> void:
 	var errors: Array = []
 	var bundle := DataStore.load_runtime_bundle(SKELETON_ID)
-	var generation: Dictionary = Generator.generate(bundle["sprite_set"], {"moves": bundle["moves"]})
+	var generation: Dictionary = Generator.build_in_memory(bundle["sprite_set"], {"moves": bundle["moves"]})
 	errors.append_array(_expect(bool(generation.get("ok", false)), "generates skeleton SpriteFrames for runtime"))
+	var generated_frames: SpriteFrames = generation.get("sprite_frames", null)
 
 	var character: Node2D = CombatCharacterScript.new()
 	character.instance_id = "spriteframes_runtime_smoke"
@@ -23,6 +24,7 @@ func _run() -> void:
 	root.add_child(character)
 	await process_frame
 	character.apply_v0_3_runtime_bundle(bundle["template"], bundle["sprite_set"], bundle["moves"])
+	character.apply_runtime_sprite_frames(generated_frames)
 	await process_frame
 
 	errors.append_array(_expect(character.has_method("has_spriteframes_playback"), "character exposes playback probe"))
@@ -32,12 +34,12 @@ func _run() -> void:
 	if sprite != null:
 		errors.append_array(_expect(sprite.sprite_frames != null, "AnimatedSprite2D has sprite_frames"))
 		errors.append_array(_expect(str(sprite.animation) == "idle", "AnimatedSprite2D starts idle"))
-		character.state_machine.current_state = "walk"
-		character.state_machine.current_move = "walk"
-		character._sync_visual_animation()
+		character.state_machine.tick(1.0 / 60.0, Vector2.RIGHT)
+		character.apply_runtime_sprite_frames(sprite.sprite_frames)
 		errors.append_array(_expect(str(sprite.animation) == "walk", "AnimatedSprite2D maps walk state"))
-		character.move_executor.start_attack_intent("basic_punch")
-		character._sync_visual_animation()
+		character.reset_runtime(Vector2.ZERO)
+		errors.append_array(_expect(character.request_attack("basic_punch"), "basic_punch starts through the public runtime seam"))
+		character.apply_runtime_sprite_frames(sprite.sprite_frames)
 		errors.append_array(_expect(str(sprite.animation) == "basic_punch", "AnimatedSprite2D maps basic_punch"))
 		errors.append_array(_expect(int(sprite.frame) == int(character.move_executor.current_frame()), "attack frame starts in parity"))
 		character.tick_character(1.0 / 60.0, Vector2.ZERO, Vector2(999, 999))
@@ -53,7 +55,11 @@ func _run() -> void:
 	fallback.is_test_dummy = true
 	root.add_child(fallback)
 	await process_frame
-	errors.append_array(_expect(not bool(fallback.has_spriteframes_playback()), "missing default SpriteFrames uses fallback"))
+	var fallback_template: Dictionary = fallback.template.duplicate(true)
+	fallback_template["sprite_set_id"] = "missing_v0_6_sprite_set"
+	fallback.apply_runtime_template(fallback_template)
+	await process_frame
+	errors.append_array(_expect(not bool(fallback.has_spriteframes_playback()), "missing SpriteFrames uses fallback"))
 
 	if errors.is_empty():
 		print("spriteframes_runtime_smoke=PASS")

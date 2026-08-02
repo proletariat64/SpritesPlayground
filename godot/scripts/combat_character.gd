@@ -136,6 +136,16 @@ func apply_v0_3_runtime_bundle(next_template: Dictionary, _next_sprite_set: Dict
 	queue_redraw()
 
 
+func apply_runtime_sprite_frames(frames: SpriteFrames) -> void:
+	_ensure_animated_sprite()
+	sprite_frames_path = ""
+	animated_sprite.sprite_frames = frames
+	sprite_frames_valid = frames != null
+	animated_sprite.visible = sprite_frames_valid
+	_sync_visual_animation()
+	queue_redraw()
+
+
 func _apply_template_data(runtime_template: Dictionary) -> void:
 	template_id = str(runtime_template["template_id"])
 	sprite_size_class = str(runtime_template["sprite_size_class"])
@@ -292,8 +302,12 @@ func debug_summary() -> Dictionary:
 		"instance_id": instance_id,
 		"sprite_set_id": sprite_set_id,
 		"state": state_machine.current_state,
+		"state_context": state_machine.current_state_context,
+		"state_authority_backend": state_machine.state_authority_backend(),
+		"state_authority_state": state_machine.state_authority_state(),
 		"move": state_machine.current_move,
 		"frame": state_machine.current_frame(),
+		"hitstop_frames": move_executor.hitstop_frames_remaining(),
 		"hp": "%d/%d" % [current_hp, max_hp],
 		"active_hitboxes": move_executor.active_hitboxes_local().size(),
 		"last_hit_hurtbox": _hit_hurtbox_id,

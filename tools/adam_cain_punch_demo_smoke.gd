@@ -23,6 +23,10 @@ func _run() -> void:
 	await physics_frame
 
 	var playground: Node = demo.get_node("Playground")
+	if not playground.has_method("advance_gameplay"):
+		push_error("adam_cain_punch_demo_smoke requires public Playground.advance_gameplay(delta)")
+		quit(1)
+		return
 	var adam: Node2D = playground.player
 	var cain: Node2D = playground.dummy
 	# This regression slice owns its historical fixtures; Playground defaults may change.
@@ -249,7 +253,7 @@ func _reset_pair(playground: Node, adam: Node2D, cain: Node2D, adam_position: Ve
 	adam.control_mode = "manual"
 	cain.control_mode = "manual"
 	cain.is_test_dummy = true
-	playground._tick_combat(DELTA)
+	playground.advance_gameplay(DELTA)
 
 
 func _request_basic_punch(attacker: Node2D) -> void:
@@ -352,10 +356,10 @@ func _build_report() -> String:
 	lines.append("| move state mapping | move -> walk / locomotion | scenario assumption + walk MoveData | mapped |")
 	lines.append("| states | idle, walk, attack, hurt, dead | CombatStateMachine | present |")
 	lines.append("| hp/current_hp | Adam %s, Cain %s | CharacterTemplate -> CombatCharacter | present |" % [values["adam_hp"], values["cain_hp"]])
-	lines.append("| live hitbox rect/window | %s f%s-f%s total=%s | data/moves/basic_punch.json -> MoveExecutor | present |" % [str(values["runtime_hitbox_rect"]), values["runtime_basic_punch_active_start"], values["runtime_basic_punch_active_end"], values["runtime_basic_punch_frame_count"]])
-	lines.append("| v0.3 hitbox rect/window | %s f%s-f%s total=%s | data/v0_3/moves/basic_punch.json | reference, not live Playground path |" % [str(values["hitbox_rect"]), values["v03_basic_punch_active_start"], values["v03_basic_punch_active_end"], values["v03_basic_punch_frame_count"]])
-	lines.append("| hurtbox rect/priority/DEF | hurtbox rects present; priority is dictionary order; DEF missing | data/templates/*.json live path; data/v0_3/templates reference | partial |")
-	lines.append("| hitbox_atk | missing; live runtime uses damage=%s | PRD/DDD vs data/moves/basic_punch.json | mismatch |" % values["runtime_basic_punch_damage"])
+	lines.append("| live hitbox rect/window | %s f%s-f%s total=%s | data/v0_6/moves/basic_punch.json -> MoveExecutor | present |" % [str(values["runtime_hitbox_rect"]), values["runtime_basic_punch_active_start"], values["runtime_basic_punch_active_end"], values["runtime_basic_punch_frame_count"]])
+	lines.append("| v0.3-schema hitbox rect/window | %s f%s-f%s total=%s | data/v0_6/moves/basic_punch.json | active authored-data path |" % [str(values["hitbox_rect"]), values["v03_basic_punch_active_start"], values["v03_basic_punch_active_end"], values["v03_basic_punch_frame_count"]])
+	lines.append("| hurtbox rect/priority/DEF | hurtbox rects present; priority is dictionary order; DEF missing | data/v0_6/templates/*.json | partial |")
+	lines.append("| hitbox_atk | missing; live runtime uses damage=%s | PRD/DDD vs data/v0_6/moves/basic_punch.json | mismatch |" % values["runtime_basic_punch_damage"])
 	lines.append("| damage formula | design says max(0, hitbox_atk-hurtbox_def); runtime applies window damage | PRD/DDD + MoveExecutor/Playground | mismatch |")
 	lines.append("| hitstop/hitstun | v0.3 hitstop_frames=%s in data; live Playground path does not consume hitstop/hitstun | data + runtime | missing in live slice |" % values["v03_basic_punch_hitstop_frames"])
 	lines.append("| cancel window | absent in runtime move template | runtime | missing |")

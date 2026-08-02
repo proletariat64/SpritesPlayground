@@ -63,6 +63,78 @@ jobs:
       - name: Scan changed production code for fake-complete markers
         run: make fake-check
 
+  legacy-seam-guard:
+    name: Legacy Seam Guard
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Reject retired contracts and private smoke seams
+        run: python3 -m unittest tests.test_legacy_seams -v
+
+  godot-headless-regressions:
+    name: Godot 4.7 Headless Regressions
+    runs-on: ubuntu-24.04
+    env:
+      GODOT_DOWNLOAD_URL: https://github.com/godotengine/godot-builds/releases/download/4.7-stable/Godot_v4.7-stable_linux.x86_64.zip
+      GODOT_BINARY_NAME: Godot_v4.7-stable_linux.x86_64
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Install and verify locked Godot
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --output /tmp/godot.zip "$GODOT_DOWNLOAD_URL"
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          sudo install -m 0755 "/tmp/godot/$GODOT_BINARY_NAME" /usr/local/bin/godot
+          expected_version="$(python3 -c 'import json; print(json.load(open("dependencies/godot.lock.json", encoding="utf-8"))["version"])')"
+          test "$(godot --version)" = "$expected_version"
+      - name: Install and verify locked development add-ons
+        run: |
+          python3 scripts/install_limboai.py --platform linux-x86_64
+          python3 scripts/install_limboai.py --platform linux-x86_64 --check
+          python3 scripts/install_godot_ai.py
+          python3 scripts/install_godot_ai.py --check
+      - name: Import project headlessly
+        run: godot --headless --path . --editor --import
+      - name: Verify approved product surfaces serially
+        run: |
+          godot --headless --path . --script tools/runtime_smoke.gd
+          godot --headless --path . --script tools/creator_lab_authoring_draft_smoke.gd
+      - name: Run key regressions serially
+        run: |
+          set -euo pipefail
+          smokes=(
+            tools/action_presentation_smoke.gd
+            tools/adam_cain_punch_demo_smoke.gd
+            tools/ai_combat_smoke.gd
+            tools/authored_data_persistence_smoke.gd
+            tools/collision_tuning_smoke.gd
+            tools/creator_lab_authoring_draft_lifecycle_smoke.gd
+            tools/creator_lab_character_template_draft_smoke.gd
+            tools/creator_lab_dirty_switching_smoke.gd
+            tools/creator_lab_move_authoring_draft_smoke.gd
+            tools/creator_lab_real_preview_smoke.gd
+            tools/creator_lab_runtime_spriteframes_smoke.gd
+            tools/creator_lab_sprite_set_authoring_draft_smoke.gd
+            tools/creator_lab_v0_3_smoke.gd
+            tools/input_event_controls_smoke.gd
+            tools/live_animationplayer_timing_smoke.gd
+            tools/live_move_events_smoke.gd
+            tools/locomotion_8dir_smoke.gd
+            tools/miduo_import_smoke.gd
+            tools/miduo_recolor_smoke.gd
+            tools/spriteframes_generation_smoke.gd
+            tools/spriteframes_runtime_smoke.gd
+            tools/stats_timing_persistence_smoke.gd
+            tools/v0_6_data_root_smoke.gd
+          )
+          for smoke in "${smokes[@]}"; do
+            godot --headless --path . --script "$smoke"
+          done
+
   pr-quality-summary:
     name: PR Quality Summary
     runs-on: ubuntu-24.04
@@ -71,6 +143,8 @@ jobs:
       - repository-hygiene
       - docs-quality
       - fake-implementation-guard
+      - legacy-seam-guard
+      - godot-headless-regressions
     if: always()
     steps:
       - name: Summary
@@ -79,3 +153,5 @@ jobs:
           test "${{ needs.repository-hygiene.result }}" = "success"
           test "${{ needs.docs-quality.result }}" = "success"
           test "${{ needs.fake-implementation-guard.result }}" = "success"
+          test "${{ needs.legacy-seam-guard.result }}" = "success"
+          test "${{ needs.godot-headless-regressions.result }}" = "success"

@@ -33,10 +33,10 @@ The runnable Godot slice proves movement, attack start, active hitbox overlap, o
 | move state mapping | move -> walk / locomotion | scenario assumption + walk MoveData | mapped |
 | states | idle, walk, attack, hurt, dead | CombatStateMachine | present |
 | hp/current_hp | Adam 100, Cain 100 | CharacterTemplate -> CombatCharacter | present |
-| live hitbox rect/window | { "x": 12.0, "y": -48.0, "w": 24.0, "h": 14.0 } f7-f12 total=27 | data/moves/basic_punch.json -> MoveExecutor | present |
-| v0.3 hitbox rect/window | { "h": 14.0, "w": 24.0, "x": 12.0, "y": -48.0 } f3-f5 total=8 | data/v0_3/moves/basic_punch.json | reference, not live Playground path |
-| hurtbox rect/priority/DEF | hurtbox rects present; priority is dictionary order; DEF missing | data/templates/*.json live path; data/v0_3/templates reference | partial |
-| hitbox_atk | missing; live runtime uses damage=8 | PRD/DDD vs data/moves/basic_punch.json | mismatch |
+| live hitbox rect/window | { "x": 12.0, "y": -48.0, "w": 24.0, "h": 14.0 } f7-f12 total=27 | data/v0_6/moves/basic_punch.json -> MoveExecutor | present |
+| v0.3-schema hitbox rect/window | { "h": 14.0, "w": 24.0, "x": 12.0, "y": -48.0 } f3-f5 total=8 | data/v0_6/moves/basic_punch.json | active authored-data path |
+| hurtbox rect/priority/DEF | hurtbox rects present; priority is dictionary order; DEF missing | data/v0_6/templates/*.json | partial |
+| hitbox_atk | missing; live runtime uses damage=8 | PRD/DDD vs data/v0_6/moves/basic_punch.json | mismatch |
 | damage formula | design says max(0, hitbox_atk-hurtbox_def); runtime applies window damage | PRD/DDD + MoveExecutor/Playground | mismatch |
 | hitstop/hitstun | v0.3 hitstop_frames=3 in data; live Playground path does not consume hitstop/hitstun | data + runtime | missing in live slice |
 | cancel window | absent in runtime move template | runtime | missing |
@@ -59,11 +59,11 @@ The runnable Godot slice proves movement, attack start, active hitbox overlap, o
 
 | frame | Adam state | move | move frame | active | overlap | Cain HP | Cain state | hurtbox |
 | --- | --- | --- | ---: | ---: | --- | ---: | --- | --- |
-| 1 | attack | basic_punch | 2 | 0 | false | 100 | idle |  |
-| 2 | attack | basic_punch | 3 | 0 | false | 100 | idle |  |
-| 3 | attack | basic_punch | 4 | 0 | false | 100 | idle |  |
-| 4 | attack | basic_punch | 5 | 0 | false | 100 | idle |  |
-| 5 | attack | basic_punch | 6 | 0 | false | 100 | idle |  |
+| 1 | attack | basic_punch | 2 | 0 | false | 100 | idle | |
+| 2 | attack | basic_punch | 3 | 0 | false | 100 | idle | |
+| 3 | attack | basic_punch | 4 | 0 | false | 100 | idle | |
+| 4 | attack | basic_punch | 5 | 0 | false | 100 | idle | |
+| 5 | attack | basic_punch | 6 | 0 | false | 100 | idle | |
 | 6 | attack | basic_punch | 7 | 1 | true | 92 | hurt | hurt_head |
 | 7 | attack | basic_punch | 8 | 1 | true | 92 | hurt | hurt_head |
 | 8 | attack | basic_punch | 9 | 1 | true | 92 | hurt | hurt_head |

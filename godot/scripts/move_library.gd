@@ -1,7 +1,8 @@
 extends Resource
 class_name MoveLibrary
 
-const CreatorDataStoreScript := preload("res://godot/scripts/creator_data_store.gd")
+const DataStore := preload("res://godot/scripts/prd_v0_3_data_store.gd")
+const CharacterTemplateScript := preload("res://godot/scripts/character_template.gd")
 
 
 static func combat_gray_s64_moves() -> Dictionary:
@@ -12,4 +13,4 @@ static func combat_gray_s64_moves() -> Dictionary:
 
 
 static func load_move(move_id: String) -> Dictionary:
-	return CreatorDataStoreScript.move_json_to_runtime(CreatorDataStoreScript.load_move_json(move_id))
+	return CharacterTemplateScript.v0_3_move_to_runtime(move_id, DataStore.load_move(move_id))

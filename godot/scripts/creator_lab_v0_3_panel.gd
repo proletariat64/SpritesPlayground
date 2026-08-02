@@ -2,10 +2,10 @@ extends PanelContainer
 class_name CreatorLabV03Panel
 
 const DataStore := preload("res://godot/scripts/prd_v0_3_data_store.gd")
-const Runtime := preload("res://godot/scripts/prd_v0_3_runtime.gd")
 const Catalog := preload("res://godot/scripts/creator_lab_action_catalog.gd")
 const Coverage := preload("res://godot/scripts/creator_lab_action_coverage.gd")
 const ActionPreview := preload("res://godot/scripts/creator_lab_action_preview.gd")
+const AuthoringDraftScript := preload("res://godot/scripts/creator_lab_authoring_draft.gd")
 const SpriteFramesGeneratorScript := preload("res://godot/scripts/spriteframes_generator.gd")
 const COLOR_TITLE := Color(0.72, 0.86, 1.0)
 const COLOR_LABEL := Color(0.82, 0.88, 0.95)
@@ -15,25 +15,26 @@ const COLOR_ACTION := Color(0.98, 0.82, 0.36)
 const COLOR_CHARACTER := Color(0.56, 0.82, 1.0)
 const COLOR_MOVE := Color(1.0, 0.78, 0.42)
 const COLOR_WARDROBE := Color(0.62, 0.88, 0.58)
-const COLOR_RUNTIME := Color(0.84, 0.72, 1.0)
+const COLOR_NPC := Color(0.84, 0.72, 1.0)
 const COLOR_PASS := Color(0.42, 0.88, 0.56)
 const COLOR_WARN := Color(1.0, 0.78, 0.28)
 const COLOR_FAIL := Color(1.0, 0.42, 0.36)
 const COLOR_STATUS := Color(0.72, 0.78, 0.84)
-const PREVIEW_FRAME_SECONDS := 1.0 / 12.0
-
+const SWITCH_TEMPLATE := "template"
+const SWITCH_BOUND_INSTANCE := "bound_instance"
 signal bind_player_requested
 signal bind_dummy_requested
 signal add_npc_requested(template_id: String)
 signal remove_selected_npc_requested
 signal bind_npc_requested(index: int)
 signal npc_template_selected(template_id: String)
+signal bound_instance_switch_committed(instance: Node)
 
+# Detached rendering caches. Authoring mutations only enter through Authoring Draft APIs.
 var template_json: Dictionary = {}
 var sprite_set_json: Dictionary = {}
 var moves_json: Dictionary = {}
 var selected_move: String = "idle"
-var runtime: RefCounted = Runtime.new()
 var bound_instance_ref = null
 var bound_instance_id: String = ""
 var bound_template_id: String = ""
@@ -51,12 +52,12 @@ var preview_frame: int = 0
 var preview_show_hurtboxes: bool = true
 var preview_show_hitboxes: bool = true
 var preview_show_foot: bool = true
-var _preview_elapsed: float = 0.0
 var npc_template_id: String = "combat_gray_s64"
 var npc_count_current: int = 1
 var npc_limit: int = 10
 var selected_npc_index: int = 0
 var npc_status: String = ""
+var _data_root: String = DataStore.DEFAULT_DATA_ROOT
 
 var template_select: OptionButton
 var npc_template_select: OptionButton
@@ -66,7 +67,11 @@ var move_select: OptionButton
 var sprite_set_select: OptionButton
 var coverage_list: ItemList
 var status_label: Label
-var runtime_label: Label
+var draft_state_label: Label
+var save_button: Button
+var discard_button: Button
+var apply_bound_button: Button
+var switch_dialog: ConfirmationDialog
 var preview_frame_label: Label
 var preview_frame_slider: HSlider
 var frame_slot_path_input: LineEdit
@@ -105,62 +110,57 @@ var current_hurtbox_id: String = "hurt_head"
 var current_move_section: String = "summary"
 var nav_keys: Array = []
 var move_section_list: ItemList
+var _authoring_draft: RefCounted = AuthoringDraftScript.new()
+var _loading_authoring_draft: bool = false
+var _pending_switch_kind: String = ""
+var _pending_template_id: String = ""
+var _pending_instance_ref = null
+var _pending_instance_id: String = ""
+var _pending_instance_template_id: String = ""
 
 
-func setup() -> void:
+func setup(data_root: String = DataStore.DEFAULT_DATA_ROOT) -> void:
+	_data_root = data_root.strip_edges() if not data_root.strip_edges().is_empty() else DataStore.DEFAULT_DATA_ROOT
 	set_process(true)
+	if not _authoring_draft.valid_snapshot_changed.is_connected(_on_authoring_draft_valid_snapshot_changed):
+		_authoring_draft.valid_snapshot_changed.connect(_on_authoring_draft_valid_snapshot_changed)
 	_build_ui()
 	_ensure_floating_preview_window()
 	load_template_id("combat_gray_s64")
 
 
+func _exit_tree() -> void:
+	if floating_preview_window != null and is_instance_valid(floating_preview_window):
+		floating_preview_window.queue_free()
+	floating_preview_window = null
+	floating_preview_control = null
+	floating_preview_frame_label = null
+
+
 func _process(delta: float) -> void:
 	if not preview_playing:
 		return
-	_preview_elapsed += delta * preview_speed
-	if _preview_elapsed < PREVIEW_FRAME_SECONDS:
-		return
-	_preview_elapsed = 0.0
-	var last_frame: int = maxi(0, _preview_frame_count() - 1)
-	if preview_frame >= last_frame:
+	if action_preview_control == null or not action_preview_control.has_method("advance_time"):
 		preview_playing = false
-		_refresh_action_preview()
 		return
-	preview_frame = mini(preview_frame + 1, last_frame)
-	_refresh_action_preview()
+	action_preview_control.advance_time(maxf(0.0, delta) * preview_speed)
+	var observation := preview_observation()
+	_sync_preview_frame_from_observation(observation)
+	if bool(observation.get("completed", false)):
+		preview_playing = false
+	_refresh_action_preview_chrome()
 
 
 func load_template_id(template_id: String) -> Array:
-	template_json = DataStore.load_template(template_id)
-	if template_json.is_empty():
-		return _set_errors(["missing template %s" % template_id])
-	sprite_set_json = DataStore.load_sprite_set(str(template_json["sprite_set_ref"]))
-	moves_json.clear()
-	for move_id in template_json["equipped_moves"]:
-		moves_json[str(move_id)] = DataStore.load_move(str(move_id))
-	if not template_json["equipped_moves"].is_empty():
-		selected_move = str(template_json["equipped_moves"][0])
-	_refresh_options()
-	_refresh_fields()
-	return validate_current()
+	var result := request_template_switch(template_id)
+	var errors: Array = result.get("errors", []).duplicate(true)
+	if errors.is_empty() and not bool(result.get("ok", false)):
+		errors.append("Authoring Draft lifecycle %s" % str(result.get("outcome", "failed")))
+	return errors
 
 
-func bind_instance(instance: Node) -> void:
-	if instance == null:
-		_set_status("bind failed: missing instance")
-		return
-	bound_instance_ref = weakref(instance)
-	update_bound_instance_summary(instance)
-	if bound_template_id.is_empty():
-		_set_status("bound %s without template id" % bound_instance_id)
-		_refresh_fields()
-		return
-	if not DataStore.list_template_ids().has(bound_template_id):
-		_set_status("bound %s; missing v0.3 template %s" % [bound_instance_id, bound_template_id])
-		_refresh_fields()
-		return
-	load_template_id(bound_template_id)
-	_set_status("bound %s" % bound_instance_id)
+func bind_instance(instance: Node) -> Dictionary:
+	return request_bound_instance_switch(instance)
 
 
 func update_bound_instance_summary(instance: Node) -> void:
@@ -182,6 +182,7 @@ func update_bound_instance_summary(instance: Node) -> void:
 
 
 func refresh_action_coverage() -> Dictionary:
+	_refresh_authored_cache_from_draft()
 	coverage = Coverage.analyze(template_json, sprite_set_json, moves_json)
 	return coverage
 
@@ -189,12 +190,13 @@ func refresh_action_coverage() -> Dictionary:
 func select_action(action_id: String) -> void:
 	if Catalog.action_for(action_id).is_empty():
 		return
+	preview_playing = false
+	preview_frame = 0
 	current_action_id = action_id
 	var row := _coverage_row_for(action_id)
 	var move_id := str(row.get("backing_move_id", ""))
 	if moves_json.has(move_id):
 		selected_move = move_id
-	preview_frame = clampi(preview_frame, 0, maxi(0, _preview_frame_count() - 1))
 	_refresh_fields()
 
 
@@ -235,46 +237,44 @@ func selected_npc_bind_index() -> int:
 
 
 func preview_play() -> void:
-	if preview_frame >= maxi(0, _preview_frame_count() - 1):
-		preview_frame = 0
-	_preview_elapsed = 0.0
-	preview_playing = true
 	_refresh_action_preview()
+	var observation := preview_observation()
+	if bool(observation.get("completed", false)) or preview_frame >= maxi(0, _preview_frame_count() - 1):
+		_seek_preview_to(0)
+		observation = preview_observation()
+	preview_playing = not bool(observation.get("completed", true))
+	_refresh_action_preview_chrome()
 
 
 func preview_pause() -> void:
 	preview_playing = false
-	_refresh_action_preview()
+	_refresh_action_preview_chrome()
 
 
 func preview_step_forward() -> void:
 	preview_playing = false
-	preview_frame = mini(preview_frame + 1, maxi(0, _preview_frame_count() - 1))
 	_refresh_action_preview()
+	if action_preview_control != null and action_preview_control.has_method("step_forward"):
+		action_preview_control.step_forward()
+	var observation := preview_observation()
+	_sync_preview_frame_from_observation(observation)
+	_refresh_action_preview_chrome()
 
 
 func preview_step_backward() -> void:
-	preview_playing = false
-	preview_frame = maxi(0, preview_frame - 1)
-	_refresh_action_preview()
+	_seek_preview_to(maxi(0, preview_frame - 1))
 
 
 func preview_first() -> void:
-	preview_playing = false
-	preview_frame = 0
-	_refresh_action_preview()
+	_seek_preview_to(0)
 
 
 func preview_last() -> void:
-	preview_playing = false
-	preview_frame = maxi(0, _preview_frame_count() - 1)
-	_refresh_action_preview()
+	_seek_preview_to(maxi(0, _preview_frame_count() - 1))
 
 
 func set_preview_frame(frame_index: int) -> void:
-	preview_playing = false
-	preview_frame = clampi(frame_index, 0, maxi(0, _preview_frame_count() - 1))
-	_refresh_action_preview()
+	_seek_preview_to(frame_index)
 
 
 func preview_frame_count() -> int:
@@ -282,12 +282,20 @@ func preview_frame_count() -> int:
 
 
 func preview_reset() -> void:
-	preview_first()
+	_seek_preview_to(0)
+
+
+func preview_sprite() -> Node:
+	return action_preview_control.real_sprite() if action_preview_control != null else null
+
+
+func preview_observation() -> Dictionary:
+	return action_preview_control.observation() if action_preview_control != null else {}
 
 
 func set_preview_speed(value: float) -> void:
 	preview_speed = 0.5 if value < 0.75 else 1.0
-	_refresh_action_preview()
+	_refresh_action_preview_chrome()
 
 
 func toggle_preview_window() -> void:
@@ -306,92 +314,294 @@ func set_preview_window_visible(next_visible: bool) -> void:
 
 
 func is_preview_window_visible() -> bool:
-	return floating_preview_window != null and floating_preview_window.visible
+	return (
+		floating_preview_window != null
+		and is_instance_valid(floating_preview_window)
+		and floating_preview_window.visible
+	)
+
+
+func draft_status() -> Dictionary:
+	var snapshot: Dictionary = _authoring_draft.snapshot()
+	return {
+		"template_id": str(snapshot.get("bundle", {}).get("template", {}).get("template_id", "")),
+		"bound_instance_id": bound_instance_id,
+		"dirty": bool(snapshot.get("dirty", false)),
+		"diagnostics": snapshot.get("diagnostics", []).duplicate(true),
+		"can_save": bool(snapshot.get("can_save", false)),
+		"can_apply": bool(snapshot.get("can_apply", false)),
+	}
+
+
+func authoring_draft_snapshot() -> Dictionary:
+	return _authoring_draft.snapshot().duplicate(true)
+
+
+func pending_switch_status() -> Dictionary:
+	var snapshot: Dictionary = _authoring_draft.snapshot()
+	return {
+		"pending": not _pending_switch_kind.is_empty(),
+		"kind": _pending_switch_kind,
+		"target_template_id": _pending_template_id,
+		"target_instance_id": _pending_instance_id,
+		"can_save": bool(snapshot.get("can_save", false)),
+		"can_discard": bool(snapshot.get("dirty", false)),
+		"choices": ["save", "discard", "cancel"],
+	}
+
+
+func request_template_switch(template_id: String) -> Dictionary:
+	_refresh_authored_cache_from_draft()
+	var target_id := template_id.strip_edges()
+	if target_id.is_empty():
+		return _switch_outcome(false, "failed", ["missing template id"])
+	if not _pending_switch_kind.is_empty():
+		_show_switch_dialog()
+		return _switch_outcome(false, "decision_required", ["resolve the pending switch first"])
+	if target_id == str(template_json.get("template_id", "")):
+		_restore_template_selector()
+		return _switch_outcome(true, "unchanged")
+	var loaded := _load_bundle_from_root(target_id)
+	var load_errors: Array = loaded.get("errors", [])
+	if not load_errors.is_empty():
+		_restore_template_selector()
+		_set_errors(load_errors)
+		return _switch_outcome(false, "failed", load_errors)
+	if bool(_authoring_draft.snapshot().get("dirty", false)):
+		_set_pending_template_switch(target_id)
+		_restore_template_selector()
+		_set_status("switch decision required: template %s" % target_id)
+		_show_switch_dialog()
+		return _switch_outcome(false, "decision_required")
+	return _commit_template_switch(target_id, loaded.get("bundle", {}))
+
+
+func request_bound_instance_switch(instance: Node) -> Dictionary:
+	if instance == null or not is_instance_valid(instance):
+		return _switch_outcome(false, "target_unavailable", ["missing bound instance"])
+	if not _pending_switch_kind.is_empty():
+		_show_switch_dialog()
+		return _switch_outcome(false, "decision_required", ["resolve the pending switch first"])
+	var summary := _instance_summary(instance)
+	var target_instance_id := str(summary.get("instance_id", ""))
+	var target_template_id := str(summary.get("template_id", ""))
+	if _bound_instance() == instance and target_template_id == bound_template_id:
+		update_bound_instance_summary(instance)
+		return _switch_outcome(true, "unchanged")
+	if target_template_id.is_empty():
+		var errors := ["bound %s without template id" % target_instance_id]
+		_set_errors(errors)
+		return _switch_outcome(false, "failed", errors)
+	var loaded := _load_bundle_from_root(target_template_id)
+	var load_errors: Array = loaded.get("errors", [])
+	if not load_errors.is_empty():
+		_set_errors(load_errors)
+		return _switch_outcome(false, "failed", load_errors)
+	if bool(_authoring_draft.snapshot().get("dirty", false)):
+		_set_pending_bound_instance_switch(instance, target_instance_id, target_template_id)
+		_set_status("switch decision required: bind %s" % target_instance_id)
+		_show_switch_dialog()
+		return _switch_outcome(false, "decision_required")
+	return _commit_bound_instance_switch(instance, loaded.get("bundle", {}))
+
+
+func resolve_pending_switch(decision: String) -> Dictionary:
+	if _pending_switch_kind.is_empty():
+		return _switch_outcome(false, "failed", ["no pending switch"])
+	if decision == "cancel":
+		_clear_pending_switch()
+		_restore_template_selector()
+		_set_status("switch cancelled")
+		_hide_switch_dialog()
+		_refresh_draft_lifecycle_ui()
+		return _switch_outcome(true, "cancelled")
+	if not ["save", "discard"].has(decision):
+		return _switch_outcome(false, "invalid_decision", ["invalid switch decision %s" % decision])
+
+	var prepared := _prepare_pending_target()
+	var prepare_errors: Array = prepared.get("errors", [])
+	if not prepare_errors.is_empty():
+		_set_errors(prepare_errors)
+		return _switch_outcome(false, "target_unavailable", prepare_errors)
+	if decision == "save":
+		var save_errors := save_all()
+		if not save_errors.is_empty():
+			_show_switch_dialog()
+			return _switch_outcome(false, "save_failed", save_errors)
+	else:
+		if not discard_current():
+			var errors := ["discard failed"]
+			_set_errors(errors)
+			return _switch_outcome(false, "failed", errors)
+
+	prepared = _prepare_pending_target()
+	prepare_errors = prepared.get("errors", [])
+	if not prepare_errors.is_empty():
+		_set_errors(prepare_errors)
+		return _switch_outcome(false, "target_unavailable", prepare_errors)
+	var result := _commit_prepared_pending_target(prepared)
+	if str(result.get("outcome", "")) == "switched":
+		_clear_pending_switch()
+		_hide_switch_dialog()
+		return _switch_outcome(true, "switched")
+	return result
 
 
 func copy_template(copy_id: String = "") -> String:
+	_refresh_authored_cache_from_draft()
 	var source_id := str(template_json["template_id"])
 	var next_id := copy_id if not copy_id.is_empty() else _next_copy_id(source_id)
-	template_json = DataStore.duplicate_template(source_id, next_id)
-	_refresh_options()
-	_refresh_fields()
-	_set_status("copied %s" % next_id)
-	return next_id
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.copy_template(next_id)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted, true, "copied %s (unsaved)" % next_id)
+	return next_id if accepted else ""
 
 
-func save_all() -> void:
+func save_all() -> Array:
 	var errors := validate_current()
 	if not errors.is_empty():
-		return
-	DataStore.save_template(template_json)
-	for move_id in moves_json.keys():
-		DataStore.save_move(moves_json[move_id])
-	DataStore.save_sprite_set(sprite_set_json)
-	var generation := SpriteFramesGeneratorScript.generate(sprite_set_json, {"moves": moves_json})
+		_refresh_draft_lifecycle_ui()
+		return errors
+	var draft_bundle: Dictionary = _authoring_draft.snapshot().get("bundle", {})
+	var draft_template: Dictionary = draft_bundle.get("template", {})
+	var save_errors := DataStore.save_runtime_bundle(draft_bundle, _data_root)
+	if not save_errors.is_empty():
+		_set_errors(save_errors)
+		_refresh_draft_lifecycle_ui()
+		return save_errors
+
+	var template_id := str(draft_template.get("template_id", ""))
+	var reloaded := _load_bundle_from_root(template_id)
+	var reload_errors: Array = reloaded.get("errors", [])
+	if not reload_errors.is_empty():
+		_set_errors(reload_errors)
+		_refresh_draft_lifecycle_ui()
+		return reload_errors
+	var persisted_bundle: Dictionary = reloaded.get("bundle", {})
+	_loading_authoring_draft = true
+	var baseline_errors: Array = _authoring_draft.accept_persisted_bundle(persisted_bundle)
+	_loading_authoring_draft = false
+	if not baseline_errors.is_empty():
+		_set_errors(baseline_errors)
+		_refresh_draft_lifecycle_ui()
+		return baseline_errors
+	_refresh_authored_cache_from_draft()
+	_refresh_options()
+	_refresh_fields()
+
+	var persisted_sprite_set: Dictionary = persisted_bundle.get("sprite_set", {})
+	var persisted_moves: Dictionary = persisted_bundle.get("moves", {})
+	var generation_options := {"moves": persisted_moves}
+	if _data_root != DataStore.DEFAULT_DATA_ROOT:
+		generation_options["output_path"] = _data_root.path_join("sprite_frames").path_join(
+			"%s.tres" % str(persisted_sprite_set.get("sprite_set_id", ""))
+		)
+	var generation := SpriteFramesGeneratorScript.generate(persisted_sprite_set, generation_options)
 	if bool(generation.get("ok", false)):
-		_set_status("saved %s + SpriteFrames generated" % str(template_json["template_id"]))
+		_set_status("saved %s + SpriteFrames generated" % template_id)
 	else:
 		_set_status("saved JSON; SpriteFrames generation FAIL: %s" % _diagnostic_codes(generation.get("errors", [])))
+	_refresh_draft_lifecycle_ui()
+	return []
+
+
+func discard_current() -> bool:
+	_loading_authoring_draft = true
+	var discarded: bool = _authoring_draft.discard_changes()
+	_loading_authoring_draft = false
+	if not discarded:
+		_set_status("discard failed")
+		_refresh_draft_lifecycle_ui()
+		return false
+	_refresh_authored_cache_from_draft()
+	preview_playing = false
+	preview_frame = 0
+	if not moves_json.has(selected_move) and not template_json.get("equipped_moves", []).is_empty():
+		selected_move = str(template_json["equipped_moves"][0])
+	_refresh_options()
+	_refresh_fields()
+	_set_status("discarded unsaved Authoring Draft changes")
+	_refresh_draft_lifecycle_ui()
+	return true
 
 
 func apply_to_bound_instance() -> bool:
-	var errors := validate_current()
-	if not errors.is_empty():
+	_refresh_authored_cache_from_draft()
+	var draft_snapshot: Dictionary = _authoring_draft.snapshot()
+	if not bool(draft_snapshot.get("can_apply", false)):
+		var diagnostics: Array = draft_snapshot.get("diagnostics", []).duplicate(true)
+		if diagnostics.is_empty():
+			diagnostics.append("apply blocked: Authoring Draft is invalid")
+		_set_errors(diagnostics)
 		return false
+	var draft_bundle: Dictionary = draft_snapshot.get("bundle", {})
+	var draft_template: Dictionary = draft_bundle.get("template", {})
+	var draft_sprite_set: Dictionary = draft_bundle.get("sprite_set", {})
+	var draft_moves: Dictionary = draft_bundle.get("moves", {})
 	var instance := _bound_instance()
 	if instance == null:
 		_set_status("apply failed: no bound instance")
 		return false
 
-	var generation := SpriteFramesGeneratorScript.generate(sprite_set_json, {"moves": moves_json})
+	var generation := SpriteFramesGeneratorScript.build_in_memory(draft_sprite_set, {"moves": draft_moves})
 	if not bool(generation.get("ok", false)):
 		_set_status("apply blocked: SpriteFrames generation FAIL: %s" % _diagnostic_codes(generation.get("errors", [])))
 		return false
+	var generated_frames = generation.get("sprite_frames", null)
+	if not (generated_frames is SpriteFrames):
+		_set_status("apply blocked: SpriteFrames generation returned no frames")
+		return false
 
-	if instance.has_method("apply_v0_3_runtime_bundle"):
-		instance.apply_v0_3_runtime_bundle(template_json, sprite_set_json, moves_json)
-	else:
-		var max_hp := maxi(1, int(template_json.get("hp", 1)))
-		instance.set("template_id", str(template_json.get("template_id", "")))
-		instance.set("sprite_set_id", str(template_json.get("sprite_set_ref", "")))
-		instance.set("max_hp", max_hp)
-		instance.set("current_hp", mini(int(_node_property(instance, "current_hp")), max_hp))
-		instance.set("walk_speed", maxf(1.0, float(template_json.get("walk_speed", 95.0))))
-		instance.set("run_speed", maxf(1.0, float(template_json.get("run_speed", 150.0))))
-		instance.set("hurtbox_profile", _runtime_hurtbox_profile())
-		instance.set("foot_collision_profile", _runtime_foot_collision_profile())
-		if instance.has_method("queue_redraw"):
-			instance.queue_redraw()
+	if not instance.has_method("apply_v0_3_runtime_bundle"):
+		_set_status("apply failed: bound instance has no live bundle path")
+		return false
+	instance.apply_v0_3_runtime_bundle(draft_template, draft_sprite_set, draft_moves)
+	if instance.has_method("apply_runtime_sprite_frames"):
+		instance.apply_runtime_sprite_frames(generated_frames)
 	update_bound_instance_summary(instance)
 	_set_status("applied v0.3 bundle to %s" % bound_instance_id)
 	return true
 
 
 func reload_current() -> Array:
-	return load_template_id(str(template_json["template_id"]))
+	_refresh_authored_cache_from_draft()
+	var template_id := str(template_json.get("template_id", ""))
+	if bool(_authoring_draft.snapshot().get("dirty", false)):
+		if not _pending_switch_kind.is_empty():
+			_show_switch_dialog()
+			return ["Authoring Draft lifecycle decision required: resolve the pending switch first"]
+		var pending_reload := _load_bundle_from_root(template_id)
+		var pending_errors: Array = pending_reload.get("errors", [])
+		if not pending_errors.is_empty():
+			return _set_errors(pending_errors)
+		_set_pending_template_switch(template_id)
+		_restore_template_selector()
+		_set_status("reload decision required: template %s" % template_id)
+		_show_switch_dialog()
+		return ["Authoring Draft lifecycle decision required: reload"]
+	var loaded := _load_bundle_from_root(template_id)
+	var errors: Array = loaded.get("errors", [])
+	if not errors.is_empty():
+		return _set_errors(errors)
+	var result := _commit_template_switch(template_id, loaded.get("bundle", {}), true)
+	return result.get("errors", []).duplicate(true)
 
 
 func save_reload_exact() -> bool:
 	if not validate_current().is_empty():
 		return false
 	var before := _normalized_json_text(_current_state())
-	save_all()
+	if not save_all().is_empty():
+		return false
 	var template_id := str(template_json["template_id"])
-	var loaded_template := DataStore.load_template(template_id)
-	var loaded_sprite_set := DataStore.load_sprite_set(str(loaded_template["sprite_set_ref"]))
-	var loaded_moves := {}
-	for move_id in loaded_template["equipped_moves"]:
-		loaded_moves[str(move_id)] = DataStore.load_move(str(move_id))
-	var after := _normalized_json_text({
-		"template": loaded_template,
-		"sprite_set": loaded_sprite_set,
-		"moves": loaded_moves,
-	})
+	var reloaded := _load_bundle_from_root(template_id)
+	if not reloaded.get("errors", []).is_empty():
+		_set_errors(reloaded.get("errors", []))
+		return false
+	var after := _normalized_json_text(reloaded.get("bundle", {}))
 	var ok := before == after
 	if ok:
-		template_json = loaded_template
-		sprite_set_json = loaded_sprite_set
-		moves_json = loaded_moves
 		_set_status("roundtrip PASS")
 	else:
 		_set_status("roundtrip FAIL")
@@ -401,58 +611,85 @@ func save_reload_exact() -> bool:
 
 
 func validate_current() -> Array:
-	var errors := DataStore.validate_runtime_bundle(_runtime_bundle())
+	_refresh_authored_cache_from_draft()
+	var draft_snapshot: Dictionary = _authoring_draft.snapshot()
+	var errors: Array = draft_snapshot.get("diagnostics", []).duplicate(true)
+	if not bool(draft_snapshot.get("can_apply", false)) and errors.is_empty():
+		errors.append("validation blocked: Authoring Draft is invalid")
 	if errors.is_empty():
 		_set_status("validation PASS")
 	else:
 		_set_errors(errors)
-	_refresh_runtime()
 	return errors
 
 
 func set_hp(value: int) -> void:
-	template_json["hp"] = maxi(1, value)
-	_refresh_fields()
+	_refresh_authored_cache_from_draft()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_character_values(
+		value,
+		float(template_json.get("walk_speed", 95.0)),
+		float(template_json.get("run_speed", 150.0))
+	)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func set_movement_speeds(walk_speed: float, run_speed: float) -> void:
-	template_json["walk_speed"] = maxf(1.0, walk_speed)
-	template_json["run_speed"] = maxf(1.0, run_speed)
-	_refresh_fields()
+	_refresh_authored_cache_from_draft()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_character_values(
+		int(template_json.get("hp", 1)),
+		walk_speed,
+		run_speed
+	)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func set_sprite_set_ref(sprite_set_id: String) -> void:
-	template_json["sprite_set_ref"] = sprite_set_id
-	sprite_set_json = DataStore.load_sprite_set(sprite_set_id)
-	_refresh_options()
-	_refresh_fields()
+	var sprite_set_document := DataStore.load_sprite_set(sprite_set_id, _data_root)
+	if sprite_set_document.is_empty():
+		sprite_set_document = {"sprite_set_id": sprite_set_id}
+	_refresh_authored_cache_from_draft()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.change_sprite_set(sprite_set_document)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted, true)
 
 
 func set_equipped_moves(move_ids: Array) -> void:
-	template_json["equipped_moves"] = move_ids.duplicate()
-	moves_json.clear()
-	for move_id in template_json["equipped_moves"]:
-		moves_json[str(move_id)] = DataStore.load_move(str(move_id))
-	if not template_json["equipped_moves"].is_empty():
-		selected_move = str(template_json["equipped_moves"][0])
-	_refresh_options()
-	_refresh_fields()
+	var move_documents := {}
+	for move_id in move_ids:
+		move_documents[str(move_id)] = DataStore.load_move(str(move_id), _data_root)
+	_refresh_authored_cache_from_draft()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.set_equipped_moves(move_ids, move_documents)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted, true)
 
 
 func set_hurtbox_rect(hurtbox_id: String, rect: Dictionary) -> void:
-	template_json["hurtboxes"][hurtbox_id] = _rect_json(rect)
-	_refresh_fields()
+	_refresh_authored_cache_from_draft()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_hurtbox_rect(hurtbox_id, rect.duplicate(true))
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func set_foot_collision(center: Dictionary, radius: Dictionary) -> void:
-	template_json["foot_collision"] = {
-		"center": {"x": float(center["x"]), "y": float(center["y"])},
-		"radius": {"x": maxf(1.0, float(radius["x"])), "y": maxf(1.0, float(radius["y"]))},
-	}
-	_refresh_fields()
+	_refresh_authored_cache_from_draft()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_foot_collision(
+		{"x": float(center["x"]), "y": float(center["y"])},
+		{"x": float(radius["x"]), "y": float(radius["y"])}
+	)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func select_move(move_id: String) -> void:
+	_refresh_authored_cache_from_draft()
 	if moves_json.has(move_id):
 		if selected_move != move_id:
 			current_move_section = "summary"
@@ -463,113 +700,119 @@ func select_move(move_id: String) -> void:
 
 
 func selected_move_json() -> Dictionary:
-	return moves_json[selected_move]
+	_refresh_authored_cache_from_draft()
+	return moves_json.get(selected_move, {}).duplicate(true)
 
 
 func set_move_scalar(field: String, value) -> void:
-	var move := selected_move_json()
-	match field:
-		"move_type":
-			move["move_type"] = str(value)
-		"state_context_override":
-			if str(value).is_empty():
-				move.erase("state_context_override")
-			else:
-				move["state_context_override"] = str(value)
-		"frame_count", "startup_frames", "active_frames", "recovery_frames", "damage", "hitstop_frames":
-			move[field] = int(value)
-		"multi_hit":
-			move["multi_hit"] = bool(value)
-	_refresh_fields()
+	_refresh_authored_cache_from_draft()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_move_scalar(selected_move, field, value)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func set_move_rhythm(startup_frames: int, active_frames: int, recovery_frames: int) -> void:
-	var move := selected_move_json()
-	move["startup_frames"] = maxi(0, startup_frames)
-	move["active_frames"] = maxi(1, active_frames)
-	move["recovery_frames"] = maxi(0, recovery_frames)
-	_refresh_fields()
+	_refresh_authored_cache_from_draft()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_move_rhythm(
+		selected_move,
+		startup_frames,
+		active_frames,
+		recovery_frames
+	)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func set_move_active_window(start_frame: int, end_frame: int) -> void:
-	var move := selected_move_json()
-	move["active_window"] = {"start_frame": start_frame, "end_frame": end_frame}
-	_refresh_fields()
+	_refresh_authored_cache_from_draft()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_move_active_window(selected_move, start_frame, end_frame)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func set_first_hitbox(hitbox_id: String, start_frame: int, end_frame: int, rect: Dictionary) -> void:
-	var move := selected_move_json()
-	if move["hitboxes"].is_empty():
-		move["hitboxes"].append({})
-	move["hitboxes"][0] = {
-		"hitbox_id": hitbox_id,
-		"active_window": {"start_frame": start_frame, "end_frame": end_frame},
-		"rect": _rect_json(rect),
-	}
-	_refresh_fields()
+	_refresh_authored_cache_from_draft()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_first_hitbox(
+		selected_move,
+		hitbox_id,
+		start_frame,
+		end_frame,
+		rect.duplicate(true)
+	)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func set_first_attack_hurtbox(hurtbox_id: String, start_frame: int, end_frame: int, rect: Dictionary) -> void:
-	var move := selected_move_json()
-	if not move.has("hurtboxes"):
-		move["hurtboxes"] = []
-	if move["hurtboxes"].is_empty():
-		move["hurtboxes"].append({})
-	move["hurtboxes"][0] = {
-		"hurtbox_id": hurtbox_id,
-		"active_window": {"start_frame": start_frame, "end_frame": end_frame},
-		"rect": _rect_json(rect),
-	}
-	_refresh_fields()
+	_refresh_authored_cache_from_draft()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_first_attack_hurtbox(
+		selected_move,
+		hurtbox_id,
+		start_frame,
+		end_frame,
+		rect.duplicate(true)
+	)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func set_move_events(events: Array) -> void:
-	selected_move_json()["events"] = events.duplicate(true)
-	_refresh_fields()
+	_refresh_authored_cache_from_draft()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_move_events(selected_move, events.duplicate(true))
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted, false, "events applied")
 
 
-func insert_empty_frame_slot(sequence_id: String, frame_index: int, shift_timing: bool = false) -> bool:
-	if not shift_timing:
-		_set_status("frame insert blocked: choose shift timing")
-		return false
-	if not sprite_set_json.get("frame_sequences", {}).has(sequence_id):
-		_set_status("frame insert failed: missing sequence %s" % sequence_id)
-		return false
-	var sequence: Array = sprite_set_json["frame_sequences"][sequence_id]
-	var insert_index := clampi(frame_index, 0, sequence.size())
-	sequence.insert(insert_index, _slot_uri("empty", sequence_id, insert_index))
-	_shift_timing_after_insert(_move_id_for_sequence(sequence_id), insert_index)
-	_refresh_after_slot_edit("inserted empty frame")
-	return true
+func insert_empty_frame_slot(sequence_id: String, frame_index: int, shift_timing: bool) -> bool:
+	_refresh_authored_cache_from_draft()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.insert_frame_slot(
+		sequence_id,
+		frame_index,
+		_slot_uri("empty", sequence_id, frame_index),
+		shift_timing
+	)
+	_loading_authoring_draft = false
+	var success_status := "inserted empty frame; shifted timing" if shift_timing else "inserted empty frame; kept timing"
+	_finish_authoring_draft_edit(accepted, false, success_status)
+	_surface_authoring_draft_operation_error(accepted)
+	return accepted
 
 
 func remove_frame_slot(sequence_id: String, frame_index: int) -> bool:
-	if not sprite_set_json.get("frame_sequences", {}).has(sequence_id):
-		_set_status("frame remove failed: missing sequence %s" % sequence_id)
-		return false
-	var sequence: Array = sprite_set_json["frame_sequences"][sequence_id]
-	if frame_index < 0 or frame_index >= sequence.size():
-		_set_status("frame remove failed: frame out of range")
-		return false
-	var move_id := _move_id_for_sequence(sequence_id)
-	if _frame_has_timing_reference(move_id, frame_index):
-		_set_status("frame remove blocked: timing metadata references frame %d" % frame_index)
-		return false
-	sequence.remove_at(frame_index)
-	_shift_timing_after_delete(move_id, frame_index)
-	_refresh_after_slot_edit("removed frame")
-	return true
+	_refresh_authored_cache_from_draft()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.delete_frame_slot(sequence_id, frame_index)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted, false, "removed frame")
+	_surface_authoring_draft_operation_error(accepted)
+	return accepted
 
 
 func replace_frame_slot(sequence_id: String, frame_index: int, frame_path: String) -> bool:
-	return _set_frame_slot(sequence_id, frame_index, frame_path, "replaced frame")
+	_refresh_authored_cache_from_draft()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.replace_frame_slot(sequence_id, frame_index, frame_path)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted, false, "replaced frame")
+	_surface_authoring_draft_operation_error(accepted)
+	return accepted
 
 
 func mark_frame_slot(sequence_id: String, frame_index: int, slot_state: String) -> bool:
-	if not ["empty", "missing", "placeholder"].has(slot_state):
-		_set_status("frame mark failed: invalid slot state %s" % slot_state)
-		return false
-	return _set_frame_slot(sequence_id, frame_index, _slot_uri(slot_state, sequence_id, frame_index), "marked frame %s" % slot_state)
+	_refresh_authored_cache_from_draft()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.mark_frame_slot(sequence_id, frame_index, slot_state)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted, false, "marked frame %s" % slot_state)
+	_surface_authoring_draft_operation_error(accepted)
+	return accepted
 
 
 func wardrobe_coverage() -> Dictionary:
@@ -592,26 +835,6 @@ func wardrobe_coverage() -> Dictionary:
 		"rows": result.get("rows", []),
 		"summary": result.get("summary", {}),
 	}
-
-
-func runtime_start_selected_move() -> Array:
-	_refresh_runtime()
-	return runtime.start_move(selected_move)
-
-
-func runtime_advance_frame(count: int = 1) -> void:
-	for i in count:
-		runtime.tick_frame()
-	_refresh_runtime_label()
-
-
-func runtime_reset_idle() -> Array:
-	_refresh_runtime()
-	return runtime.start_move("idle")
-
-
-func runtime_summary() -> Dictionary:
-	return runtime.debug_summary()
 
 
 func _build_ui() -> void:
@@ -642,14 +865,20 @@ func _build_ui() -> void:
 	top.add_child(template_select)
 	top.add_child(_button("Bind P", _on_bind_player_pressed, 48))
 	top.add_child(_button("Bind D", _on_bind_dummy_pressed, 48))
-	top.add_child(_button("Save", _on_save_pressed))
+	save_button = _button("Save", _on_save_pressed)
+	top.add_child(save_button)
 	top.add_child(_button("Check", _on_check_pressed))
 
 	var tools := HBoxContainer.new()
 	tools.add_theme_constant_override("separation", 3)
 	root.add_child(tools)
+	discard_button = _button("Discard", _on_discard_pressed)
+	tools.add_child(discard_button)
 	tools.add_child(_button("Reload", _on_reload_pressed))
 	tools.add_child(_button("Roundtrip", _on_exact_pressed))
+	draft_state_label = _label("Draft: clean", COLOR_STATUS)
+	draft_state_label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	tools.add_child(draft_state_label)
 
 	var main := HBoxContainer.new()
 	main.custom_minimum_size = Vector2(546, 288)
@@ -694,6 +923,17 @@ func _build_ui() -> void:
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(status_label)
 
+	switch_dialog = ConfirmationDialog.new()
+	switch_dialog.title = "Unsaved Authoring Draft"
+	switch_dialog.get_ok_button().text = "Save"
+	switch_dialog.get_cancel_button().text = "Cancel"
+	switch_dialog.add_button("Discard", true, "discard")
+	switch_dialog.confirmed.connect(_on_switch_save_confirmed)
+	switch_dialog.canceled.connect(_on_switch_cancelled)
+	switch_dialog.custom_action.connect(_on_switch_custom_action)
+	add_child(switch_dialog)
+	_refresh_draft_lifecycle_ui()
+
 
 func _refresh_navigation() -> void:
 	if navigation_list == null:
@@ -712,7 +952,6 @@ func _refresh_navigation() -> void:
 	_add_nav_item("Wardrobe Map", "wardrobe_mapping")
 	_add_nav_item("Wardrobe Clips", "wardrobe_clips")
 	_add_nav_item("Wardrobe Frames", "wardrobe_sequences")
-	_add_nav_item("Runtime", "runtime_preview")
 	var selected_index := nav_keys.find(current_nav)
 	if selected_index < 0:
 		current_nav = "character_template"
@@ -743,7 +982,6 @@ func _refresh_three_panel() -> void:
 	_refresh_navigation()
 	_build_values_panel()
 	_build_detail_panel()
-	_refresh_runtime_label()
 
 
 func _reset_editor_refs() -> void:
@@ -776,9 +1014,9 @@ func _reset_editor_refs() -> void:
 	attack_hurtbox_id_input = null
 	attack_hurtbox_inputs = {}
 	events_text = null
-	runtime_label = null
 	preview_frame_slider = null
 	move_section_list = null
+	apply_bound_button = null
 
 
 func _build_values_panel() -> void:
@@ -806,7 +1044,7 @@ func _build_values_panel() -> void:
 			_add_value("fail", str(summary.get("fail", 0)))
 			_build_coverage_list(values_panel)
 		"action_preview":
-			var preview_row := _coverage_row_for(current_action_id)
+			var preview_row := _coverage_row_for_bundle(current_action_id, _preview_bundle())
 			_add_value("action", str(preview_row.get("action_id", current_action_id)))
 			_add_value("status", str(preview_row.get("status", "")))
 			_add_value("clip", str(preview_row.get("clip_id", "")))
@@ -838,12 +1076,6 @@ func _build_values_panel() -> void:
 		"wardrobe_sequences":
 			for coverage_row in coverage.get("rows", []):
 				_add_value(str(coverage_row.get("frame_sequence_ref", "")), "%s frames" % str(coverage_row.get("sequence_frame_count", 0)))
-		"runtime_preview":
-			var summary: Dictionary = runtime.debug_summary()
-			_add_value("state", str(summary.get("current_state", "")))
-			_add_value("move", str(summary.get("current_move", "")))
-			_add_value("frame", str(summary.get("current_frame", 0)))
-			_add_value("active boxes", str(summary.get("active_hitbox_count", 0)))
 		_:
 			if current_nav.begins_with("move:") and moves_json.has(selected_move):
 				_build_move_values_panel()
@@ -868,8 +1100,6 @@ func _build_detail_panel() -> void:
 			_build_equipped_moves_detail(detail_panel)
 		"wardrobe_mapping", "wardrobe_clips", "wardrobe_sequences":
 			_build_wardrobe_detail(detail_panel)
-		"runtime_preview":
-			_build_runtime_detail(detail_panel)
 		_:
 			if current_nav.begins_with("move:") and moves_json.has(selected_move):
 				_build_move_detail(detail_panel)
@@ -882,7 +1112,9 @@ func _build_instance_detail(parent: VBoxContainer) -> void:
 	parent.add_child(row)
 	row.add_child(_button("Bind P", _on_bind_player_pressed, 48))
 	row.add_child(_button("Bind D", _on_bind_dummy_pressed, 48))
-	row.add_child(_button("Apply Bound", _on_apply_bound_pressed, 74))
+	apply_bound_button = _button("Apply Bound", _on_apply_bound_pressed, 74)
+	row.add_child(apply_bound_button)
+	_refresh_draft_lifecycle_ui()
 	_build_npc_controls(parent)
 	_add_detail_value(parent, "instance", _bound_or_none(bound_instance_id), COLOR_INSTANCE)
 	_add_detail_value(parent, "template", _bound_or_none(bound_template_id), COLOR_INSTANCE)
@@ -895,7 +1127,7 @@ func _build_instance_detail(parent: VBoxContainer) -> void:
 
 
 func _build_npc_controls(parent: VBoxContainer) -> void:
-	parent.add_child(_label("NPC controls", COLOR_RUNTIME))
+	parent.add_child(_label("NPC controls", COLOR_NPC))
 	var spawn_row := HBoxContainer.new()
 	spawn_row.add_theme_constant_override("separation", 3)
 	parent.add_child(spawn_row)
@@ -914,7 +1146,7 @@ func _build_npc_controls(parent: VBoxContainer) -> void:
 	bind_row.add_child(_button("Bind NPC", _on_bind_npc_pressed, 58))
 	bind_row.add_child(_button("Next NPC", _on_npc_next_pressed, 58))
 
-	npc_count_label = _label("", COLOR_RUNTIME)
+	npc_count_label = _label("", COLOR_NPC)
 	parent.add_child(npc_count_label)
 	npc_status_label = _label("", COLOR_HINT)
 	npc_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -1000,7 +1232,9 @@ func _build_action_preview_detail(parent: VBoxContainer) -> void:
 	var slot_row := HBoxContainer.new()
 	slot_row.add_theme_constant_override("separation", 3)
 	parent.add_child(slot_row)
+	slot_row.add_child(_button("Ins<Keep", _on_frame_slot_insert_before_keep_pressed, 70))
 	slot_row.add_child(_button("Ins<+Shift", _on_frame_slot_insert_before_shift_pressed, 70))
+	slot_row.add_child(_button("Ins>Keep", _on_frame_slot_insert_after_keep_pressed, 70))
 	slot_row.add_child(_button("Ins>+Shift", _on_frame_slot_insert_after_shift_pressed, 70))
 	slot_row.add_child(_button("Remove", _on_frame_slot_remove_pressed, 52))
 	slot_row.add_child(_button("Empty", _on_frame_slot_mark_empty_pressed, 44))
@@ -1270,7 +1504,7 @@ func _build_wardrobe_detail(parent: VBoxContainer) -> void:
 	parent.add_child(_label("Wardrobe coverage - sprite-set view", COLOR_WARDROBE))
 	sprite_set_select = OptionButton.new()
 	_style_control(sprite_set_select, 118, 18)
-	for id in DataStore.list_sprite_set_ids():
+	for id in DataStore.list_sprite_set_ids(_data_root):
 		sprite_set_select.add_item(id)
 		if id == str(template_json.get("sprite_set_ref", "")):
 			sprite_set_select.select(sprite_set_select.item_count - 1)
@@ -1287,21 +1521,6 @@ func _build_wardrobe_detail(parent: VBoxContainer) -> void:
 		], _coverage_row_color(row)))
 	parent.add_child(_button("Validate", _on_check_pressed, 64))
 	parent.add_child(_button("Generate Stub", _on_wardrobe_generate_stub_pressed, 88))
-
-
-func _build_runtime_detail(parent: VBoxContainer) -> void:
-	parent.add_child(_label("Runtime preview - frame stepper", COLOR_RUNTIME))
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 3)
-	parent.add_child(row)
-	row.add_child(_button("Start", _on_runtime_start_pressed))
-	row.add_child(_button("+1", _on_runtime_one_pressed))
-	row.add_child(_button("+4", _on_runtime_four_pressed))
-	row.add_child(_button("Idle", _on_runtime_idle_pressed))
-	runtime_label = Label.new()
-	runtime_label.add_theme_font_size_override("font_size", 8)
-	runtime_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	parent.add_child(runtime_label)
 
 
 func _build_persistent_preview_surface(parent: VBoxContainer) -> void:
@@ -1326,8 +1545,11 @@ func _build_persistent_preview_surface(parent: VBoxContainer) -> void:
 
 
 func _ensure_floating_preview_window() -> void:
-	if floating_preview_window != null:
+	if floating_preview_window != null and is_instance_valid(floating_preview_window):
 		return
+	floating_preview_window = null
+	floating_preview_control = null
+	floating_preview_frame_label = null
 	var host := get_parent()
 	if host == null:
 		call_deferred("_ensure_floating_preview_window")
@@ -1365,6 +1587,7 @@ func _ensure_floating_preview_window() -> void:
 	root.add_child(floating_preview_frame_label)
 
 	floating_preview_control = ActionPreview.new()
+	floating_preview_control.bind_preview_source(action_preview_control)
 	floating_preview_control.custom_minimum_size = Vector2(276, 202)
 	floating_preview_control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	floating_preview_control.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -1412,7 +1635,7 @@ func _populate_npc_template_select() -> void:
 	if npc_template_select == null:
 		return
 	npc_template_select.clear()
-	var ids := DataStore.list_template_ids()
+	var ids := DataStore.list_template_ids(_data_root)
 	if ids.is_empty():
 		return
 	if npc_template_id.is_empty() or not ids.has(npc_template_id):
@@ -1460,6 +1683,24 @@ func _coverage_row_for(action_id: String) -> Dictionary:
 	return {}
 
 
+func _coverage_row_for_bundle(action_id: String, bundle: Dictionary) -> Dictionary:
+	var bundle_coverage := Coverage.analyze(
+		bundle.get("template", {}),
+		bundle.get("sprite_set", {}),
+		bundle.get("moves", {})
+	)
+	for row in bundle_coverage.get("rows", []):
+		if str(row.get("action_id", "")) == action_id:
+			return row
+	return {}
+
+
+func _preview_bundle() -> Dictionary:
+	_refresh_authored_cache_from_draft()
+	var bundle: Dictionary = _authoring_draft.snapshot().get("preview_bundle", {})
+	return bundle.duplicate(true)
+
+
 func _current_sequence_ref() -> String:
 	return str(_coverage_row_for(current_action_id).get("frame_sequence_ref", ""))
 
@@ -1475,111 +1716,8 @@ func _current_frame_slot_text() -> String:
 	return ""
 
 
-func _set_frame_slot(sequence_id: String, frame_index: int, frame_path: String, status_text: String) -> bool:
-	if not sprite_set_json.get("frame_sequences", {}).has(sequence_id):
-		_set_status("frame edit failed: missing sequence %s" % sequence_id)
-		return false
-	_ensure_sequence_frame(sequence_id, frame_index)
-	sprite_set_json["frame_sequences"][sequence_id][frame_index] = frame_path
-	_refresh_after_slot_edit(status_text)
-	return true
-
-
-func _ensure_sequence_frame(sequence_id: String, frame_index: int) -> void:
-	var sequence: Array = sprite_set_json["frame_sequences"][sequence_id]
-	while sequence.size() <= frame_index:
-		sequence.append(_slot_uri("empty", sequence_id, sequence.size()))
-
-
 func _slot_uri(slot_state: String, sequence_id: String, frame_index: int) -> String:
 	return "%s://%s/%s/frame_%03d.png" % [slot_state, str(sprite_set_json.get("sprite_set_id", "sprite_set")), sequence_id, frame_index]
-
-
-func _move_id_for_sequence(sequence_id: String) -> String:
-	if coverage.is_empty():
-		refresh_action_coverage()
-	for row in coverage.get("rows", []):
-		if str(row.get("frame_sequence_ref", "")) == sequence_id:
-			return str(row.get("backing_move_id", ""))
-	if moves_json.has(sequence_id):
-		return sequence_id
-	return ""
-
-
-func _frame_has_timing_reference(move_id: String, frame_index: int) -> bool:
-	if move_id.is_empty() or not moves_json.has(move_id):
-		return false
-	var move: Dictionary = moves_json[move_id]
-	if _window_contains(move.get("active_window", {}), frame_index):
-		return true
-	for hitbox in move.get("hitboxes", []):
-		if _window_contains(hitbox.get("active_window", {}), frame_index):
-			return true
-	for hurtbox in move.get("hurtboxes", []):
-		if _window_contains(hurtbox.get("active_window", {}), frame_index):
-			return true
-	for event in move.get("events", []):
-		if int(event.get("frame", -1)) == frame_index:
-			return true
-	return false
-
-
-func _window_contains(window: Dictionary, frame_index: int) -> bool:
-	return frame_index >= int(window.get("start_frame", 0)) and frame_index <= int(window.get("end_frame", -1))
-
-
-func _shift_timing_after_insert(move_id: String, frame_index: int) -> void:
-	if move_id.is_empty() or not moves_json.has(move_id):
-		return
-	var move: Dictionary = moves_json[move_id]
-	move["frame_count"] = maxi(1, int(move.get("frame_count", 1)) + 1)
-	_shift_window_after_insert(move.get("active_window", {}), frame_index)
-	for hitbox in move.get("hitboxes", []):
-		_shift_window_after_insert(hitbox.get("active_window", {}), frame_index)
-	for hurtbox in move.get("hurtboxes", []):
-		_shift_window_after_insert(hurtbox.get("active_window", {}), frame_index)
-	for event in move.get("events", []):
-		if int(event.get("frame", -1)) >= frame_index:
-			event["frame"] = int(event["frame"]) + 1
-
-
-func _shift_timing_after_delete(move_id: String, frame_index: int) -> void:
-	if move_id.is_empty() or not moves_json.has(move_id):
-		return
-	var move: Dictionary = moves_json[move_id]
-	move["frame_count"] = maxi(1, int(move.get("frame_count", 1)) - 1)
-	_shift_window_after_delete(move.get("active_window", {}), frame_index)
-	for hitbox in move.get("hitboxes", []):
-		_shift_window_after_delete(hitbox.get("active_window", {}), frame_index)
-	for hurtbox in move.get("hurtboxes", []):
-		_shift_window_after_delete(hurtbox.get("active_window", {}), frame_index)
-	for event in move.get("events", []):
-		if int(event.get("frame", -1)) > frame_index:
-			event["frame"] = int(event["frame"]) - 1
-
-
-func _shift_window_after_insert(window: Dictionary, frame_index: int) -> void:
-	if window.is_empty():
-		return
-	if int(window.get("start_frame", 0)) >= frame_index:
-		window["start_frame"] = int(window["start_frame"]) + 1
-	if int(window.get("end_frame", 0)) >= frame_index:
-		window["end_frame"] = int(window["end_frame"]) + 1
-
-
-func _shift_window_after_delete(window: Dictionary, frame_index: int) -> void:
-	if window.is_empty():
-		return
-	if int(window.get("start_frame", 0)) > frame_index:
-		window["start_frame"] = int(window["start_frame"]) - 1
-	if int(window.get("end_frame", 0)) > frame_index:
-		window["end_frame"] = int(window["end_frame"]) - 1
-
-
-func _refresh_after_slot_edit(status_text: String) -> void:
-	refresh_action_coverage()
-	_refresh_fields()
-	_set_status(status_text)
 
 
 func _coverage_row_color(row: Dictionary) -> Color:
@@ -1592,18 +1730,20 @@ func _coverage_row_color(row: Dictionary) -> Color:
 
 
 func _preview_frame_count() -> int:
-	var row := _coverage_row_for(current_action_id)
+	var bundle := _preview_bundle()
+	var row := _coverage_row_for_bundle(current_action_id, bundle)
 	if row.is_empty():
 		return 1
 	var sequence_count := 0
 	var sequence_ref := str(row.get("frame_sequence_ref", ""))
-	var sequences: Dictionary = sprite_set_json.get("frame_sequences", {})
+	var sequences: Dictionary = bundle.get("sprite_set", {}).get("frame_sequences", {})
 	if sequences.has(sequence_ref):
 		sequence_count = sequences[sequence_ref].size()
 	var move_count := 0
 	var move_id := str(row.get("backing_move_id", ""))
-	if moves_json.has(move_id):
-		move_count = int(moves_json[move_id].get("frame_count", 1))
+	var preview_moves: Dictionary = bundle.get("moves", {})
+	if preview_moves.has(move_id):
+		move_count = int(preview_moves[move_id].get("frame_count", 1))
 	return maxi(1, maxi(sequence_count, move_count))
 
 
@@ -1612,6 +1752,25 @@ func _clamp_preview_frame() -> void:
 
 
 func _refresh_action_preview() -> void:
+	_clamp_preview_frame()
+	var requested_frame := preview_frame
+	_apply_preview_to_control(action_preview_control)
+	_apply_preview_to_control(floating_preview_control)
+	var observation := preview_observation()
+	if (
+		action_preview_control != null
+		and action_preview_control.has_method("seek_frame")
+		and not observation.is_empty()
+		and not bool(observation.get("completed", false))
+		and int(observation.get("frame", requested_frame)) != requested_frame
+	):
+		action_preview_control.seek_frame(requested_frame)
+		observation = preview_observation()
+	_sync_preview_frame_from_observation(observation)
+	_refresh_action_preview_chrome()
+
+
+func _refresh_action_preview_chrome() -> void:
 	_clamp_preview_frame()
 	var status_text := _preview_status_text()
 	if preview_frame_label != null:
@@ -1623,26 +1782,67 @@ func _refresh_action_preview() -> void:
 		preview_frame_slider.set_value_no_signal(preview_frame)
 	if frame_slot_path_input != null and not frame_slot_path_input.has_focus():
 		frame_slot_path_input.text = _current_frame_slot_text()
-	_apply_preview_to_control(action_preview_control)
-	_apply_preview_to_control(floating_preview_control)
+	for control in [action_preview_control, floating_preview_control]:
+		if control == null:
+			continue
+		if control.has_method("set_overlay_visibility"):
+			control.set_overlay_visibility(preview_show_hurtboxes, preview_show_hitboxes, preview_show_foot)
+		if control.has_method("set_frame"):
+			control.set_frame(preview_frame)
 
 
 func _preview_status_text() -> String:
-	return "%s %s  f:%d/%d  %.1fx" % [
+	var observation := preview_observation()
+	var runtime_state := str(observation.get("state", "none"))
+	var runtime_move := str(observation.get("move", "none"))
+	if bool(observation.get("completed", false)):
+		runtime_state = "complete"
+	return "%s %s  f:%d/%d  %.1fx  state:%s move:%s" % [
 		"play" if preview_playing else "pause",
 		current_action_id,
 		preview_frame + 1,
 		_preview_frame_count(),
 		preview_speed,
+		runtime_state,
+		runtime_move,
 	]
 
 
 func _apply_preview_to_control(control: Control) -> void:
 	if control == null or not control.has_method("set_preview_data"):
 		return
-	control.set_preview_data(_coverage_row_for(current_action_id), template_json, sprite_set_json, moves_json)
+	var preview_bundle := _preview_bundle()
+	if preview_bundle.is_empty():
+		return
+	control.set_preview_data(
+		_coverage_row_for_bundle(current_action_id, preview_bundle),
+		preview_bundle.get("template", {}),
+		preview_bundle.get("sprite_set", {}),
+		preview_bundle.get("moves", {})
+	)
 	control.set_overlay_visibility(preview_show_hurtboxes, preview_show_hitboxes, preview_show_foot)
 	control.set_frame(preview_frame)
+
+
+func _seek_preview_to(target_frame: int) -> void:
+	preview_playing = false
+	preview_frame = clampi(target_frame, 0, maxi(0, _preview_frame_count() - 1))
+	_apply_preview_to_control(action_preview_control)
+	_apply_preview_to_control(floating_preview_control)
+	if action_preview_control != null and action_preview_control.has_method("seek_frame"):
+		action_preview_control.seek_frame(preview_frame)
+	_sync_preview_frame_from_observation(preview_observation())
+	_refresh_action_preview_chrome()
+
+
+func _sync_preview_frame_from_observation(observation: Dictionary) -> void:
+	if observation.is_empty():
+		return
+	preview_frame = clampi(
+		int(observation.get("frame", preview_frame)),
+		0,
+		maxi(0, _preview_frame_count() - 1)
+	)
 
 
 func _node_property(instance: Node, property_name: String):
@@ -1659,11 +1859,17 @@ func _clear_children(node: Node) -> void:
 
 
 func _refresh_options() -> void:
+	_refresh_authored_cache_from_draft()
 	if template_select != null:
 		template_select.clear()
-		for id in DataStore.list_template_ids():
+		var template_ids := DataStore.list_template_ids(_data_root)
+		var active_template_id := str(template_json.get("template_id", ""))
+		if not active_template_id.is_empty() and not template_ids.has(active_template_id):
+			template_ids.append(active_template_id)
+			template_ids.sort()
+		for id in template_ids:
 			template_select.add_item(id)
-			if id == str(template_json.get("template_id", "")):
+			if id == active_template_id:
 				template_select.select(template_select.item_count - 1)
 	if move_select != null:
 		move_select.clear()
@@ -1673,7 +1879,7 @@ func _refresh_options() -> void:
 				move_select.select(move_select.item_count - 1)
 	if sprite_set_select != null:
 		sprite_set_select.clear()
-		for id in DataStore.list_sprite_set_ids():
+		for id in DataStore.list_sprite_set_ids(_data_root):
 			sprite_set_select.add_item(id)
 			if id == str(template_json.get("sprite_set_ref", "")):
 				sprite_set_select.select(sprite_set_select.item_count - 1)
@@ -1687,43 +1893,246 @@ func _refresh_fields() -> void:
 	_clamp_preview_frame()
 	_refresh_three_panel()
 	_refresh_action_preview()
-	_refresh_runtime()
+	_refresh_draft_lifecycle_ui()
 
 
-func _refresh_runtime() -> Array:
-	var errors: Array = runtime.load_bundle(_runtime_bundle())
-	_refresh_runtime_label()
-	return errors
-
-
-func _refresh_runtime_label() -> void:
-	if runtime_label == null:
+func _on_authoring_draft_valid_snapshot_changed() -> void:
+	if _loading_authoring_draft:
 		return
-	var summary: Dictionary = runtime.debug_summary()
-	runtime_label.text = "state:%s move:%s frame:%s hitstop:%s boxes:%s set:%s" % [
-		summary.get("current_state", ""),
-		summary.get("current_move", ""),
-		summary.get("current_frame", 0),
-		summary.get("hitstop_frames", 0),
-		summary.get("active_hitbox_count", 0),
-		summary.get("sprite_set_ref", ""),
-	]
+	_refresh_authored_cache_from_draft()
+	_refresh_options()
+	_refresh_fields()
 
 
-func _runtime_bundle() -> Dictionary:
-	return {
-		"template": template_json,
-		"sprite_set": sprite_set_json,
-		"moves": moves_json,
+func _refresh_authored_cache_from_draft() -> void:
+	var bundle: Dictionary = authoring_draft_snapshot().get("bundle", {})
+	template_json = bundle.get("template", {}).duplicate(true)
+	sprite_set_json = bundle.get("sprite_set", {}).duplicate(true)
+	moves_json = bundle.get("moves", {}).duplicate(true)
+
+
+func _finish_authoring_draft_edit(accepted: bool, refresh_options: bool = false, success_status: String = "") -> void:
+	_refresh_authored_cache_from_draft()
+	if refresh_options:
+		if not moves_json.has(selected_move) and not template_json.get("equipped_moves", []).is_empty():
+			selected_move = str(template_json["equipped_moves"][0])
+		_refresh_options()
+	_refresh_fields()
+	if not accepted:
+		_set_status("Authoring Draft rejected edit")
+		return
+	var diagnostics: Array = _authoring_draft.snapshot().get("diagnostics", []).duplicate(true)
+	if not diagnostics.is_empty():
+		_set_errors(diagnostics)
+	elif not success_status.is_empty():
+		_set_status(success_status)
+
+
+func _surface_authoring_draft_operation_error(accepted: bool) -> void:
+	if accepted:
+		return
+	var operation_error := str(_authoring_draft.last_operation_error())
+	if not operation_error.is_empty():
+		_set_status(operation_error)
+
+
+func _load_bundle_from_root(template_id: String) -> Dictionary:
+	var errors: Array = []
+	if not DataStore.list_template_ids(_data_root).has(template_id):
+		return {"bundle": {}, "errors": ["missing template %s" % template_id]}
+	var loaded_template := DataStore.load_template(template_id, _data_root)
+	if loaded_template.is_empty():
+		return {"bundle": {}, "errors": ["missing template %s" % template_id]}
+	var sprite_set_id := str(loaded_template.get("sprite_set_ref", ""))
+	if sprite_set_id.is_empty():
+		errors.append("template %s is missing sprite_set_ref" % template_id)
+	var loaded_sprite_set := (
+		DataStore.load_sprite_set(sprite_set_id, _data_root) if not sprite_set_id.is_empty() else {}
+	)
+	if loaded_sprite_set.is_empty():
+		errors.append("missing sprite set %s" % sprite_set_id)
+	var equipped_moves = loaded_template.get("equipped_moves", null)
+	var loaded_moves := {}
+	if typeof(equipped_moves) != TYPE_ARRAY:
+		errors.append("template %s has invalid equipped_moves" % template_id)
+	else:
+		for move_id in equipped_moves:
+			var id := str(move_id)
+			var loaded_move := DataStore.load_move(id, _data_root)
+			if loaded_move.is_empty():
+				errors.append("missing move %s" % id)
+			else:
+				loaded_moves[id] = loaded_move
+	if not errors.is_empty():
+		return {"bundle": {}, "errors": errors}
+	var bundle := {
+		"template": loaded_template,
+		"sprite_set": loaded_sprite_set,
+		"moves": loaded_moves,
 	}
+	var validation_errors := DataStore.validate_runtime_bundle(bundle)
+	if not validation_errors.is_empty():
+		return {"bundle": {}, "errors": validation_errors}
+	return {"bundle": bundle, "errors": []}
+
+
+func _commit_template_switch(template_id: String, bundle: Dictionary, force_reload: bool = false) -> Dictionary:
+	_refresh_authored_cache_from_draft()
+	if not force_reload and template_id == str(template_json.get("template_id", "")):
+		_restore_template_selector()
+		return _switch_outcome(true, "unchanged")
+	_loading_authoring_draft = true
+	var load_errors: Array = _authoring_draft.load_bundle(bundle)
+	_loading_authoring_draft = false
+	if not load_errors.is_empty():
+		_set_errors(load_errors)
+		return _switch_outcome(false, "failed", load_errors)
+	_refresh_authored_cache_from_draft()
+	preview_playing = false
+	preview_frame = 0
+	if not template_json.get("equipped_moves", []).is_empty():
+		selected_move = str(template_json["equipped_moves"][0])
+	_refresh_options()
+	_refresh_fields()
+	_set_status("switched template %s" % template_id)
+	return _switch_outcome(true, "switched")
+
+
+func _commit_bound_instance_switch(instance: Node, bundle: Dictionary) -> Dictionary:
+	if instance == null or not is_instance_valid(instance):
+		return _switch_outcome(false, "target_unavailable", ["bound instance is no longer available"])
+	var template_id := str(bundle.get("template", {}).get("template_id", ""))
+	var loaded_result := _commit_template_switch(template_id, bundle, true)
+	if str(loaded_result.get("outcome", "")) != "switched":
+		return loaded_result
+	bound_instance_ref = weakref(instance)
+	update_bound_instance_summary(instance)
+	_set_status("bound %s" % bound_instance_id)
+	bound_instance_switch_committed.emit(instance)
+	_refresh_draft_lifecycle_ui()
+	return _switch_outcome(true, "switched")
+
+
+func _prepare_pending_target() -> Dictionary:
+	if _pending_switch_kind == SWITCH_TEMPLATE:
+		var loaded := _load_bundle_from_root(_pending_template_id)
+		return {
+			"kind": SWITCH_TEMPLATE,
+			"bundle": loaded.get("bundle", {}),
+			"errors": loaded.get("errors", []),
+		}
+	if _pending_switch_kind == SWITCH_BOUND_INSTANCE:
+		var instance: Node = _pending_instance_ref.get_ref() if _pending_instance_ref != null else null
+		if not (instance is Node) or not is_instance_valid(instance):
+			return {"kind": SWITCH_BOUND_INSTANCE, "errors": ["bound instance is no longer available"]}
+		var loaded := _load_bundle_from_root(_pending_instance_template_id)
+		return {
+			"kind": SWITCH_BOUND_INSTANCE,
+			"instance": instance,
+			"bundle": loaded.get("bundle", {}),
+			"errors": loaded.get("errors", []),
+		}
+	return {"errors": ["invalid pending switch"]}
+
+
+func _commit_prepared_pending_target(prepared: Dictionary) -> Dictionary:
+	match str(prepared.get("kind", "")):
+		SWITCH_TEMPLATE:
+			return _commit_template_switch(_pending_template_id, prepared.get("bundle", {}), true)
+		SWITCH_BOUND_INSTANCE:
+			return _commit_bound_instance_switch(prepared.get("instance", null), prepared.get("bundle", {}))
+	return _switch_outcome(false, "failed", ["invalid pending switch"])
+
+
+func _set_pending_template_switch(template_id: String) -> void:
+	_pending_switch_kind = SWITCH_TEMPLATE
+	_pending_template_id = template_id
+	_pending_instance_ref = null
+	_pending_instance_id = ""
+	_pending_instance_template_id = ""
+
+
+func _set_pending_bound_instance_switch(instance: Node, instance_id: String, template_id: String) -> void:
+	_pending_switch_kind = SWITCH_BOUND_INSTANCE
+	_pending_template_id = template_id
+	_pending_instance_ref = weakref(instance)
+	_pending_instance_id = instance_id
+	_pending_instance_template_id = template_id
+
+
+func _clear_pending_switch() -> void:
+	_pending_switch_kind = ""
+	_pending_template_id = ""
+	_pending_instance_ref = null
+	_pending_instance_id = ""
+	_pending_instance_template_id = ""
+
+
+func _switch_outcome(ok: bool, outcome: String, errors: Array = []) -> Dictionary:
+	var safe_errors: Array = []
+	for error in errors:
+		safe_errors.append(str(error))
+	return {
+		"ok": ok,
+		"outcome": outcome,
+		"status": outcome,
+		"pending": not _pending_switch_kind.is_empty(),
+		"kind": _pending_switch_kind,
+		"target_template_id": _pending_template_id,
+		"target_instance_id": _pending_instance_id,
+		"errors": safe_errors,
+	}
+
+
+func _instance_summary(instance: Node) -> Dictionary:
+	var summary: Dictionary = {}
+	if instance.has_method("debug_summary"):
+		summary = instance.debug_summary()
+	return {
+		"instance_id": str(summary.get("instance_id", _node_property(instance, "instance_id"))),
+		"template_id": str(summary.get("template_id", _node_property(instance, "template_id"))),
+	}
+
+
+func _restore_template_selector() -> void:
+	_select_option(template_select, str(template_json.get("template_id", "")))
+
+
+func _refresh_draft_lifecycle_ui() -> void:
+	var snapshot: Dictionary = _authoring_draft.snapshot()
+	var dirty: bool = bool(snapshot.get("dirty", false))
+	var valid: bool = snapshot.get("diagnostics", []).is_empty() and bool(snapshot.get("can_apply", false))
+	if draft_state_label != null:
+		draft_state_label.text = "Draft: %s" % ("invalid dirty" if dirty and not valid else ("dirty" if dirty else "clean"))
+		draft_state_label.add_theme_color_override("font_color", COLOR_FAIL if dirty and not valid else (COLOR_WARN if dirty else COLOR_PASS))
+	if save_button != null:
+		save_button.disabled = not bool(snapshot.get("can_save", false))
+	if discard_button != null:
+		discard_button.disabled = not dirty
+	if apply_bound_button != null:
+		apply_bound_button.disabled = not bool(snapshot.get("can_apply", false))
+	if switch_dialog != null:
+		switch_dialog.get_ok_button().disabled = not bool(snapshot.get("can_save", false))
+
+
+func _show_switch_dialog() -> void:
+	if switch_dialog == null or _pending_switch_kind.is_empty():
+		return
+	var target_text := _pending_template_id
+	if _pending_switch_kind == SWITCH_BOUND_INSTANCE:
+		target_text = "%s (template %s)" % [_pending_instance_id, _pending_instance_template_id]
+	switch_dialog.dialog_text = "Unsaved Authoring Draft changes.\nSwitch %s to %s?" % [_pending_switch_kind, target_text]
+	_refresh_draft_lifecycle_ui()
+	switch_dialog.popup_centered()
+
+
+func _hide_switch_dialog() -> void:
+	if switch_dialog != null:
+		switch_dialog.hide()
 
 
 func _current_state() -> Dictionary:
-	return {
-		"template": template_json,
-		"sprite_set": sprite_set_json,
-		"moves": moves_json,
-	}
+	return authoring_draft_snapshot().get("bundle", {}).duplicate(true)
 
 
 func _normalized_json_text(data: Dictionary) -> String:
@@ -1736,7 +2145,7 @@ func _normalized_json_text(data: Dictionary) -> String:
 
 func _next_copy_id(source_id: String) -> String:
 	var base_id := "%s_copy" % source_id
-	var ids := DataStore.list_template_ids()
+	var ids := DataStore.list_template_ids(_data_root)
 	if not ids.has(base_id):
 		return base_id
 	var index := 2
@@ -1760,21 +2169,6 @@ func _rect_from_json(rect: Dictionary) -> Rect2:
 
 func _vector_from_json(value: Dictionary) -> Vector2:
 	return Vector2(float(value.get("x", 0.0)), float(value.get("y", 0.0)))
-
-
-func _runtime_hurtbox_profile() -> Dictionary:
-	var profile := {}
-	for hurtbox_id in template_json.get("hurtboxes", {}).keys():
-		profile[str(hurtbox_id)] = _rect_from_json(template_json["hurtboxes"][hurtbox_id])
-	return profile
-
-
-func _runtime_foot_collision_profile() -> Dictionary:
-	var foot: Dictionary = template_json.get("foot_collision", {})
-	return {
-		"center": _vector_from_json(foot.get("center", {})),
-		"radius": _vector_from_json(foot.get("radius", {})),
-	}
 
 
 func _bound_instance() -> Node:
@@ -1917,8 +2311,6 @@ func _nav_color(key: String) -> Color:
 		return COLOR_MOVE
 	if key.begins_with("wardrobe"):
 		return COLOR_WARDROBE
-	if key.begins_with("runtime"):
-		return COLOR_RUNTIME
 	return COLOR_CHARACTER
 
 
@@ -2066,7 +2458,7 @@ func _set_errors(errors: Array) -> Array:
 
 
 func _on_template_selected(index: int) -> void:
-	load_template_id(template_select.get_item_text(index))
+	request_template_switch(template_select.get_item_text(index))
 
 
 func _on_bind_player_pressed() -> void:
@@ -2187,8 +2579,16 @@ func _on_preview_reset_pressed() -> void:
 	preview_reset()
 
 
+func _on_frame_slot_insert_before_keep_pressed() -> void:
+	insert_empty_frame_slot(_current_sequence_ref(), preview_frame, false)
+
+
 func _on_frame_slot_insert_before_shift_pressed() -> void:
 	insert_empty_frame_slot(_current_sequence_ref(), preview_frame, true)
+
+
+func _on_frame_slot_insert_after_keep_pressed() -> void:
+	insert_empty_frame_slot(_current_sequence_ref(), preview_frame + 1, false)
 
 
 func _on_frame_slot_insert_after_shift_pressed() -> void:
@@ -2227,17 +2627,17 @@ func _on_preview_normal_speed_pressed() -> void:
 
 func _on_preview_hurt_toggled(value: bool) -> void:
 	preview_show_hurtboxes = value
-	_refresh_action_preview()
+	_refresh_action_preview_chrome()
 
 
 func _on_preview_hit_toggled(value: bool) -> void:
 	preview_show_hitboxes = value
-	_refresh_action_preview()
+	_refresh_action_preview_chrome()
 
 
 func _on_preview_foot_toggled(value: bool) -> void:
 	preview_show_foot = value
-	_refresh_action_preview()
+	_refresh_action_preview_chrome()
 
 
 func _on_preview_window_toggle_pressed() -> void:
@@ -2301,6 +2701,10 @@ func _on_save_pressed() -> void:
 	save_all()
 
 
+func _on_discard_pressed() -> void:
+	discard_current()
+
+
 func _on_reload_pressed() -> void:
 	reload_current()
 
@@ -2311,6 +2715,22 @@ func _on_check_pressed() -> void:
 
 func _on_exact_pressed() -> void:
 	save_reload_exact()
+
+
+func _on_switch_save_confirmed() -> void:
+	var result := resolve_pending_switch("save")
+	if str(result.get("outcome", "")) == "save_failed":
+		call_deferred("_show_switch_dialog")
+
+
+func _on_switch_cancelled() -> void:
+	if not _pending_switch_kind.is_empty():
+		resolve_pending_switch("cancel")
+
+
+func _on_switch_custom_action(action: StringName) -> void:
+	if str(action) == "discard":
+		resolve_pending_switch("discard")
 
 
 func _on_sprite_ref_submitted() -> void:
@@ -2395,26 +2815,26 @@ func _on_hurtbox_selected(index: int) -> void:
 
 
 func _on_box_fields_submitted() -> void:
-	var changed := false
 	if hurtbox_select != null and not hurt_inputs.is_empty():
 		if not _validate_number_inputs(hurt_inputs, ["x", "y", "w", "h"]):
 			return
 		current_hurtbox_id = hurtbox_select.get_item_text(hurtbox_select.selected)
-		template_json["hurtboxes"][current_hurtbox_id] = _rect_json({
+		set_hurtbox_rect(current_hurtbox_id, {
 			"x": _number_from(hurt_inputs, "x"),
 			"y": _number_from(hurt_inputs, "y"),
 			"w": _number_from(hurt_inputs, "w"),
 			"h": _number_from(hurt_inputs, "h"),
 		})
-		changed = true
+		return
 	if not foot_inputs.is_empty():
 		if not _validate_number_inputs(foot_inputs, ["center_x", "center_y", "radius_x", "radius_y"]):
 			return
-		template_json["foot_collision"] = {
-			"center": {"x": _number_from(foot_inputs, "center_x"), "y": _number_from(foot_inputs, "center_y")},
-			"radius": {"x": maxf(1.0, _number_from(foot_inputs, "radius_x")), "y": maxf(1.0, _number_from(foot_inputs, "radius_y"))},
-		}
-		changed = true
+		set_foot_collision(
+			{"x": _number_from(foot_inputs, "center_x"), "y": _number_from(foot_inputs, "center_y")},
+			{"x": _number_from(foot_inputs, "radius_x"), "y": _number_from(foot_inputs, "radius_y")}
+		)
+		return
+	var next_hitbox := {}
 	if hitbox_id_input != null and not hitbox_inputs.is_empty():
 		var hitbox_id := hitbox_id_input.text.strip_edges()
 		var hitbox_id_valid := _is_hitbox_id_valid(hitbox_id)
@@ -2424,23 +2844,18 @@ func _on_box_fields_submitted() -> void:
 			return
 		if not _validate_number_inputs(hitbox_inputs, ["start_frame", "end_frame", "x", "y", "w", "h"]):
 			return
-		var move := selected_move_json()
-		if move["hitboxes"].is_empty():
-			move["hitboxes"].append({})
-		move["hitboxes"][0] = {
+		next_hitbox = {
 			"hitbox_id": hitbox_id,
-			"active_window": {
-				"start_frame": int(_number_from(hitbox_inputs, "start_frame")),
-				"end_frame": int(_number_from(hitbox_inputs, "end_frame")),
-			},
-			"rect": _rect_json({
+			"start_frame": int(_number_from(hitbox_inputs, "start_frame")),
+			"end_frame": int(_number_from(hitbox_inputs, "end_frame")),
+			"rect": {
 				"x": _number_from(hitbox_inputs, "x"),
 				"y": _number_from(hitbox_inputs, "y"),
 				"w": _number_from(hitbox_inputs, "w"),
 				"h": _number_from(hitbox_inputs, "h"),
-			}),
+			},
 		}
-		changed = true
+	var next_attack_hurtbox := {}
 	if attack_hurtbox_id_input != null and not attack_hurtbox_inputs.is_empty():
 		var hurtbox_id := attack_hurtbox_id_input.text.strip_edges()
 		var hurtbox_id_valid := hurtbox_id.begins_with("hurt_")
@@ -2450,27 +2865,31 @@ func _on_box_fields_submitted() -> void:
 			return
 		if not _validate_number_inputs(attack_hurtbox_inputs, ["start_frame", "end_frame", "x", "y", "w", "h"]):
 			return
-		var move := selected_move_json()
-		if not move.has("hurtboxes"):
-			move["hurtboxes"] = []
-		if move["hurtboxes"].is_empty():
-			move["hurtboxes"].append({})
-		move["hurtboxes"][0] = {
+		next_attack_hurtbox = {
 			"hurtbox_id": hurtbox_id,
-			"active_window": {
-				"start_frame": int(_number_from(attack_hurtbox_inputs, "start_frame")),
-				"end_frame": int(_number_from(attack_hurtbox_inputs, "end_frame")),
-			},
-			"rect": _rect_json({
+			"start_frame": int(_number_from(attack_hurtbox_inputs, "start_frame")),
+			"end_frame": int(_number_from(attack_hurtbox_inputs, "end_frame")),
+			"rect": {
 				"x": _number_from(attack_hurtbox_inputs, "x"),
 				"y": _number_from(attack_hurtbox_inputs, "y"),
 				"w": _number_from(attack_hurtbox_inputs, "w"),
 				"h": _number_from(attack_hurtbox_inputs, "h"),
-			}),
+			},
 		}
-		changed = true
-	if changed:
-		_refresh_fields()
+	if not next_hitbox.is_empty():
+		set_first_hitbox(
+			str(next_hitbox["hitbox_id"]),
+			int(next_hitbox["start_frame"]),
+			int(next_hitbox["end_frame"]),
+			next_hitbox["rect"]
+		)
+	if not next_attack_hurtbox.is_empty():
+		set_first_attack_hurtbox(
+			str(next_attack_hurtbox["hurtbox_id"]),
+			int(next_attack_hurtbox["start_frame"]),
+			int(next_attack_hurtbox["end_frame"]),
+			next_attack_hurtbox["rect"]
+		)
 
 
 func _on_events_apply_pressed() -> void:
@@ -2479,26 +2898,3 @@ func _on_events_apply_pressed() -> void:
 		_set_status("events JSON invalid")
 		return
 	set_move_events(json.data)
-	var errors := validate_current()
-	if errors.is_empty():
-		_set_status("events applied")
-
-
-func _on_runtime_start_pressed() -> void:
-	runtime_start_selected_move()
-	_set_status("runtime start %s" % selected_move)
-
-
-func _on_runtime_one_pressed() -> void:
-	runtime_advance_frame(1)
-	_set_status("runtime +1 frame")
-
-
-func _on_runtime_four_pressed() -> void:
-	runtime_advance_frame(4)
-	_set_status("runtime +4 frames")
-
-
-func _on_runtime_idle_pressed() -> void:
-	runtime_reset_idle()
-	_set_status("runtime idle")

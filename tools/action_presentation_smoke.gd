@@ -137,8 +137,10 @@ func _slice_two_facing_and_missing(character: Node) -> void:
 	_expect(str(character.animated_sprite.animation) == "jab_w", "combat presentation selects west-authored art")
 	_expect(not character.animated_sprite.flip_h, "west-authored art is not flipped")
 	character.reset_runtime(Vector2(245, 245))
-	var resolved: Dictionary = character._resolve_visual_animation(character.animated_sprite.sprite_frames, "uppercut")
-	_expect(resolved.is_empty(), "missing unequipped uppercut has no unrelated visual substitute")
+	var animation_before_missing_attack := str(character.animated_sprite.animation)
+	_expect(not character.request_attack("uppercut"), "missing unequipped uppercut is rejected")
+	_tick(character, 1)
+	_expect(str(character.animated_sprite.animation) == animation_before_missing_attack, "missing unequipped uppercut has no unrelated visual substitute")
 
 
 func _tick(character: Node, count: int) -> void:
