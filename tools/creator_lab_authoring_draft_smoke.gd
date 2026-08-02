@@ -119,6 +119,70 @@ func _run_panel_tracer(persisted_move_before: String) -> void:
 	var preview_sprite: Node = panel.preview_sprite()
 	_expect(not playground.all_characters().has(preview_sprite), "Creator Lab Preview remains outside Playground membership")
 	_expect(preview_sprite.combat_target == null, "Creator Lab Preview remains targetless")
+	var live_template_before := {
+		"max_hp": int(playable_sprite.max_hp),
+		"walk_speed": float(playable_sprite.walk_speed),
+		"run_speed": float(playable_sprite.run_speed),
+		"hurt_head": playable_sprite.hurtbox_profile.get("hurt_head", Rect2()),
+		"foot": playable_sprite.foot_collision_profile.duplicate(true),
+	}
+	var preview_before_invalid_template: Dictionary = panel.preview_observation().duplicate(true)
+	var preview_hp_before_invalid := int(preview_sprite.max_hp)
+	panel.set_hp(0)
+	var invalid_template_status: Dictionary = panel.draft_status()
+	_expect(not invalid_template_status.get("diagnostics", []).is_empty(), "Panel exposes invalid CharacterTemplate diagnostics")
+	_expect(not bool(invalid_template_status.get("can_apply", true)), "Panel blocks Apply for an invalid CharacterTemplate Draft")
+	_expect(
+		panel.preview_observation() == preview_before_invalid_template,
+		"Panel retains the last valid real Preview while CharacterTemplate Draft is invalid"
+	)
+	_expect(int(preview_sprite.max_hp) == preview_hp_before_invalid, "invalid HP retains the last valid real Preview sprite HP")
+	_expect(not panel.apply_to_bound_instance(), "invalid CharacterTemplate Draft cannot Apply")
+	_expect(
+		int(playable_sprite.max_hp) == int(live_template_before["max_hp"]),
+		"invalid CharacterTemplate Apply leaves the Playground sprite unchanged"
+	)
+
+	panel.set_hp(125)
+	panel.set_movement_speeds(80.0, 220.0)
+	panel.set_hurtbox_rect("hurt_head", {"x": -9, "y": -62, "w": 26, "h": 20})
+	var valid_hurtbox_preview := _box_rect_by_id(panel.preview_observation().get("hurtboxes", []), "hurtbox_id", "hurt_head")
+	panel.set_hurtbox_rect("hurt_head", {"x": -9, "y": -62, "w": 0, "h": 20})
+	var invalid_hurtbox_status: Dictionary = panel.draft_status()
+	_expect(not invalid_hurtbox_status.get("diagnostics", []).is_empty(), "Panel exposes invalid character hurtbox diagnostics")
+	_expect(not bool(invalid_hurtbox_status.get("can_apply", true)), "Panel blocks Apply for an invalid character hurtbox")
+	_expect(
+		_box_rect_by_id(panel.preview_observation().get("hurtboxes", []), "hurtbox_id", "hurt_head") == valid_hurtbox_preview,
+		"invalid character hurtbox retains the last valid real Preview hurtbox"
+	)
+	panel.set_hurtbox_rect("hurt_head", {"x": -9, "y": -62, "w": 26, "h": 20})
+	panel.set_foot_collision({"x": 2, "y": -6}, {"x": 20, "y": 10})
+	var valid_template_status: Dictionary = panel.draft_status()
+	var refreshed_template_preview: Dictionary = panel.preview_observation()
+	_expect(bool(valid_template_status.get("dirty", false)), "Panel CharacterTemplate edit intention marks the Draft dirty")
+	_expect(valid_template_status.get("diagnostics", []).is_empty(), "repaired Panel CharacterTemplate Draft validates")
+	_expect(
+		int(preview_sprite.max_hp) == 125
+		and is_equal_approx(float(preview_sprite.walk_speed), 80.0)
+		and is_equal_approx(float(preview_sprite.run_speed), 220.0),
+		"repaired character values automatically refresh Preview sprite HP and movement speeds"
+	)
+	_expect(
+		_box_rect_by_id(refreshed_template_preview.get("hurtboxes", []), "hurtbox_id", "hurt_head").size == Vector2(26, 20),
+		"valid character hurtbox edit automatically refreshes the real Preview"
+	)
+	_expect(
+		preview_sprite.foot_contact_ellipse().get("radius", Vector2.ZERO) == Vector2(20, 10),
+		"valid foot-collision edit automatically refreshes the real Preview"
+	)
+	_expect(
+		int(playable_sprite.max_hp) == int(live_template_before["max_hp"])
+		and is_equal_approx(float(playable_sprite.walk_speed), float(live_template_before["walk_speed"]))
+		and is_equal_approx(float(playable_sprite.run_speed), float(live_template_before["run_speed"]))
+		and playable_sprite.hurtbox_profile.get("hurt_head", Rect2()) == live_template_before["hurt_head"]
+		and playable_sprite.foot_collision_profile == live_template_before["foot"],
+		"valid CharacterTemplate Preview refresh leaves Playground unchanged before Apply"
+	)
 
 	var has_draft_status := panel.has_method("draft_status")
 	_expect(has_draft_status, "Creator Lab Panel exposes read-only Authoring Draft status")
@@ -130,8 +194,8 @@ func _run_panel_tracer(persisted_move_before: String) -> void:
 	)
 	if has_draft_status:
 		_expect(
-			not bool(panel.draft_status().get("dirty", true)),
-			"legacy compatibility edit does not become the representative Draft dirty path"
+			bool(panel.draft_status().get("dirty", false)),
+			"legacy compatibility edit does not clear the prior CharacterTemplate Draft dirty state"
 		)
 	panel.set_move_scalar("damage", EDITED_DAMAGE)
 	if has_draft_status:
@@ -164,6 +228,14 @@ func _run_panel_tracer(persisted_move_before: String) -> void:
 	_expect(panel.apply_to_bound_instance(), "explicit Apply succeeds for the valid Draft")
 	var applied_damage := _run_live_move_to_first_hitbox(playable_sprite, playground)
 	_expect(applied_damage == EDITED_DAMAGE, "explicit Apply reaches Playground through the real Move execution path")
+	_expect(
+		int(playable_sprite.max_hp) == 125
+		and is_equal_approx(float(playable_sprite.walk_speed), 80.0)
+		and is_equal_approx(float(playable_sprite.run_speed), 220.0)
+		and playable_sprite.hurtbox_profile.get("hurt_head", Rect2()).size == Vector2(26, 20)
+		and playable_sprite.foot_collision_profile.get("radius", Vector2.ZERO) == Vector2(20, 10),
+		"explicit Apply sends valid CharacterTemplate values and collision profiles through the live bundle path"
+	)
 	_expect(
 		is_equal_approx(_active_hitbox_width(playable_sprite), LEGACY_HITBOX_WIDTH),
 		"legacy hitbox edit is explicitly re-imported before the Draft damage edit and survives Apply"
@@ -220,6 +292,13 @@ func _active_hitbox_width(sprite: Node) -> float:
 		return -1.0
 	var rect: Rect2 = hitboxes[0].get("rect", Rect2())
 	return rect.size.x
+
+
+func _box_rect_by_id(boxes: Array, id_key: String, box_id: String) -> Rect2:
+	for box in boxes:
+		if str(box.get(id_key, "")) == box_id:
+			return box.get("rect", Rect2())
+	return Rect2()
 
 
 func _run_live_move_to_first_hitbox(sprite: Node, playground: Node) -> int:

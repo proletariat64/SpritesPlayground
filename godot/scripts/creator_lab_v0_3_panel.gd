@@ -351,11 +351,12 @@ func draft_status() -> Dictionary:
 func copy_template(copy_id: String = "") -> String:
 	var source_id := str(template_json["template_id"])
 	var next_id := copy_id if not copy_id.is_empty() else _next_copy_id(source_id)
-	template_json = DataStore.duplicate_template(source_id, next_id)
-	_refresh_options()
-	_refresh_fields()
-	_set_status("copied %s" % next_id)
-	return next_id
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.copy_template(next_id)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted, true, "copied %s (unsaved)" % next_id)
+	return next_id if accepted else ""
 
 
 func save_all() -> void:
@@ -374,9 +375,6 @@ func save_all() -> void:
 
 
 func apply_to_bound_instance() -> bool:
-	var errors := validate_current()
-	if not errors.is_empty():
-		return false
 	_sync_authoring_draft_from_legacy_if_needed()
 	var draft_snapshot: Dictionary = _authoring_draft.snapshot()
 	if not bool(draft_snapshot.get("can_apply", false)):
@@ -452,45 +450,68 @@ func validate_current() -> Array:
 
 
 func set_hp(value: int) -> void:
-	template_json["hp"] = maxi(1, value)
-	_refresh_fields()
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_character_values(
+		value,
+		float(template_json.get("walk_speed", 95.0)),
+		float(template_json.get("run_speed", 150.0))
+	)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func set_movement_speeds(walk_speed: float, run_speed: float) -> void:
-	template_json["walk_speed"] = maxf(1.0, walk_speed)
-	template_json["run_speed"] = maxf(1.0, run_speed)
-	_refresh_fields()
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_character_values(
+		int(template_json.get("hp", 1)),
+		walk_speed,
+		run_speed
+	)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func set_sprite_set_ref(sprite_set_id: String) -> void:
-	template_json["sprite_set_ref"] = sprite_set_id
-	sprite_set_json = DataStore.load_sprite_set(sprite_set_id)
-	_refresh_options()
-	_refresh_fields()
+	var sprite_set_document := DataStore.load_sprite_set(sprite_set_id)
+	if sprite_set_document.is_empty():
+		sprite_set_document = {"sprite_set_id": sprite_set_id}
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.change_sprite_set(sprite_set_document)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted, true)
 
 
 func set_equipped_moves(move_ids: Array) -> void:
-	template_json["equipped_moves"] = move_ids.duplicate()
-	moves_json.clear()
-	for move_id in template_json["equipped_moves"]:
-		moves_json[str(move_id)] = DataStore.load_move(str(move_id))
-	if not template_json["equipped_moves"].is_empty():
-		selected_move = str(template_json["equipped_moves"][0])
-	_refresh_options()
-	_refresh_fields()
+	var move_documents := {}
+	for move_id in move_ids:
+		move_documents[str(move_id)] = DataStore.load_move(str(move_id))
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.set_equipped_moves(move_ids, move_documents)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted, true)
 
 
 func set_hurtbox_rect(hurtbox_id: String, rect: Dictionary) -> void:
-	template_json["hurtboxes"][hurtbox_id] = _rect_json(rect)
-	_refresh_fields()
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_hurtbox_rect(hurtbox_id, rect.duplicate(true))
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func set_foot_collision(center: Dictionary, radius: Dictionary) -> void:
-	template_json["foot_collision"] = {
-		"center": {"x": float(center["x"]), "y": float(center["y"])},
-		"radius": {"x": maxf(1.0, float(radius["x"])), "y": maxf(1.0, float(radius["y"]))},
-	}
-	_refresh_fields()
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_foot_collision(
+		{"x": float(center["x"]), "y": float(center["y"])},
+		{"x": float(radius["x"]), "y": float(radius["y"])}
+	)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func select_move(move_id: String) -> void:
@@ -510,8 +531,10 @@ func selected_move_json() -> Dictionary:
 func set_move_scalar(field: String, value) -> void:
 	if field == "damage":
 		_sync_authoring_draft_from_legacy_if_needed()
-		if not _authoring_draft.edit_move_scalar(selected_move, field, int(value)):
-			_set_status("Authoring Draft rejected %s edit" % field)
+		_loading_authoring_draft = true
+		var accepted: bool = _authoring_draft.edit_move_scalar(selected_move, field, int(value))
+		_loading_authoring_draft = false
+		_finish_authoring_draft_edit(accepted)
 		return
 	var move := selected_move_json()
 	match field:
@@ -852,7 +875,7 @@ func _build_values_panel() -> void:
 			_add_value("fail", str(summary.get("fail", 0)))
 			_build_coverage_list(values_panel)
 		"action_preview":
-			var preview_row := _coverage_row_for(current_action_id)
+			var preview_row := _coverage_row_for_bundle(current_action_id, _preview_bundle())
 			_add_value("action", str(preview_row.get("action_id", current_action_id)))
 			_add_value("status", str(preview_row.get("status", "")))
 			_add_value("clip", str(preview_row.get("clip_id", "")))
@@ -1510,6 +1533,24 @@ func _coverage_row_for(action_id: String) -> Dictionary:
 	return {}
 
 
+func _coverage_row_for_bundle(action_id: String, bundle: Dictionary) -> Dictionary:
+	var bundle_coverage := Coverage.analyze(
+		bundle.get("template", {}),
+		bundle.get("sprite_set", {}),
+		bundle.get("moves", {})
+	)
+	for row in bundle_coverage.get("rows", []):
+		if str(row.get("action_id", "")) == action_id:
+			return row
+	return {}
+
+
+func _preview_bundle() -> Dictionary:
+	_sync_authoring_draft_from_legacy_if_needed()
+	var bundle: Dictionary = _authoring_draft.snapshot().get("preview_bundle", {})
+	return bundle.duplicate(true)
+
+
 func _current_sequence_ref() -> String:
 	return str(_coverage_row_for(current_action_id).get("frame_sequence_ref", ""))
 
@@ -1642,18 +1683,20 @@ func _coverage_row_color(row: Dictionary) -> Color:
 
 
 func _preview_frame_count() -> int:
-	var row := _coverage_row_for(current_action_id)
+	var bundle := _preview_bundle()
+	var row := _coverage_row_for_bundle(current_action_id, bundle)
 	if row.is_empty():
 		return 1
 	var sequence_count := 0
 	var sequence_ref := str(row.get("frame_sequence_ref", ""))
-	var sequences: Dictionary = sprite_set_json.get("frame_sequences", {})
+	var sequences: Dictionary = bundle.get("sprite_set", {}).get("frame_sequences", {})
 	if sequences.has(sequence_ref):
 		sequence_count = sequences[sequence_ref].size()
 	var move_count := 0
 	var move_id := str(row.get("backing_move_id", ""))
-	if moves_json.has(move_id):
-		move_count = int(moves_json[move_id].get("frame_count", 1))
+	var preview_moves: Dictionary = bundle.get("moves", {})
+	if preview_moves.has(move_id):
+		move_count = int(preview_moves[move_id].get("frame_count", 1))
 	return maxi(1, maxi(sequence_count, move_count))
 
 
@@ -1721,7 +1764,15 @@ func _preview_status_text() -> String:
 func _apply_preview_to_control(control: Control) -> void:
 	if control == null or not control.has_method("set_preview_data"):
 		return
-	control.set_preview_data(_coverage_row_for(current_action_id), template_json, sprite_set_json, moves_json)
+	var preview_bundle := _preview_bundle()
+	if preview_bundle.is_empty():
+		return
+	control.set_preview_data(
+		_coverage_row_for_bundle(current_action_id, preview_bundle),
+		preview_bundle.get("template", {}),
+		preview_bundle.get("sprite_set", {}),
+		preview_bundle.get("moves", {})
+	)
 	control.set_overlay_visibility(preview_show_hurtboxes, preview_show_hitboxes, preview_show_foot)
 	control.set_frame(preview_frame)
 
@@ -1827,13 +1878,30 @@ func _sync_legacy_draft_aliases() -> void:
 	moves_json = bundle.get("moves", {})
 
 
+func _finish_authoring_draft_edit(accepted: bool, refresh_options: bool = false, success_status: String = "") -> void:
+	_sync_legacy_draft_aliases()
+	if refresh_options:
+		if not moves_json.has(selected_move) and not template_json.get("equipped_moves", []).is_empty():
+			selected_move = str(template_json["equipped_moves"][0])
+		_refresh_options()
+	_refresh_fields()
+	if not accepted:
+		_set_status("Authoring Draft rejected edit")
+		return
+	var diagnostics: Array = _authoring_draft.snapshot().get("diagnostics", []).duplicate(true)
+	if not diagnostics.is_empty():
+		_set_errors(diagnostics)
+	elif not success_status.is_empty():
+		_set_status(success_status)
+
+
 func _sync_authoring_draft_from_legacy_if_needed() -> void:
 	var legacy_bundle := _runtime_bundle()
 	var snapshot: Dictionary = _authoring_draft.snapshot()
 	if snapshot.get("bundle", {}) == legacy_bundle:
 		return
 	_loading_authoring_draft = true
-	_authoring_draft.load_bundle(legacy_bundle)
+	_authoring_draft.import_legacy_bundle(legacy_bundle)
 	_loading_authoring_draft = false
 	_sync_legacy_draft_aliases()
 
@@ -2528,21 +2596,21 @@ func _on_box_fields_submitted() -> void:
 		if not _validate_number_inputs(hurt_inputs, ["x", "y", "w", "h"]):
 			return
 		current_hurtbox_id = hurtbox_select.get_item_text(hurtbox_select.selected)
-		template_json["hurtboxes"][current_hurtbox_id] = _rect_json({
+		set_hurtbox_rect(current_hurtbox_id, {
 			"x": _number_from(hurt_inputs, "x"),
 			"y": _number_from(hurt_inputs, "y"),
 			"w": _number_from(hurt_inputs, "w"),
 			"h": _number_from(hurt_inputs, "h"),
 		})
-		changed = true
+		return
 	if not foot_inputs.is_empty():
 		if not _validate_number_inputs(foot_inputs, ["center_x", "center_y", "radius_x", "radius_y"]):
 			return
-		template_json["foot_collision"] = {
-			"center": {"x": _number_from(foot_inputs, "center_x"), "y": _number_from(foot_inputs, "center_y")},
-			"radius": {"x": maxf(1.0, _number_from(foot_inputs, "radius_x")), "y": maxf(1.0, _number_from(foot_inputs, "radius_y"))},
-		}
-		changed = true
+		set_foot_collision(
+			{"x": _number_from(foot_inputs, "center_x"), "y": _number_from(foot_inputs, "center_y")},
+			{"x": _number_from(foot_inputs, "radius_x"), "y": _number_from(foot_inputs, "radius_y")}
+		)
+		return
 	if hitbox_id_input != null and not hitbox_inputs.is_empty():
 		var hitbox_id := hitbox_id_input.text.strip_edges()
 		var hitbox_id_valid := _is_hitbox_id_valid(hitbox_id)
