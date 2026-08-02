@@ -86,7 +86,7 @@ func _run_playground_smoke() -> Array:
 	var started: bool = player.request_attack("jab")
 	errors.append_array(_expect(started, "jab request starts scoped miduo_jab"))
 	errors.append_array(_expect(str(player.state_machine.current_move) == "miduo_jab", "runtime move id stays scoped (got %s)" % player.state_machine.current_move))
-	player._sync_visual_animation()
+	await physics_frame
 	errors.append_array(_expect(str(player.animated_sprite.animation) == "jab", "attack plays imported jab clip (got %s)" % player.animated_sprite.animation))
 	while player.move_executor.is_executing():
 		await physics_frame
@@ -100,8 +100,11 @@ func _run_playground_smoke() -> Array:
 	playground.select_player_character()
 	var panel: Node = playground.creator_lab
 	errors.append_array(_expect(str(panel.bound_template_id) == "miduo", "creator lab binds miduo"))
-	errors.append_array(_expect(str(panel.template_json.get("template_id", "")) == "miduo", "creator lab loads miduo template"))
-	errors.append_array(_expect(int(panel.template_json.get("hp", 0)) == 100, "creator lab sees imported default hp"))
+	var draft_snapshot: Dictionary = panel.authoring_draft_snapshot()
+	var authored_bundle: Dictionary = draft_snapshot.get("bundle", {})
+	var authored_template: Dictionary = authored_bundle.get("template", {})
+	errors.append_array(_expect(str(authored_template.get("template_id", "")) == "miduo", "creator lab loads miduo template"))
+	errors.append_array(_expect(int(authored_template.get("hp", 0)) == 100, "creator lab sees imported default hp"))
 
 	playground.free()
 	return errors

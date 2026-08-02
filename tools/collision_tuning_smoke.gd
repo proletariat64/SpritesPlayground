@@ -7,6 +7,7 @@ const CombatCharacterScript := preload("res://godot/scripts/combat_character.gd"
 const TEMPLATE_ID := "miduo"
 const MOVE_ID := "miduo_jab"
 const OTHER_MOVE_ID := "miduo_blue_jab"
+const DATA_ROOT := "user://collision_tuning_smoke"
 
 
 func _init() -> void:
@@ -15,17 +16,20 @@ func _init() -> void:
 
 func _run() -> void:
 	var errors: Array = []
-	var original_template := DataStore.load_template(TEMPLATE_ID)
-	var backups := {}
-	backups[DataStore.template_path(TEMPLATE_ID)] = _read_text(DataStore.template_path(TEMPLATE_ID))
-	backups[DataStore.sprite_set_path(str(original_template["sprite_set_ref"]))] = _read_text(DataStore.sprite_set_path(str(original_template["sprite_set_ref"])))
-	backups["res://godot/resources/sprite_frames/miduo.tres"] = _read_text("res://godot/resources/sprite_frames/miduo.tres")
-	for move_id in original_template["equipped_moves"]:
-		backups[DataStore.move_path(str(move_id))] = _read_text(DataStore.move_path(str(move_id)))
-	var other_move_text := _read_text(DataStore.move_path(OTHER_MOVE_ID))
+	_remove_tree(DATA_ROOT)
+	errors.append_array(_expect(
+		DataStore.save_runtime_bundle(DataStore.load_runtime_bundle("combat_gray_s64"), DATA_ROOT).is_empty(),
+		"isolated Creator Lab bootstrap fixture persists"
+	))
+	errors.append_array(_expect(
+		DataStore.save_runtime_bundle(DataStore.load_runtime_bundle(TEMPLATE_ID), DATA_ROOT).is_empty(),
+		"isolated collision fixture persists"
+	))
+	var other_move := DataStore.load_move(OTHER_MOVE_ID)
+	errors.append_array(_expect(DataStore.save_move(other_move, DATA_ROOT) == OK, "isolated peer move persists"))
 	var panel: PanelContainer = PanelScript.new()
 	root.add_child(panel)
-	panel.setup()
+	panel.setup(DATA_ROOT)
 	await process_frame
 	panel.load_template_id(TEMPLATE_ID)
 	panel.select_move(MOVE_ID)
@@ -34,13 +38,13 @@ func _run() -> void:
 	panel.set_first_hitbox("hit_jab", 1, 2, {"x": 32, "y": -50, "w": 24, "h": 18})
 	panel.set_first_attack_hurtbox("hurt_attack_body", 1, 2, {"x": -14, "y": -56, "w": 28, "h": 48})
 	panel.save_all()
-	var saved_move := DataStore.load_move(MOVE_ID)
+	var saved_move := DataStore.load_move(MOVE_ID, DATA_ROOT)
 	errors.append_array(_expect(saved_move.get("hurtboxes", []).size() == 1, "attack-frame hurtbox persists"))
 	errors.append_array(_expect(float(saved_move["hitboxes"][0]["rect"]["x"]) == 32.0, "hitbox position persists"))
 	errors.append_array(_expect(float(saved_move["hitboxes"][0]["rect"]["w"]) == 24.0, "hitbox size persists"))
 	errors.append_array(_expect(float(saved_move["hurtboxes"][0]["rect"]["x"]) == -14.0, "attack hurtbox position persists"))
 	errors.append_array(_expect(float(saved_move["hurtboxes"][0]["rect"]["h"]) == 48.0, "attack hurtbox size persists"))
-	errors.append_array(_expect(_read_text(DataStore.move_path(OTHER_MOVE_ID)) == other_move_text, "character-scoped peer remains unchanged"))
+	errors.append_array(_expect(DataStore.load_move(OTHER_MOVE_ID, DATA_ROOT) == other_move, "character-scoped peer remains unchanged"))
 
 	panel.current_move_section = "summary"
 	panel.select_move(MOVE_ID)
@@ -86,11 +90,10 @@ func _run() -> void:
 	_start_active_jab(defender)
 	errors.append_array(_expect(_live_overlap(attacker, defender), "restored attack hurtbox is vulnerable at same distance"))
 
-	for path in backups.keys():
-		_write_text(str(path), str(backups[path]))
 	panel.queue_free()
 	attacker.queue_free()
 	defender.queue_free()
+	_remove_tree(DATA_ROOT)
 
 	if errors.is_empty():
 		print("collision_tuning_smoke=PASS")
@@ -113,7 +116,7 @@ func _spawn(id: String, spawn_position: Vector2):
 
 
 func _apply_saved_bundle(character) -> void:
-	var bundle := DataStore.load_runtime_bundle(TEMPLATE_ID)
+	var bundle := DataStore.load_runtime_bundle(TEMPLATE_ID, DATA_ROOT)
 	character.apply_v0_3_runtime_bundle(bundle["template"], bundle["sprite_set"], bundle["moves"])
 	character.reset_runtime(character.position)
 
@@ -141,14 +144,22 @@ func _descendant_text(node: Node) -> String:
 	return result
 
 
-func _read_text(path: String) -> String:
-	var file := FileAccess.open(path, FileAccess.READ)
-	return file.get_as_text()
-
-
-func _write_text(path: String, content: String) -> void:
-	var file := FileAccess.open(path, FileAccess.WRITE)
-	file.store_string(content)
+func _remove_tree(path: String) -> void:
+	var directory := DirAccess.open(path)
+	if directory == null:
+		return
+	directory.list_dir_begin()
+	var entry := directory.get_next()
+	while not entry.is_empty():
+		if entry != "." and entry != "..":
+			var child := path.path_join(entry)
+			if directory.current_is_dir():
+				_remove_tree(child)
+			else:
+				DirAccess.remove_absolute(ProjectSettings.globalize_path(child))
+		entry = directory.get_next()
+	directory.list_dir_end()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
 func _expect(condition: bool, label: String) -> Array:

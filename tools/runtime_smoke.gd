@@ -2,6 +2,8 @@ extends SceneTree
 
 const PlaygroundScene := preload("res://godot/scenes/Playground.tscn")
 const V03DataStoreScript := preload("res://godot/scripts/prd_v0_3_data_store.gd")
+const CREATOR_DATA_ROOT := "user://runtime_smoke_creator_lab"
+const CREATOR_FIXTURE_TEMPLATE_IDS := ["combat_gray_s64", "miduo_blue"]
 
 
 func _init() -> void:
@@ -13,6 +15,10 @@ func _run() -> void:
 	root.add_child(playground)
 	await process_frame
 	await physics_frame
+	if not playground.has_method("advance_gameplay"):
+		push_error("runtime_smoke requires public Playground.advance_gameplay(delta)")
+		quit(1)
+		return
 	# Legacy runtime checks pin NPCs as stationary targets; AI behavior has its own
 	# public Playground seam in ai_combat_smoke.gd.
 	playground.dummy.is_test_dummy = true
@@ -33,6 +39,7 @@ func _run() -> void:
 	var all_hits_ok: bool = await _run_all_character_pairwise_hits_smoke(playground)
 	var depth_ok: bool = _run_depth_order_smoke(playground)
 	var reset_all_ok: bool = _run_reset_all_characters_smoke(playground)
+	_cleanup_creator_smoke()
 	if punch_ok and kick_ok and lethal_ok and non_goal_ok and ai_ok and creator_ok and focus_ok and foot_ok and foot_spacing_ok and foot_spacing_wall_ok and npc_collection_ok and all_spacing_ok and all_hits_ok and depth_ok and reset_all_ok:
 		print("runtime_smoke=PASS")
 		quit(0)
@@ -112,7 +119,7 @@ func _run_ai_stress_smoke(playground: Node) -> bool:
 		"dead": true,
 	}
 	for i in 10800:
-		playground._tick_combat(1.0 / 60.0)
+		playground.advance_gameplay(1.0 / 60.0)
 		if not valid_states.has(playground.player.state_machine.current_state):
 			return false
 		if playground.player.state_machine.current_state == "attack" and not playground.player.move_executor.is_executing():
@@ -131,12 +138,21 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 		print("creator_lab_smoke wrong panel=%s" % panel.name)
 		return false
 
-	var original_punch := V03DataStoreScript.load_move("basic_punch").duplicate(true)
-	var original_sprite_set := V03DataStoreScript.load_sprite_set("combat_gray_s64").duplicate(true)
+	_cleanup_creator_smoke()
+	var seed_errors: Array = []
+	for template_id in CREATOR_FIXTURE_TEMPLATE_IDS:
+		seed_errors.append_array(V03DataStoreScript.save_runtime_bundle(
+			V03DataStoreScript.load_runtime_bundle(template_id),
+			CREATOR_DATA_ROOT
+		))
+	if not seed_errors.is_empty():
+		print("creator_lab_smoke fixture seed errors=%s" % seed_errors)
+		_cleanup_creator_smoke()
+		return false
+	panel.setup(CREATOR_DATA_ROOT)
+	await process_frame
+
 	var copy_id := "combat_gray_s64_runtime_smoke_copy"
-	var copy_path := V03DataStoreScript.template_path(copy_id)
-	if FileAccess.file_exists(copy_path):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(copy_path))
 
 	panel.load_template_id("combat_gray_s64")
 	playground.player.apply_template_id("combat_gray_s64")
@@ -161,8 +177,8 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 	)
 	playground.select_player_character()
 	panel.copy_template(copy_id)
-	if str(panel.template_json["template_id"]) != copy_id:
-		_restore_creator_smoke(original_punch, original_sprite_set, copy_path)
+	if str(panel.draft_status().get("template_id", "")) != copy_id:
+		_cleanup_creator_smoke()
 		return false
 
 	panel.set_hp(101)
@@ -187,7 +203,7 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 		and bound_apply_ok
 		and int(playground.player.max_hp) == 101
 		and str(playground.player.template_id) == copy_id
-		and str(playground.player.sprite_set_id) == str(panel.template_json["sprite_set_ref"])
+		and str(playground.player.sprite_set_id) == "combat_gray_s64"
 		and is_equal_approx(live_hurt.position.x, -11.0)
 		and is_equal_approx(live_foot["center"].x, 1.0)
 		and is_equal_approx(live_foot["radius"].x, 19.0)
@@ -206,19 +222,14 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 		and is_equal_approx(live_rect.size.x, 25.0)
 	)
 
-	var coverage_before_invalid: Dictionary = panel._coverage_row_for("basic_punch")
-	var invalid_sequence_ref := str(coverage_before_invalid.get("frame_sequence_ref", ""))
-	var original_invalid_sequence: Array = panel.sprite_set_json["frame_sequences"][invalid_sequence_ref].duplicate(true)
 	var player_hp_before_invalid := int(playground.player.max_hp)
-	panel.sprite_set_json["frame_sequences"][invalid_sequence_ref][0] = "bogus://runtime_smoke_invalid"
-	panel.set_hp(102)
+	panel.set_move_scalar("frame_count", 8)
 	var invalid_apply_ok: bool = (
 		not panel.apply_to_bound_instance()
 		and int(playground.player.max_hp) == player_hp_before_invalid
-		and str(panel.status_label.text).contains("SpriteFrames generation FAIL")
+		and not panel.draft_status().get("diagnostics", []).is_empty()
 	)
-	panel.sprite_set_json["frame_sequences"][invalid_sequence_ref] = original_invalid_sequence
-	panel.set_hp(101)
+	panel.set_move_scalar("frame_count", 9)
 
 	var exact_ok: bool = panel.save_reload_exact()
 	var coverage: Dictionary = panel.wardrobe_coverage()
@@ -229,13 +240,16 @@ func _run_creator_lab_smoke(playground: Node) -> bool:
 	)
 	var toggle_ok: bool = _run_creator_toggle_smoke(playground)
 
-	panel.select_move("basic_punch")
-	var start_errors: Array = panel.runtime_start_selected_move()
-	panel.runtime_advance_frame(2)
-	var runtime_summary: Dictionary = panel.runtime_summary()
-	var runtime_ok: bool = start_errors.is_empty() and int(runtime_summary["active_hitbox_count"]) == 1
+	panel.select_action("basic_punch")
+	panel.preview_reset()
+	panel.set_preview_frame(2)
+	var runtime_summary: Dictionary = panel.preview_observation()
+	var runtime_ok: bool = (
+		str(runtime_summary.get("move", "")) == "basic_punch"
+		and int(runtime_summary.get("frame", -1)) == 2
+		and runtime_summary.get("hitboxes", []).size() == 1
+	)
 
-	_restore_creator_smoke(original_punch, original_sprite_set, copy_path)
 	playground.player.apply_template_id("combat_gray_s64")
 	if not (player_bound and dummy_bound and hud_ok and live_apply_ok and live_bridge_ok and invalid_apply_ok and exact_ok and wardrobe_ok and toggle_ok and runtime_ok):
 		print("creator_lab_smoke player_bound=%s dummy_bound=%s hud_ok=%s live_apply_ok=%s live_bridge_ok=%s invalid_apply=%s exact_ok=%s wardrobe_ok=%s toggle_ok=%s runtime_ok=%s" % [player_bound, dummy_bound, hud_ok, live_apply_ok, live_bridge_ok, invalid_apply_ok, exact_ok, wardrobe_ok, toggle_ok, runtime_ok])
@@ -250,19 +264,19 @@ func _run_foot_clamp_smoke(playground: Node) -> bool:
 	character.foot_collision_profile["center"] = Vector2.ZERO
 	character.foot_collision_profile["radius"] = Vector2(4, 4)
 	character.reset_runtime(start_position)
-	playground._tick_combat(1.0 / 60.0)
+	playground.advance_gameplay(1.0 / 60.0)
 	var small_radius_x := character.position.x
 
 	character.foot_collision_profile["center"] = Vector2.ZERO
 	character.foot_collision_profile["radius"] = Vector2(40, 4)
 	character.reset_runtime(start_position)
-	playground._tick_combat(1.0 / 60.0)
+	playground.advance_gameplay(1.0 / 60.0)
 	var large_radius_x := character.position.x
 
 	character.foot_collision_profile["center"] = Vector2(20, 0)
 	character.foot_collision_profile["radius"] = Vector2(4, 4)
 	character.reset_runtime(start_position)
-	playground._tick_combat(1.0 / 60.0)
+	playground.advance_gameplay(1.0 / 60.0)
 	var offset_center_x := character.position.x
 
 	character.foot_collision_profile = original_profile
@@ -285,21 +299,21 @@ func _run_foot_spacing_smoke(playground: Node) -> bool:
 	dummy.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2(10, 6)}
 	player.reset_runtime(Vector2(320, 205))
 	dummy.reset_runtime(Vector2(324, 205))
-	playground._resolve_foot_spacing()
+	playground.advance_gameplay(1.0 / 60.0)
 	var small_spacing: float = player.foot_center_world().distance_to(dummy.foot_center_world())
 
 	player.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2(30, 6)}
 	dummy.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2(30, 6)}
 	player.reset_runtime(Vector2(320, 205))
 	dummy.reset_runtime(Vector2(324, 205))
-	playground._resolve_foot_spacing()
+	playground.advance_gameplay(1.0 / 60.0)
 	var large_spacing: float = player.foot_center_world().distance_to(dummy.foot_center_world())
 
 	player.foot_collision_profile = {"center": Vector2(12, 0), "radius": Vector2(30, 6)}
 	dummy.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2(30, 6)}
 	player.reset_runtime(Vector2(320, 205))
 	dummy.reset_runtime(Vector2(324, 205))
-	playground._resolve_foot_spacing()
+	playground.advance_gameplay(1.0 / 60.0)
 	var offset_spacing: float = player.foot_center_world().distance_to(dummy.foot_center_world())
 
 	player.foot_collision_profile = original_player_profile
@@ -326,7 +340,7 @@ func _run_foot_spacing_wall_clamp_smoke(playground: Node) -> bool:
 	var edge_x: float = playground.arena_center.x + playground.arena_radius.x - 40.0
 	player.reset_runtime(Vector2(edge_x - 2.0, playground.arena_center.y))
 	dummy.reset_runtime(Vector2(edge_x + 2.0, playground.arena_center.y))
-	playground._tick_combat(1.0 / 60.0)
+	playground.advance_gameplay(1.0 / 60.0)
 
 	var player_inside := _foot_inside_arena(playground, player)
 	var dummy_inside := _foot_inside_arena(playground, dummy)
@@ -456,11 +470,13 @@ func _run_all_character_pairwise_spacing_smoke(playground: Node) -> bool:
 	for character in live_characters:
 		original_profiles.append(character.foot_collision_profile.duplicate(true))
 		original_positions.append(character.position)
+		character.control_mode = "manual"
+		character.is_test_dummy = true
 
 	for character in live_characters:
 		character.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2(12, 6)}
 	_cluster_characters(live_characters)
-	playground._resolve_all_foot_spacing()
+	playground.advance_gameplay(1.0 / 60.0)
 	var small_min_distance: float = _minimum_pair_distance(live_characters)
 
 	for character in live_characters:
@@ -468,7 +484,7 @@ func _run_all_character_pairwise_spacing_smoke(playground: Node) -> bool:
 	var expanded_npc: Node2D = playground.npcs[1]
 	expanded_npc.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2(36, 6)}
 	_cluster_characters(live_characters)
-	playground._resolve_all_foot_spacing()
+	playground.advance_gameplay(1.0 / 60.0)
 	var expanded_min_distance: float = _minimum_distance_to(expanded_npc, live_characters)
 
 	for index in live_characters.size():
@@ -495,13 +511,19 @@ func _run_all_character_pairwise_hits_smoke(playground: Node) -> bool:
 	# Pin both character templates so this smoke cannot pass only because an earlier
 	# Creator Lab slice changed the bound runtime character.
 	playground.player.apply_template_id("miduo")
+	var live_characters: Array = playground.all_characters()
+	var original_profiles: Array = []
+	for character in live_characters:
+		original_profiles.append(character.foot_collision_profile.duplicate(true))
+		character.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2.ZERO}
 	playground.player.reset_runtime(Vector2(245, 245))
 	for npc in playground.npcs:
+		npc.control_mode = "manual"
+		npc.is_test_dummy = true
 		npc.reset_runtime(_target_position_for("jab"))
 	playground.player.request_attack("jab")
 	for _frame in 8:
-		playground.player.state_machine.tick(1.0 / 60.0, Vector2.ZERO)
-		playground._process_all_hits()
+		playground.advance_gameplay(1.0 / 60.0)
 
 	var player_hit_all := true
 	for npc in playground.npcs:
@@ -509,17 +531,22 @@ func _run_all_character_pairwise_hits_smoke(playground: Node) -> bool:
 			player_hit_all = false
 
 	playground.reset_playground()
+	for npc in playground.npcs:
+		npc.control_mode = "manual"
+		npc.is_test_dummy = true
 	var npc_attacker: Node2D = playground.npcs[0]
 	npc_attacker.apply_template_id("skeleton_default_unarmed_s64")
+	npc_attacker.foot_collision_profile = {"center": Vector2.ZERO, "radius": Vector2.ZERO}
 	npc_attacker.reset_runtime(Vector2(245, 245))
 	npc_attacker.state_machine.facing = 1
 	playground.player.reset_runtime(_target_position_for("basic_punch"))
 	npc_attacker.request_attack("basic_punch")
 	for _frame in 8:
-		npc_attacker.state_machine.tick(1.0 / 60.0, Vector2.ZERO)
-		playground._process_all_hits()
+		playground.advance_gameplay(1.0 / 60.0)
 	var npc_hit_player: bool = playground.player.current_hp == playground.player.max_hp - 8
 
+	for index in live_characters.size():
+		live_characters[index].foot_collision_profile = original_profiles[index]
 	_cleanup_npcs_to_min(playground)
 	playground.reset_playground()
 	var ok: bool = player_hit_all and npc_hit_player
@@ -542,25 +569,25 @@ func _run_depth_order_smoke(playground: Node) -> bool:
 
 	player.reset_runtime(Vector2(260, 250))
 	dummy.reset_runtime(Vector2(260, 210))
-	playground._update_character_depth_order()
+	playground.advance_gameplay(1.0 / 60.0)
 	var lower_player_front: bool = player.z_index > dummy.z_index
 
 	player.reset_runtime(Vector2(260, 190))
 	dummy.reset_runtime(Vector2(260, 250))
-	playground._update_character_depth_order()
+	playground.advance_gameplay(1.0 / 60.0)
 	var swapped_dummy_front: bool = dummy.z_index > player.z_index
 
 	player.reset_runtime(Vector2(260, 250))
 	dummy.reset_runtime(Vector2(260, 210))
 	player.state_machine.visual_jump_offset = -120.0
-	playground._update_character_depth_order()
+	playground.advance_gameplay(1.0 / 60.0)
 	var jump_ignored: bool = player.z_index > dummy.z_index
 
 	player.state_machine.visual_jump_offset = original_player_jump
 	dummy.state_machine.visual_jump_offset = original_dummy_jump
 	player.reset_runtime(original_player_position)
 	dummy.reset_runtime(original_dummy_position)
-	playground._update_character_depth_order()
+	playground.advance_gameplay(1.0 / 60.0)
 
 	var ok: bool = lower_player_front and swapped_dummy_front and jump_ignored
 	if not ok:
@@ -626,19 +653,16 @@ func _run_creator_toggle_smoke(playground: Node) -> bool:
 
 func _run_input_focus_smoke(playground: Node) -> bool:
 	playground.creator_lab.visible = true
-	playground.creator_lab.current_nav = "character_template"
-	playground.creator_lab._refresh_fields()
 	await process_frame
-	var focus_target: Control = playground.creator_lab.sprite_ref_input
-	if focus_target == null:
-		print("input_focus_smoke missing sprite_ref_input")
-		return false
+	var focus_target := LineEdit.new()
+	playground.creator_lab.add_child(focus_target)
 	focus_target.grab_focus()
 	await process_frame
 	var focused_before: bool = playground.get_viewport().gui_get_focus_owner() == focus_target
 	playground.toggle_creator_lab()
 	await process_frame
 	var closed_focus_released: bool = not playground.creator_lab.visible and playground.get_viewport().gui_get_focus_owner() == null
+	focus_target.queue_free()
 	if not (focused_before and closed_focus_released):
 		print("input_focus_smoke focused_before=%s closed_focus_released=%s" % [
 			focused_before,
@@ -647,11 +671,26 @@ func _run_input_focus_smoke(playground: Node) -> bool:
 	return focused_before and closed_focus_released
 
 
-func _restore_creator_smoke(original_punch: Dictionary, original_sprite_set: Dictionary, copy_path: String) -> void:
-	V03DataStoreScript.save_move(original_punch)
-	V03DataStoreScript.save_sprite_set(original_sprite_set)
-	if FileAccess.file_exists(copy_path):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(copy_path))
+func _cleanup_creator_smoke() -> void:
+	_remove_tree(CREATOR_DATA_ROOT)
+
+
+func _remove_tree(path: String) -> void:
+	var directory := DirAccess.open(path)
+	if directory == null:
+		return
+	directory.list_dir_begin()
+	var entry := directory.get_next()
+	while not entry.is_empty():
+		if entry != "." and entry != "..":
+			var child := path.path_join(entry)
+			if directory.current_is_dir():
+				_remove_tree(child)
+			else:
+				DirAccess.remove_absolute(ProjectSettings.globalize_path(child))
+		entry = directory.get_next()
+	directory.list_dir_end()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
 func _target_position_for(move_id: String) -> Vector2:

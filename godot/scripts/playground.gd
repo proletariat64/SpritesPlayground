@@ -52,6 +52,10 @@ func _process(_delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	_process_input()
+	advance_gameplay(delta)
+
+
+func advance_gameplay(delta: float) -> void:
 	_tick_combat(delta)
 
 
@@ -324,18 +328,10 @@ func _resolve_all_foot_spacing() -> void:
 			return
 
 
-func _resolve_foot_spacing() -> void:
-	_resolve_all_foot_spacing()
-
-
 func _clamp_all_characters_to_arena() -> void:
 	for character in all_characters():
 		if character.has_method("clamp_to_arena"):
 			character.clamp_to_arena(arena_center, arena_radius)
-
-
-func _clamp_characters_to_arena() -> void:
-	_clamp_all_characters_to_arena()
 
 
 func _update_character_depth_order() -> void:

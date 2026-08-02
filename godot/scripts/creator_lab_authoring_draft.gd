@@ -425,13 +425,6 @@ func copy_template(next_template_id) -> bool:
 	return _commit_candidate(candidate)
 
 
-func import_legacy_bundle(source) -> bool:
-	if not _loaded or not _has_bundle_documents(source):
-		return false
-	# Import current legacy edits without resetting the original clean baseline.
-	return _commit_candidate(source.duplicate(true))
-
-
 func snapshot() -> Dictionary:
 	var valid := _loaded and _diagnostics.is_empty()
 	return {
@@ -442,11 +435,6 @@ func snapshot() -> Dictionary:
 		"can_save": _dirty and valid,
 		"can_apply": valid,
 	}
-
-
-func legacy_bundle_view() -> Dictionary:
-	# Temporary detached bridge while Panel edits migrate behind Draft in #44-#46.
-	return _bundle.duplicate(true)
 
 
 func _commit_candidate(candidate: Dictionary) -> bool:

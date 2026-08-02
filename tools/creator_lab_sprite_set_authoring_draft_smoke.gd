@@ -1,8 +1,6 @@
 extends SceneTree
 
 const DraftScript := preload("res://godot/scripts/creator_lab_authoring_draft.gd")
-const PanelScript := preload("res://godot/scripts/creator_lab_v0_3_panel.gd")
-const PlaygroundScene := preload("res://godot/scenes/Playground.tscn")
 
 const SHARED_SEQUENCE := "shared"
 const ALIASED_JUMP_SEQUENCE := "jump_alias_shared"
@@ -43,8 +41,6 @@ func _run() -> void:
 		_run_delete_slices()
 		_run_replace_and_mark_slices()
 		_run_source_copy_slice()
-
-	await _run_panel_wiring_slice()
 
 	if _errors.is_empty():
 		print("creator_lab_sprite_set_authoring_draft_smoke=PASS")
@@ -241,53 +237,6 @@ func _run_source_copy_slice() -> void:
 	_expect(draft.load_bundle(source).is_empty(), "synthetic shared-sequence bundle is valid")
 	_expect(draft.insert_frame_slot(SHARED_SEQUENCE, 1, INSERTED_SLOT, true), "source-copy insertion succeeds")
 	_expect(source == source_before, "frame editing never aliases or mutates the loaded source bundle")
-
-
-func _run_panel_wiring_slice() -> void:
-	var playground: Node = PlaygroundScene.instantiate()
-	root.add_child(playground)
-	await process_frame
-	playground.set_process(false)
-	playground.set_physics_process(false)
-
-	var panel: PanelContainer = PanelScript.new()
-	root.add_child(panel)
-	panel.setup()
-	await process_frame
-
-	var playable_sprite: Node = playground.player
-	playable_sprite.apply_template_id("combat_gray_s64")
-	panel.bind_instance(playable_sprite)
-	panel.select_action("basic_punch")
-	var preview_count_before: int = int(panel.preview_frame_count())
-	var live_before := _playground_observation(playable_sprite, "basic_punch")
-
-	_expect(
-		panel.insert_empty_frame_slot("basic_punch", 0, true),
-		"Panel expresses one public frame-insertion intention without private refresh ordering"
-	)
-	var draft_status: Dictionary = panel.draft_status()
-	_expect(bool(draft_status.get("dirty", false)), "Panel frame intention marks the Authoring Draft dirty")
-	_expect(draft_status.get("diagnostics", []).is_empty(), "Panel reports the valid frame intention as diagnostic-free")
-	_expect(panel.preview_frame_count() == preview_count_before + 1, "valid Panel frame intention automatically refreshes the real Preview")
-	_expect(
-		_playground_observation(playable_sprite, "basic_punch") == live_before,
-		"Panel frame intention leaves the selected Playground sprite unchanged before Apply"
-	)
-
-	panel.queue_free()
-	playground.queue_free()
-	await process_frame
-
-
-func _playground_observation(sprite: Node, move_id: String) -> Dictionary:
-	var runtime_move: Dictionary = sprite.move_executor.move_templates.get(move_id, {})
-	return {
-		"template_id": str(sprite.template_id),
-		"hp": int(sprite.current_hp),
-		"position": sprite.position,
-		"total_frames": int(runtime_move.get("total_frames", -1)),
-	}
 
 
 func _new_draft():

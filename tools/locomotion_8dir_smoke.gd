@@ -233,11 +233,11 @@ func _slice_directional_animation_and_flip() -> void:
 	for sector in sectors:
 		miduo.reset_runtime(Vector2.ZERO)
 		miduo.state_machine.tick(DT, sector[0])
-		miduo._sync_visual_animation()
+		_refresh_visual(miduo)
 		_expect(str(miduo.animated_sprite.animation) == "eden_walk_start_%s" % sector[1], "miduo %s walk resolves imported start art (got %s)" % [sector[1], miduo.animated_sprite.animation])
 		for i in 12:
 			miduo.state_machine.tick(DT, sector[0])
-		miduo._sync_visual_animation()
+		_refresh_visual(miduo)
 		_expect(str(miduo.animated_sprite.animation) == "eden_walk_loop_%s" % sector[1], "miduo %s walk resolves imported loop art (got %s)" % [sector[1], miduo.animated_sprite.animation])
 		_expect(not miduo.animated_sprite.flip_h, "miduo %s authored directional art is not flipped" % sector[1])
 	var skeleton := CombatCharacterScript.new()
@@ -246,11 +246,11 @@ func _slice_directional_animation_and_flip() -> void:
 	root.add_child(skeleton)
 	await process_frame
 	skeleton.state_machine.tick(DT, Vector2(-1, 0))
-	skeleton._sync_visual_animation()
+	_refresh_visual(skeleton)
 	_expect(str(skeleton.animated_sprite.animation) == "walk", "skeleton W walk falls back to unsuffixed walk (got %s)" % skeleton.animated_sprite.animation)
 	_expect(skeleton.animated_sprite.flip_h, "skeleton legacy W walk mirrors with flip_h")
 	skeleton.state_machine.tick(DT, Vector2(1, 0))
-	skeleton._sync_visual_animation()
+	_refresh_visual(skeleton)
 	_expect(not skeleton.animated_sprite.flip_h, "skeleton legacy E walk is not flipped")
 	miduo.free()
 	skeleton.free()
@@ -265,20 +265,20 @@ func _slice_cycle_phase() -> void:
 	miduo.state_machine.tick(DT, Vector2(1, 0))
 	for i in 12:
 		miduo.state_machine.tick(DT, Vector2(1, 0))
-	miduo._sync_visual_animation()
+	_refresh_visual(miduo)
 	_expect(str(miduo.animated_sprite.animation) == "eden_walk_loop_e", "walk reaches imported loop phase (got %s)" % miduo.animated_sprite.animation)
 	miduo.state_machine.tick(DT, Vector2(-1, 0))
-	miduo._sync_visual_animation()
+	_refresh_visual(miduo)
 	_expect(str(miduo.animated_sprite.animation) == "eden_walk_turn_w", "direction change presents imported turn phase (got %s)" % miduo.animated_sprite.animation)
 	miduo.state_machine.tick(DT, Vector2(-1, 0), true)
-	miduo._sync_visual_animation()
+	_refresh_visual(miduo)
 	_expect(str(miduo.animated_sprite.animation) == "eden_run_start_w", "walk to run presents imported run start (got %s)" % miduo.animated_sprite.animation)
 	for i in 12:
 		miduo.state_machine.tick(DT, Vector2(-1, 0), true)
-	miduo._sync_visual_animation()
+	_refresh_visual(miduo)
 	_expect(str(miduo.animated_sprite.animation) == "eden_run_loop_w", "run reaches imported loop phase (got %s)" % miduo.animated_sprite.animation)
 	miduo.state_machine.tick(DT, Vector2.ZERO, true)
-	miduo._sync_visual_animation()
+	_refresh_visual(miduo)
 	_expect(str(miduo.animated_sprite.animation) == "eden_run_stop_w", "run stop presents imported stop phase (got %s)" % miduo.animated_sprite.animation)
 	miduo.free()
 
@@ -301,18 +301,16 @@ func _slice_resource_and_scene() -> void:
 		required.append_array(["dash", "jump", "hurt", "dead", "jab", "high_kick"])
 		for animation_name in required:
 			_expect(names.has(animation_name), "miduo has animation %s" % animation_name)
-		var missing_attack := CombatCharacterScript.new()
-		_expect(
-			missing_attack._resolve_visual_animation(frames, "uppercut").is_empty(),
-			"missing uppercut never substitutes unrelated animation art"
-		)
-		missing_attack.free()
 	var playground: Node = PlaygroundScene.instantiate()
 	root.add_child(playground)
 	await process_frame
 	await physics_frame
 	_expect(str(playground.player.template_id) == "miduo", "playground player defaults to imported miduo")
 	_expect(str(playground.player.animated_sprite.animation) == "idle_e", "player boots onto idle_e (got %s)" % playground.player.animated_sprite.animation)
+	var animation_before_missing_attack := str(playground.player.animated_sprite.animation)
+	_expect(not playground.player.request_attack("uppercut"), "missing uppercut request is rejected")
+	await physics_frame
+	_expect(str(playground.player.animated_sprite.animation) == animation_before_missing_attack, "missing uppercut never substitutes unrelated animation art")
 	Input.action_press("run")
 	Input.action_press("move_right")
 	for i in 10:
@@ -326,6 +324,10 @@ func _slice_resource_and_scene() -> void:
 		await physics_frame
 	_expect(playground.player.state_machine.current_state == "idle", "releasing input returns to idle (got %s)" % playground.player.state_machine.current_state)
 	playground.free()
+
+
+func _refresh_visual(character: Node) -> void:
+	character.apply_runtime_sprite_frames(character.animated_sprite.sprite_frames)
 
 
 func _slice_reset_to_idle_direction() -> void:

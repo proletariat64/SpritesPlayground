@@ -2,7 +2,6 @@ extends PanelContainer
 class_name CreatorLabV03Panel
 
 const DataStore := preload("res://godot/scripts/prd_v0_3_data_store.gd")
-const Runtime := preload("res://godot/scripts/prd_v0_3_runtime.gd")
 const Catalog := preload("res://godot/scripts/creator_lab_action_catalog.gd")
 const Coverage := preload("res://godot/scripts/creator_lab_action_coverage.gd")
 const ActionPreview := preload("res://godot/scripts/creator_lab_action_preview.gd")
@@ -16,7 +15,7 @@ const COLOR_ACTION := Color(0.98, 0.82, 0.36)
 const COLOR_CHARACTER := Color(0.56, 0.82, 1.0)
 const COLOR_MOVE := Color(1.0, 0.78, 0.42)
 const COLOR_WARDROBE := Color(0.62, 0.88, 0.58)
-const COLOR_RUNTIME := Color(0.84, 0.72, 1.0)
+const COLOR_NPC := Color(0.84, 0.72, 1.0)
 const COLOR_PASS := Color(0.42, 0.88, 0.56)
 const COLOR_WARN := Color(1.0, 0.78, 0.28)
 const COLOR_FAIL := Color(1.0, 0.42, 0.36)
@@ -31,11 +30,11 @@ signal bind_npc_requested(index: int)
 signal npc_template_selected(template_id: String)
 signal bound_instance_switch_committed(instance: Node)
 
+# Detached rendering caches. Authoring mutations only enter through Authoring Draft APIs.
 var template_json: Dictionary = {}
 var sprite_set_json: Dictionary = {}
 var moves_json: Dictionary = {}
 var selected_move: String = "idle"
-var runtime: RefCounted = Runtime.new()
 var bound_instance_ref = null
 var bound_instance_id: String = ""
 var bound_template_id: String = ""
@@ -73,7 +72,6 @@ var save_button: Button
 var discard_button: Button
 var apply_bound_button: Button
 var switch_dialog: ConfirmationDialog
-var runtime_label: Label
 var preview_frame_label: Label
 var preview_frame_slider: HSlider
 var frame_slot_path_input: LineEdit
@@ -184,6 +182,7 @@ func update_bound_instance_summary(instance: Node) -> void:
 
 
 func refresh_action_coverage() -> Dictionary:
+	_refresh_authored_cache_from_draft()
 	coverage = Coverage.analyze(template_json, sprite_set_json, moves_json)
 	return coverage
 
@@ -334,6 +333,10 @@ func draft_status() -> Dictionary:
 	}
 
 
+func authoring_draft_snapshot() -> Dictionary:
+	return _authoring_draft.snapshot().duplicate(true)
+
+
 func pending_switch_status() -> Dictionary:
 	var snapshot: Dictionary = _authoring_draft.snapshot()
 	return {
@@ -348,6 +351,7 @@ func pending_switch_status() -> Dictionary:
 
 
 func request_template_switch(template_id: String) -> Dictionary:
+	_refresh_authored_cache_from_draft()
 	var target_id := template_id.strip_edges()
 	if target_id.is_empty():
 		return _switch_outcome(false, "failed", ["missing template id"])
@@ -444,9 +448,9 @@ func resolve_pending_switch(decision: String) -> Dictionary:
 
 
 func copy_template(copy_id: String = "") -> String:
+	_refresh_authored_cache_from_draft()
 	var source_id := str(template_json["template_id"])
 	var next_id := copy_id if not copy_id.is_empty() else _next_copy_id(source_id)
-	_sync_authoring_draft_from_legacy_if_needed()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.copy_template(next_id)
 	_loading_authoring_draft = false
@@ -482,7 +486,7 @@ func save_all() -> Array:
 		_set_errors(baseline_errors)
 		_refresh_draft_lifecycle_ui()
 		return baseline_errors
-	_sync_legacy_draft_aliases()
+	_refresh_authored_cache_from_draft()
 	_refresh_options()
 	_refresh_fields()
 
@@ -510,7 +514,7 @@ func discard_current() -> bool:
 		_set_status("discard failed")
 		_refresh_draft_lifecycle_ui()
 		return false
-	_sync_legacy_draft_aliases()
+	_refresh_authored_cache_from_draft()
 	preview_playing = false
 	preview_frame = 0
 	if not moves_json.has(selected_move) and not template_json.get("equipped_moves", []).is_empty():
@@ -523,7 +527,7 @@ func discard_current() -> bool:
 
 
 func apply_to_bound_instance() -> bool:
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	var draft_snapshot: Dictionary = _authoring_draft.snapshot()
 	if not bool(draft_snapshot.get("can_apply", false)):
 		var diagnostics: Array = draft_snapshot.get("diagnostics", []).duplicate(true)
@@ -540,21 +544,28 @@ func apply_to_bound_instance() -> bool:
 		_set_status("apply failed: no bound instance")
 		return false
 
-	var generation := SpriteFramesGeneratorScript.generate(draft_sprite_set, {"moves": draft_moves})
+	var generation := SpriteFramesGeneratorScript.build_in_memory(draft_sprite_set, {"moves": draft_moves})
 	if not bool(generation.get("ok", false)):
 		_set_status("apply blocked: SpriteFrames generation FAIL: %s" % _diagnostic_codes(generation.get("errors", [])))
+		return false
+	var generated_frames = generation.get("sprite_frames", null)
+	if not (generated_frames is SpriteFrames):
+		_set_status("apply blocked: SpriteFrames generation returned no frames")
 		return false
 
 	if not instance.has_method("apply_v0_3_runtime_bundle"):
 		_set_status("apply failed: bound instance has no live bundle path")
 		return false
 	instance.apply_v0_3_runtime_bundle(draft_template, draft_sprite_set, draft_moves)
+	if instance.has_method("apply_runtime_sprite_frames"):
+		instance.apply_runtime_sprite_frames(generated_frames)
 	update_bound_instance_summary(instance)
 	_set_status("applied v0.3 bundle to %s" % bound_instance_id)
 	return true
 
 
 func reload_current() -> Array:
+	_refresh_authored_cache_from_draft()
 	var template_id := str(template_json.get("template_id", ""))
 	if bool(_authoring_draft.snapshot().get("dirty", false)):
 		if not _pending_switch_kind.is_empty():
@@ -600,23 +611,20 @@ func save_reload_exact() -> bool:
 
 
 func validate_current() -> Array:
-	var synchronized := _sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	var draft_snapshot: Dictionary = _authoring_draft.snapshot()
 	var errors: Array = draft_snapshot.get("diagnostics", []).duplicate(true)
-	if not synchronized and errors.is_empty():
-		errors.append("Authoring Draft rejected legacy edit")
 	if not bool(draft_snapshot.get("can_apply", false)) and errors.is_empty():
 		errors.append("validation blocked: Authoring Draft is invalid")
 	if errors.is_empty():
 		_set_status("validation PASS")
 	else:
 		_set_errors(errors)
-	_refresh_runtime()
 	return errors
 
 
 func set_hp(value: int) -> void:
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.edit_character_values(
 		value,
@@ -628,7 +636,7 @@ func set_hp(value: int) -> void:
 
 
 func set_movement_speeds(walk_speed: float, run_speed: float) -> void:
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.edit_character_values(
 		int(template_json.get("hp", 1)),
@@ -643,7 +651,7 @@ func set_sprite_set_ref(sprite_set_id: String) -> void:
 	var sprite_set_document := DataStore.load_sprite_set(sprite_set_id, _data_root)
 	if sprite_set_document.is_empty():
 		sprite_set_document = {"sprite_set_id": sprite_set_id}
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.change_sprite_set(sprite_set_document)
 	_loading_authoring_draft = false
@@ -654,7 +662,7 @@ func set_equipped_moves(move_ids: Array) -> void:
 	var move_documents := {}
 	for move_id in move_ids:
 		move_documents[str(move_id)] = DataStore.load_move(str(move_id), _data_root)
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.set_equipped_moves(move_ids, move_documents)
 	_loading_authoring_draft = false
@@ -662,7 +670,7 @@ func set_equipped_moves(move_ids: Array) -> void:
 
 
 func set_hurtbox_rect(hurtbox_id: String, rect: Dictionary) -> void:
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.edit_hurtbox_rect(hurtbox_id, rect.duplicate(true))
 	_loading_authoring_draft = false
@@ -670,7 +678,7 @@ func set_hurtbox_rect(hurtbox_id: String, rect: Dictionary) -> void:
 
 
 func set_foot_collision(center: Dictionary, radius: Dictionary) -> void:
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.edit_foot_collision(
 		{"x": float(center["x"]), "y": float(center["y"])},
@@ -681,6 +689,7 @@ func set_foot_collision(center: Dictionary, radius: Dictionary) -> void:
 
 
 func select_move(move_id: String) -> void:
+	_refresh_authored_cache_from_draft()
 	if moves_json.has(move_id):
 		if selected_move != move_id:
 			current_move_section = "summary"
@@ -691,11 +700,12 @@ func select_move(move_id: String) -> void:
 
 
 func selected_move_json() -> Dictionary:
+	_refresh_authored_cache_from_draft()
 	return moves_json.get(selected_move, {}).duplicate(true)
 
 
 func set_move_scalar(field: String, value) -> void:
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.edit_move_scalar(selected_move, field, value)
 	_loading_authoring_draft = false
@@ -703,7 +713,7 @@ func set_move_scalar(field: String, value) -> void:
 
 
 func set_move_rhythm(startup_frames: int, active_frames: int, recovery_frames: int) -> void:
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.edit_move_rhythm(
 		selected_move,
@@ -716,7 +726,7 @@ func set_move_rhythm(startup_frames: int, active_frames: int, recovery_frames: i
 
 
 func set_move_active_window(start_frame: int, end_frame: int) -> void:
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.edit_move_active_window(selected_move, start_frame, end_frame)
 	_loading_authoring_draft = false
@@ -724,7 +734,7 @@ func set_move_active_window(start_frame: int, end_frame: int) -> void:
 
 
 func set_first_hitbox(hitbox_id: String, start_frame: int, end_frame: int, rect: Dictionary) -> void:
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.edit_first_hitbox(
 		selected_move,
@@ -738,7 +748,7 @@ func set_first_hitbox(hitbox_id: String, start_frame: int, end_frame: int, rect:
 
 
 func set_first_attack_hurtbox(hurtbox_id: String, start_frame: int, end_frame: int, rect: Dictionary) -> void:
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.edit_first_attack_hurtbox(
 		selected_move,
@@ -752,7 +762,7 @@ func set_first_attack_hurtbox(hurtbox_id: String, start_frame: int, end_frame: i
 
 
 func set_move_events(events: Array) -> void:
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.edit_move_events(selected_move, events.duplicate(true))
 	_loading_authoring_draft = false
@@ -760,7 +770,7 @@ func set_move_events(events: Array) -> void:
 
 
 func insert_empty_frame_slot(sequence_id: String, frame_index: int, shift_timing: bool) -> bool:
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.insert_frame_slot(
 		sequence_id,
@@ -776,7 +786,7 @@ func insert_empty_frame_slot(sequence_id: String, frame_index: int, shift_timing
 
 
 func remove_frame_slot(sequence_id: String, frame_index: int) -> bool:
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.delete_frame_slot(sequence_id, frame_index)
 	_loading_authoring_draft = false
@@ -786,7 +796,7 @@ func remove_frame_slot(sequence_id: String, frame_index: int) -> bool:
 
 
 func replace_frame_slot(sequence_id: String, frame_index: int, frame_path: String) -> bool:
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.replace_frame_slot(sequence_id, frame_index, frame_path)
 	_loading_authoring_draft = false
@@ -796,7 +806,7 @@ func replace_frame_slot(sequence_id: String, frame_index: int, frame_path: Strin
 
 
 func mark_frame_slot(sequence_id: String, frame_index: int, slot_state: String) -> bool:
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.mark_frame_slot(sequence_id, frame_index, slot_state)
 	_loading_authoring_draft = false
@@ -825,26 +835,6 @@ func wardrobe_coverage() -> Dictionary:
 		"rows": result.get("rows", []),
 		"summary": result.get("summary", {}),
 	}
-
-
-func runtime_start_selected_move() -> Array:
-	_refresh_runtime()
-	return runtime.start_move(selected_move)
-
-
-func runtime_advance_frame(count: int = 1) -> void:
-	for i in count:
-		runtime.tick_frame()
-	_refresh_runtime_label()
-
-
-func runtime_reset_idle() -> Array:
-	_refresh_runtime()
-	return runtime.start_move("idle")
-
-
-func runtime_summary() -> Dictionary:
-	return runtime.debug_summary()
 
 
 func _build_ui() -> void:
@@ -962,7 +952,6 @@ func _refresh_navigation() -> void:
 	_add_nav_item("Wardrobe Map", "wardrobe_mapping")
 	_add_nav_item("Wardrobe Clips", "wardrobe_clips")
 	_add_nav_item("Wardrobe Frames", "wardrobe_sequences")
-	_add_nav_item("Runtime", "runtime_preview")
 	var selected_index := nav_keys.find(current_nav)
 	if selected_index < 0:
 		current_nav = "character_template"
@@ -993,7 +982,6 @@ func _refresh_three_panel() -> void:
 	_refresh_navigation()
 	_build_values_panel()
 	_build_detail_panel()
-	_refresh_runtime_label()
 
 
 func _reset_editor_refs() -> void:
@@ -1026,7 +1014,6 @@ func _reset_editor_refs() -> void:
 	attack_hurtbox_id_input = null
 	attack_hurtbox_inputs = {}
 	events_text = null
-	runtime_label = null
 	preview_frame_slider = null
 	move_section_list = null
 	apply_bound_button = null
@@ -1089,12 +1076,6 @@ func _build_values_panel() -> void:
 		"wardrobe_sequences":
 			for coverage_row in coverage.get("rows", []):
 				_add_value(str(coverage_row.get("frame_sequence_ref", "")), "%s frames" % str(coverage_row.get("sequence_frame_count", 0)))
-		"runtime_preview":
-			var summary: Dictionary = runtime.debug_summary()
-			_add_value("state", str(summary.get("current_state", "")))
-			_add_value("move", str(summary.get("current_move", "")))
-			_add_value("frame", str(summary.get("current_frame", 0)))
-			_add_value("active boxes", str(summary.get("active_hitbox_count", 0)))
 		_:
 			if current_nav.begins_with("move:") and moves_json.has(selected_move):
 				_build_move_values_panel()
@@ -1119,8 +1100,6 @@ func _build_detail_panel() -> void:
 			_build_equipped_moves_detail(detail_panel)
 		"wardrobe_mapping", "wardrobe_clips", "wardrobe_sequences":
 			_build_wardrobe_detail(detail_panel)
-		"runtime_preview":
-			_build_runtime_detail(detail_panel)
 		_:
 			if current_nav.begins_with("move:") and moves_json.has(selected_move):
 				_build_move_detail(detail_panel)
@@ -1148,7 +1127,7 @@ func _build_instance_detail(parent: VBoxContainer) -> void:
 
 
 func _build_npc_controls(parent: VBoxContainer) -> void:
-	parent.add_child(_label("NPC controls", COLOR_RUNTIME))
+	parent.add_child(_label("NPC controls", COLOR_NPC))
 	var spawn_row := HBoxContainer.new()
 	spawn_row.add_theme_constant_override("separation", 3)
 	parent.add_child(spawn_row)
@@ -1167,7 +1146,7 @@ func _build_npc_controls(parent: VBoxContainer) -> void:
 	bind_row.add_child(_button("Bind NPC", _on_bind_npc_pressed, 58))
 	bind_row.add_child(_button("Next NPC", _on_npc_next_pressed, 58))
 
-	npc_count_label = _label("", COLOR_RUNTIME)
+	npc_count_label = _label("", COLOR_NPC)
 	parent.add_child(npc_count_label)
 	npc_status_label = _label("", COLOR_HINT)
 	npc_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -1544,21 +1523,6 @@ func _build_wardrobe_detail(parent: VBoxContainer) -> void:
 	parent.add_child(_button("Generate Stub", _on_wardrobe_generate_stub_pressed, 88))
 
 
-func _build_runtime_detail(parent: VBoxContainer) -> void:
-	parent.add_child(_label("Runtime preview - frame stepper", COLOR_RUNTIME))
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 3)
-	parent.add_child(row)
-	row.add_child(_button("Start", _on_runtime_start_pressed))
-	row.add_child(_button("+1", _on_runtime_one_pressed))
-	row.add_child(_button("+4", _on_runtime_four_pressed))
-	row.add_child(_button("Idle", _on_runtime_idle_pressed))
-	runtime_label = Label.new()
-	runtime_label.add_theme_font_size_override("font_size", 8)
-	runtime_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	parent.add_child(runtime_label)
-
-
 func _build_persistent_preview_surface(parent: VBoxContainer) -> void:
 	var shell := HBoxContainer.new()
 	shell.custom_minimum_size = Vector2(546, 136)
@@ -1732,7 +1696,7 @@ func _coverage_row_for_bundle(action_id: String, bundle: Dictionary) -> Dictiona
 
 
 func _preview_bundle() -> Dictionary:
-	_sync_authoring_draft_from_legacy_if_needed()
+	_refresh_authored_cache_from_draft()
 	var bundle: Dictionary = _authoring_draft.snapshot().get("preview_bundle", {})
 	return bundle.duplicate(true)
 
@@ -1895,6 +1859,7 @@ func _clear_children(node: Node) -> void:
 
 
 func _refresh_options() -> void:
+	_refresh_authored_cache_from_draft()
 	if template_select != null:
 		template_select.clear()
 		var template_ids := DataStore.list_template_ids(_data_root)
@@ -1928,47 +1893,26 @@ func _refresh_fields() -> void:
 	_clamp_preview_frame()
 	_refresh_three_panel()
 	_refresh_action_preview()
-	_refresh_runtime()
 	_refresh_draft_lifecycle_ui()
-
-
-func _refresh_runtime() -> Array:
-	var errors: Array = runtime.load_bundle(_runtime_bundle())
-	_refresh_runtime_label()
-	return errors
-
-
-func _refresh_runtime_label() -> void:
-	if runtime_label == null:
-		return
-	var summary: Dictionary = runtime.debug_summary()
-	runtime_label.text = "state:%s move:%s frame:%s hitstop:%s boxes:%s set:%s" % [
-		summary.get("current_state", ""),
-		summary.get("current_move", ""),
-		summary.get("current_frame", 0),
-		summary.get("hitstop_frames", 0),
-		summary.get("active_hitbox_count", 0),
-		summary.get("sprite_set_ref", ""),
-	]
 
 
 func _on_authoring_draft_valid_snapshot_changed() -> void:
 	if _loading_authoring_draft:
 		return
-	_sync_legacy_draft_aliases()
+	_refresh_authored_cache_from_draft()
 	_refresh_options()
 	_refresh_fields()
 
 
-func _sync_legacy_draft_aliases() -> void:
-	var bundle: Dictionary = _authoring_draft.legacy_bundle_view()
-	template_json = bundle.get("template", {})
-	sprite_set_json = bundle.get("sprite_set", {})
-	moves_json = bundle.get("moves", {})
+func _refresh_authored_cache_from_draft() -> void:
+	var bundle: Dictionary = authoring_draft_snapshot().get("bundle", {})
+	template_json = bundle.get("template", {}).duplicate(true)
+	sprite_set_json = bundle.get("sprite_set", {}).duplicate(true)
+	moves_json = bundle.get("moves", {}).duplicate(true)
 
 
 func _finish_authoring_draft_edit(accepted: bool, refresh_options: bool = false, success_status: String = "") -> void:
-	_sync_legacy_draft_aliases()
+	_refresh_authored_cache_from_draft()
 	if refresh_options:
 		if not moves_json.has(selected_move) and not template_json.get("equipped_moves", []).is_empty():
 			selected_move = str(template_json["equipped_moves"][0])
@@ -1990,19 +1934,6 @@ func _surface_authoring_draft_operation_error(accepted: bool) -> void:
 	var operation_error := str(_authoring_draft.last_operation_error())
 	if not operation_error.is_empty():
 		_set_status(operation_error)
-
-
-func _sync_authoring_draft_from_legacy_if_needed() -> bool:
-	var legacy_bundle := _runtime_bundle()
-	var snapshot: Dictionary = _authoring_draft.snapshot()
-	if snapshot.get("bundle", {}) == legacy_bundle:
-		return true
-	_loading_authoring_draft = true
-	var accepted: bool = _authoring_draft.import_legacy_bundle(legacy_bundle)
-	_loading_authoring_draft = false
-	if not accepted:
-		_sync_legacy_draft_aliases()
-	return accepted
 
 
 func _load_bundle_from_root(template_id: String) -> Dictionary:
@@ -2046,6 +1977,7 @@ func _load_bundle_from_root(template_id: String) -> Dictionary:
 
 
 func _commit_template_switch(template_id: String, bundle: Dictionary, force_reload: bool = false) -> Dictionary:
+	_refresh_authored_cache_from_draft()
 	if not force_reload and template_id == str(template_json.get("template_id", "")):
 		_restore_template_selector()
 		return _switch_outcome(true, "unchanged")
@@ -2055,7 +1987,7 @@ func _commit_template_switch(template_id: String, bundle: Dictionary, force_relo
 	if not load_errors.is_empty():
 		_set_errors(load_errors)
 		return _switch_outcome(false, "failed", load_errors)
-	_sync_legacy_draft_aliases()
+	_refresh_authored_cache_from_draft()
 	preview_playing = false
 	preview_frame = 0
 	if not template_json.get("equipped_moves", []).is_empty():
@@ -2199,20 +2131,8 @@ func _hide_switch_dialog() -> void:
 		switch_dialog.hide()
 
 
-func _runtime_bundle() -> Dictionary:
-	return {
-		"template": template_json,
-		"sprite_set": sprite_set_json,
-		"moves": moves_json,
-	}
-
-
 func _current_state() -> Dictionary:
-	return {
-		"template": template_json,
-		"sprite_set": sprite_set_json,
-		"moves": moves_json,
-	}
+	return authoring_draft_snapshot().get("bundle", {}).duplicate(true)
 
 
 func _normalized_json_text(data: Dictionary) -> String:
@@ -2249,21 +2169,6 @@ func _rect_from_json(rect: Dictionary) -> Rect2:
 
 func _vector_from_json(value: Dictionary) -> Vector2:
 	return Vector2(float(value.get("x", 0.0)), float(value.get("y", 0.0)))
-
-
-func _runtime_hurtbox_profile() -> Dictionary:
-	var profile := {}
-	for hurtbox_id in template_json.get("hurtboxes", {}).keys():
-		profile[str(hurtbox_id)] = _rect_from_json(template_json["hurtboxes"][hurtbox_id])
-	return profile
-
-
-func _runtime_foot_collision_profile() -> Dictionary:
-	var foot: Dictionary = template_json.get("foot_collision", {})
-	return {
-		"center": _vector_from_json(foot.get("center", {})),
-		"radius": _vector_from_json(foot.get("radius", {})),
-	}
 
 
 func _bound_instance() -> Node:
@@ -2406,8 +2311,6 @@ func _nav_color(key: String) -> Color:
 		return COLOR_MOVE
 	if key.begins_with("wardrobe"):
 		return COLOR_WARDROBE
-	if key.begins_with("runtime"):
-		return COLOR_RUNTIME
 	return COLOR_CHARACTER
 
 
@@ -2995,23 +2898,3 @@ func _on_events_apply_pressed() -> void:
 		_set_status("events JSON invalid")
 		return
 	set_move_events(json.data)
-
-
-func _on_runtime_start_pressed() -> void:
-	runtime_start_selected_move()
-	_set_status("runtime start %s" % selected_move)
-
-
-func _on_runtime_one_pressed() -> void:
-	runtime_advance_frame(1)
-	_set_status("runtime +1 frame")
-
-
-func _on_runtime_four_pressed() -> void:
-	runtime_advance_frame(4)
-	_set_status("runtime +4 frames")
-
-
-func _on_runtime_idle_pressed() -> void:
-	runtime_reset_idle()
-	_set_status("runtime idle")

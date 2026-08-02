@@ -13,6 +13,8 @@ func _run() -> void:
 	root.add_child(playground)
 	await process_frame
 	await physics_frame
+	if not playground.has_method("advance_gameplay"):
+		errors.append("Playground exposes public advance_gameplay(delta)")
 	var npc: Node2D = playground.dummy
 
 	errors.append_array(_expect(npc.template_id == "miduo_blue", "default npc uses independent recolor"))
@@ -44,7 +46,7 @@ func _run() -> void:
 	var initial_distance := npc.position.distance_to(playground.player.position)
 	var saw_attack := false
 	for _frame in 240:
-		playground._tick_combat(1.0 / 60.0)
+		playground.advance_gameplay(1.0 / 60.0)
 		saw_attack = saw_attack or npc.state_machine.current_state == "attack"
 	var useful_distance := npc.position.distance_to(playground.player.position)
 	errors.append_array(_expect(useful_distance < initial_distance, "AI approaches player"))
@@ -64,7 +66,7 @@ func _run() -> void:
 	var saw_knockdown := false
 	var saw_recovery := false
 	for _frame in 120:
-		playground._tick_combat(1.0 / 60.0)
+		playground.advance_gameplay(1.0 / 60.0)
 		saw_knockdown = saw_knockdown or npc.state_machine.current_state == "hurt" and npc.state_machine.reaction_mode == "knockdown"
 		saw_recovery = saw_knockdown and npc.state_machine.current_state == "idle"
 	errors.append_array(_expect(npc.current_hp < npc_hp_before, "NPC receives player hit"))

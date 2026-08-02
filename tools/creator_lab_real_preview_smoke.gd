@@ -29,7 +29,12 @@ func _run() -> void:
 
 	_expect(panel.has_method("preview_sprite"), "Creator Lab Panel exposes its isolated real preview sprite")
 	_expect(panel.has_method("preview_observation"), "Creator Lab Panel exposes public real-preview observation")
-	if not panel.has_method("preview_sprite") or not panel.has_method("preview_observation"):
+	_expect(panel.has_method("authoring_draft_snapshot"), "Creator Lab Panel exposes a detached public Authoring Draft snapshot")
+	if (
+		not panel.has_method("preview_sprite")
+		or not panel.has_method("preview_observation")
+		or not panel.has_method("authoring_draft_snapshot")
+	):
 		_finish(playground, panel)
 		return
 
@@ -174,8 +179,14 @@ func _run() -> void:
 
 
 func _configure_playable_oracle(playable_sprite: Node, panel: PanelContainer) -> void:
+	var draft_snapshot: Dictionary = panel.authoring_draft_snapshot()
+	var bundle: Dictionary = draft_snapshot.get("bundle", {})
 	playable_sprite.is_test_dummy = true
-	playable_sprite.apply_v0_3_runtime_bundle(panel.template_json, panel.sprite_set_json, panel.moves_json)
+	playable_sprite.apply_v0_3_runtime_bundle(
+		bundle.get("template", {}),
+		bundle.get("sprite_set", {}),
+		bundle.get("moves", {})
+	)
 	playable_sprite.reset_runtime(PREVIEW_POSITION)
 	playable_sprite.set_combat_target(null)
 	playable_sprite.state_machine.facing = 1

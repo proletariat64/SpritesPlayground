@@ -23,6 +23,10 @@ func _run() -> void:
 	await physics_frame
 
 	var playground: Node = demo.get_node("Playground")
+	if not playground.has_method("advance_gameplay"):
+		push_error("adam_cain_punch_demo_smoke requires public Playground.advance_gameplay(delta)")
+		quit(1)
+		return
 	var adam: Node2D = playground.player
 	var cain: Node2D = playground.dummy
 	# This regression slice owns its historical fixtures; Playground defaults may change.
@@ -249,7 +253,7 @@ func _reset_pair(playground: Node, adam: Node2D, cain: Node2D, adam_position: Ve
 	adam.control_mode = "manual"
 	cain.control_mode = "manual"
 	cain.is_test_dummy = true
-	playground._tick_combat(DELTA)
+	playground.advance_gameplay(DELTA)
 
 
 func _request_basic_punch(attacker: Node2D) -> void:

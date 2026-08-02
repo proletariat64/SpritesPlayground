@@ -6,6 +6,7 @@ const CombatCharacterScript := preload("res://godot/scripts/combat_character.gd"
 
 const TEMPLATE_ID := "miduo"
 const MOVE_ID := "miduo_jab"
+const DATA_ROOT := "user://stats_timing_persistence_smoke"
 
 
 func _init() -> void:
@@ -14,17 +15,20 @@ func _init() -> void:
 
 func _run() -> void:
 	var errors: Array = []
-	var original_template := DataStore.load_template(TEMPLATE_ID).duplicate(true)
 	var original_move := DataStore.load_move(MOVE_ID).duplicate(true)
-	var backups := {}
-	backups[DataStore.template_path(TEMPLATE_ID)] = _read_text(DataStore.template_path(TEMPLATE_ID))
-	backups[DataStore.sprite_set_path(str(original_template["sprite_set_ref"]))] = _read_text(DataStore.sprite_set_path(str(original_template["sprite_set_ref"])))
-	for move_id in original_template["equipped_moves"]:
-		backups[DataStore.move_path(str(move_id))] = _read_text(DataStore.move_path(str(move_id)))
+	_remove_tree(DATA_ROOT)
+	errors.append_array(_expect(
+		DataStore.save_runtime_bundle(DataStore.load_runtime_bundle("combat_gray_s64"), DATA_ROOT).is_empty(),
+		"isolated Creator Lab bootstrap fixture persists"
+	))
+	errors.append_array(_expect(
+		DataStore.save_runtime_bundle(DataStore.load_runtime_bundle(TEMPLATE_ID), DATA_ROOT).is_empty(),
+		"isolated timing fixture persists"
+	))
 
 	var panel: PanelContainer = PanelScript.new()
 	root.add_child(panel)
-	panel.setup()
+	panel.setup(DATA_ROOT)
 	await process_frame
 	panel.load_template_id(TEMPLATE_ID)
 	panel.set_hp(140)
@@ -34,8 +38,8 @@ func _run() -> void:
 	panel.set_move_rhythm(2, 3, 4)
 	panel.save_all()
 
-	var saved_template := DataStore.load_template(TEMPLATE_ID)
-	var saved_move := DataStore.load_move(MOVE_ID)
+	var saved_template := DataStore.load_template(TEMPLATE_ID, DATA_ROOT)
+	var saved_move := DataStore.load_move(MOVE_ID, DATA_ROOT)
 	errors.append_array(_expect(int(saved_template.get("hp", 0)) == 140, "HP persists exactly"))
 	errors.append_array(_expect(float(saved_template.get("walk_speed", 0.0)) == 80.0, "walk speed persists exactly"))
 	errors.append_array(_expect(float(saved_template.get("run_speed", 0.0)) == 220.0, "run speed persists exactly"))
@@ -45,7 +49,7 @@ func _run() -> void:
 	errors.append_array(_expect(int(saved_move.get("recovery_frames", -1)) == 4, "recovery persists exactly"))
 	errors.append_array(_expect(int(saved_move.get("frame_count", 0)) == int(original_move.get("frame_count", 0)), "explicit rhythm preserves authored frame_count"))
 
-	var loaded_bundle := DataStore.load_runtime_bundle(TEMPLATE_ID)
+	var loaded_bundle := DataStore.load_runtime_bundle(TEMPLATE_ID, DATA_ROOT)
 	var tuned: Node = await _spawn_character("tuned")
 	tuned.apply_v0_3_runtime_bundle(loaded_bundle["template"], loaded_bundle["sprite_set"], loaded_bundle["moves"])
 	tuned.reset_runtime(Vector2.ZERO)
@@ -91,12 +95,11 @@ func _run() -> void:
 	tuned.move_executor.tick()
 	errors.append_array(_expect(not tuned.move_executor.is_executing(), "move finishes after timing resumes from hitstop"))
 
-	for path in backups.keys():
-		_write_text(str(path), str(backups[path]))
 	panel.queue_free()
 	slow.queue_free()
 	tuned.queue_free()
 	target.queue_free()
+	_remove_tree(DATA_ROOT)
 
 	if errors.is_empty():
 		print("stats_timing_persistence_smoke=PASS")
@@ -117,14 +120,22 @@ func _spawn_character(id: String):
 	return character
 
 
-func _read_text(path: String) -> String:
-	var file := FileAccess.open(path, FileAccess.READ)
-	return file.get_as_text()
-
-
-func _write_text(path: String, content: String) -> void:
-	var file := FileAccess.open(path, FileAccess.WRITE)
-	file.store_string(content)
+func _remove_tree(path: String) -> void:
+	var directory := DirAccess.open(path)
+	if directory == null:
+		return
+	directory.list_dir_begin()
+	var entry := directory.get_next()
+	while not entry.is_empty():
+		if entry != "." and entry != "..":
+			var child := path.path_join(entry)
+			if directory.current_is_dir():
+				_remove_tree(child)
+			else:
+				DirAccess.remove_absolute(ProjectSettings.globalize_path(child))
+		entry = directory.get_next()
+	directory.list_dir_end()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
 func _expect(condition: bool, label: String) -> Array:
