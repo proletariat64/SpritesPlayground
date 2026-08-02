@@ -14,6 +14,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 GODOT_LOCK = PROJECT_ROOT / "dependencies" / "godot.lock.json"
 INSTALL_LIMBOAI = PROJECT_ROOT / "scripts" / "install_limboai.py"
 INSTALL_GODOT_AI = PROJECT_ROOT / "scripts" / "install_godot_ai.py"
+INSTALL_CODE_REVIEW_GRAPH = PROJECT_ROOT / "scripts" / "install_code_review_graph.py"
 INSTALL_PI_PACKAGES = PROJECT_ROOT / "scripts" / "install_pi_packages.py"
 
 
@@ -62,6 +63,7 @@ def _dependency_commands(
     project_root: Path,
     check: bool,
     repair: bool,
+    skip_code_review_graph: bool,
     skip_pi: bool,
     pi_manifest: Path | None,
     limboai_archive: Path | None,
@@ -70,6 +72,13 @@ def _dependency_commands(
     limbo = [sys.executable, str(INSTALL_LIMBOAI), "--project-root", str(project_root)]
     godot_ai = [sys.executable, str(INSTALL_GODOT_AI), "--project-root", str(project_root)]
     commands = [("LimboAI runtime dependency", limbo), ("Godot AI development tool", godot_ai)]
+    if not skip_code_review_graph:
+        commands.append(
+            (
+                "code-review-graph development tool",
+                [sys.executable, str(INSTALL_CODE_REVIEW_GRAPH)],
+            )
+        )
     if not skip_pi:
         pi_packages = [
             sys.executable,
@@ -99,8 +108,13 @@ def main() -> int:
     parser.add_argument("--project-root", type=Path, default=PROJECT_ROOT, help="Checkout to prepare")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--check", action="store_true", help="Verify without installing or importing")
-    mode.add_argument("--repair", action="store_true", help="Reinstall pinned add-ons even when healthy")
+    mode.add_argument("--repair", action="store_true", help="Reinstall pinned dependencies even when healthy")
     parser.add_argument("--skip-import", action="store_true", help="Ensure dependencies without running Godot import")
+    parser.add_argument(
+        "--skip-code-review-graph",
+        action="store_true",
+        help="Skip code-review-graph verification",
+    )
     parser.add_argument("--skip-pi", action="store_true", help="Skip external Pi package verification")
     parser.add_argument("--pi-manifest", type=Path, help="Use an alternate pinned Pi package manifest")
     parser.add_argument("--limboai-archive", type=Path, help="Use the pinned LimboAI release archive")
@@ -127,6 +141,7 @@ def main() -> int:
         project_root,
         args.check,
         args.repair,
+        args.skip_code_review_graph,
         args.skip_pi,
         args.pi_manifest,
         args.limboai_archive,
@@ -166,7 +181,8 @@ def main() -> int:
 
     print(
         "SpritesPlayground development bootstrap ready: "
-        "pinned Godot + LimboAI runtime + Godot AI development/UAT + Pi packages"
+        "pinned Godot + LimboAI runtime + Godot AI development/UAT + "
+        "code-review-graph + Pi packages"
     )
     return 0
 

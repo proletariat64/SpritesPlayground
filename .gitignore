@@ -12,7 +12,9 @@ export_presets.cfg
 data_*/
 mono_crash.*.json
 
-# GitNexus local index
+# Local code intelligence indexes
+.code-review-graph/
+# Legacy GitNexus data; retained only to keep old local indexes untracked.
 .gitnexus/
 
 # Generated assets, local dependency archives, and scratch output

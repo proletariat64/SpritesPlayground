@@ -1,43 +1,35 @@
-<!-- gitnexus:start -->
-# GitNexus — Code Intelligence
+<!-- code-review-graph:start -->
+# code-review-graph — Code Intelligence
 
-This project is indexed by GitNexus as **SpritesPlayground** (2382 symbols, 2203 relationships, 9 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project uses **code-review-graph** for structural exploration, review, and change-impact analysis. It has built-in GDScript support, including `.gd` classes, functions, `extends` dependencies, and call edges.
 
-> Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
+> First use: run `code-review-graph build` from the repository root. Refresh a stale graph with `code-review-graph update --brief`; inspect health with `code-review-graph status`. Generated graph data under `.code-review-graph/` is local and must not be committed.
 
 ## Always Do
 
-- **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
-- **MUST run `detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows. For regression review, compare against the default branch: `detect_changes({scope: "compare", base_ref: "main"})`.
-- **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
-- When exploring unfamiliar code, use `query({query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
-- When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `context({name: "symbolName"})`.
+- **MUST run graph impact analysis before editing an existing symbol.** Locate the symbol with `code-review-graph search "<symbol>"`, inspect callers with `code-review-graph query callers_of "<symbol>"`, then run `code-review-graph impact --files <path> --depth 2`. Report direct callers, affected files/flows, and the blast-radius size to the user.
+- **MUST refresh and review changes before committing or handing off.** Run `code-review-graph update --brief`, then `code-review-graph detect-changes --base main` to verify that only expected symbols, files, flows, and tests are affected.
+- **MUST warn the user** before proceeding if code-review-graph reports HIGH/CRITICAL risk or an unexpectedly broad blast radius.
+- When exploring unfamiliar code, use `code-review-graph search`, `query`, `flows`, `flow`, or `architecture` before text search. Fall back to grep/read only when the graph lacks the needed detail.
+- If code-review-graph MCP tools are available, prefer their corresponding tools (`semantic_search_nodes_tool`, `query_graph_tool`, `get_impact_radius_tool`, `detect_changes_tool`, and `get_affected_flows_tool`) over CLI output.
 
 ## Never Do
 
-- NEVER edit a function, class, or method without first running `impact` on it.
-- NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
-- NEVER rename symbols with find-and-replace — use `rename` which understands the call graph.
-- NEVER commit changes without running `detect_changes()` to check affected scope.
-
-## Resources
-
-| Resource | Use for |
-| ---------- | --------- |
-| `gitnexus://repo/SpritesPlayground/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/SpritesPlayground/clusters` | All functional areas |
-| `gitnexus://repo/SpritesPlayground/processes` | All execution flows |
-| `gitnexus://repo/SpritesPlayground/process/{name}` | Step-by-step execution trace |
+- NEVER edit an existing function, class, or method without the graph preflight above.
+- NEVER ignore HIGH/CRITICAL or unexpectedly broad impact results.
+- NEVER rename symbols with find-and-replace; preview with `code-review-graph refactor rename --old-name <old> --new-name <new>` and apply the rename with a language-aware tool.
+- NEVER commit or hand off changes without refreshing the graph and running change detection.
 
 ## CLI
 
-| Task | Use this installed skill |
-| ------ | -------------------------- |
-| Understand architecture / "How does X work?" | `gitnexus-exploring` |
-| Blast radius / "What breaks if I change X?" | `gitnexus-impact-analysis` |
-| Trace bugs / "Why is X failing?" | `gitnexus-debugging` |
-| Rename / extract / split / refactor | `gitnexus-refactoring` |
-| Tools, resources, schema reference | `gitnexus-guide` |
-| Index, status, clean, wiki CLI commands | `gitnexus-cli` |
+| Task | Command |
+| ---------- | --------- |
+| Build or fully refresh the graph | `code-review-graph build` |
+| Incrementally refresh and show risk | `code-review-graph update --brief` |
+| Find a symbol or concept | `code-review-graph search "<query>"` |
+| Inspect callers/callees/tests/imports | `code-review-graph query <pattern> "<target>"` |
+| Analyze changed-file blast radius | `code-review-graph impact --files <paths...> --depth 2` |
+| Review the current change set | `code-review-graph detect-changes --base main` |
+| Inspect architecture and execution flows | `code-review-graph architecture`; `code-review-graph flows` |
 
-<!-- gitnexus:end -->
+<!-- code-review-graph:end -->
