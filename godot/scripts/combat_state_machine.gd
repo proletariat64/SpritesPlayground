@@ -34,6 +34,7 @@ const KNOCKDOWN_GET_UP_SECONDS := 5.0 / 12.0
 
 var current_state: String = STATE_IDLE
 var current_move: String = ""
+var current_state_context: String = STATE_IDLE
 var velocity: Vector2 = Vector2.ZERO
 var visual_jump_offset: float = 0.0
 var state_elapsed: float = 0.0
@@ -59,12 +60,14 @@ var hurt_duration: float = 0.28
 var _move_executor: Node
 var _attack_started_airborne: bool = false
 var _airborne_attack_start_offset: float = 0.0
+var _finish_uses_requested_context: bool = false
 
 
 func configure(move_executor: Node) -> void:
 	_move_executor = move_executor
 	_move_executor.move_started.connect(_on_move_started)
 	_move_executor.move_finished.connect(_on_move_finished)
+	_move_executor.state_context_requested.connect(_on_state_context_requested)
 
 
 func request_action(action_id: String) -> bool:
@@ -113,6 +116,8 @@ func reset_to_idle() -> void:
 	death_phase = ""
 	_attack_started_airborne = false
 	_airborne_attack_start_offset = 0.0
+	_finish_uses_requested_context = false
+	current_state_context = STATE_IDLE
 	current_move = STATE_IDLE
 	_enter_state(STATE_IDLE)
 
@@ -164,7 +169,10 @@ func tick(delta: float, input_vector: Vector2, run_requested: bool = false) -> v
 				visual_jump_offset = lerpf(_airborne_attack_start_offset, 0.0, attack_progress)
 			else:
 				visual_jump_offset = 0.0
+			var movement_was_hitstopped: bool = _move_executor.is_hitstopped()
 			_move_executor.tick(delta)
+			if _move_executor.is_executing() and not movement_was_hitstopped and not _move_executor.is_hitstopped():
+				velocity = _move_executor.authored_velocity()
 			return
 		STATE_HURT:
 			visual_jump_offset = 0.0
@@ -333,12 +341,15 @@ func _enter_state(state_id: String) -> void:
 
 
 func _on_move_finished(_move_id: String) -> void:
-	if current_state == STATE_ATTACK:
-		_attack_started_airborne = false
-		_airborne_attack_start_offset = 0.0
-		visual_jump_offset = 0.0
-		current_move = ""
-		_enter_state(STATE_IDLE)
+	if current_state != STATE_ATTACK:
+		return
+	var finished_context := current_state_context if _finish_uses_requested_context else STATE_IDLE
+	_attack_started_airborne = false
+	_airborne_attack_start_offset = 0.0
+	_finish_uses_requested_context = false
+	visual_jump_offset = 0.0
+	current_move = ""
+	_enter_finished_context(finished_context)
 
 
 func _on_move_started(move_id: String) -> void:
@@ -347,5 +358,39 @@ func _on_move_started(move_id: String) -> void:
 	_attack_started_airborne = current_state == STATE_JUMP
 	_airborne_attack_start_offset = visual_jump_offset if _attack_started_airborne else 0.0
 	locked_attack_facing = facing
+	var authored_context := str(_move_executor.active_move.get("state_context_override", STATE_IDLE))
+	current_state_context = authored_context if _is_known_state_context(authored_context) else STATE_IDLE
+	_finish_uses_requested_context = false
 	current_move = move_id
 	_enter_state(STATE_ATTACK)
+
+
+func _on_state_context_requested(state_context: String) -> void:
+	if current_state != STATE_ATTACK or not _is_known_state_context(state_context):
+		return
+	current_state_context = state_context
+	_finish_uses_requested_context = true
+
+
+func _enter_finished_context(state_context: String) -> void:
+	match state_context:
+		STATE_WALK:
+			_enter_state(STATE_WALK)
+		STATE_DASH:
+			_enter_state(STATE_DASH)
+		STATE_JUMP:
+			jump_mode = "jump"
+			_enter_state(STATE_JUMP)
+			jump_phase = "air"
+		STATE_HURT:
+			_enter_state(STATE_HURT)
+			reaction_mode = "hurt"
+			reaction_phase = "hurt"
+		STATE_DEAD:
+			enter_dead()
+		_:
+			_enter_state(STATE_IDLE)
+
+
+func _is_known_state_context(state_context: String) -> bool:
+	return state_context in [STATE_IDLE, STATE_WALK, STATE_DASH, STATE_JUMP, STATE_HURT, STATE_DEAD]

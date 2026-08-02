@@ -74,21 +74,22 @@ func _run() -> void:
 	errors.append_array(_expect(tuned.request_attack("jab"), "tuned move starts"))
 	errors.append_array(_expect(tuned.move_executor.active_hitboxes_local().is_empty(), "startup frame 0 is inactive"))
 	tuned.move_executor.tick()
-	errors.append_array(_expect(tuned.move_executor.active_hitboxes_local().is_empty(), "startup frame 1 is inactive"))
-	tuned.move_executor.tick()
 	var active_hitboxes: Array = tuned.move_executor.active_hitboxes_local()
-	errors.append_array(_expect(active_hitboxes.size() == 1, "active rhythm begins at frame 2"))
+	errors.append_array(_expect(active_hitboxes.size() == 1, "authored enable event opens the hitbox on frame 1"))
 	if not active_hitboxes.is_empty():
 		target.take_hit(int(active_hitboxes[0]["damage"]), str(active_hitboxes[0]["hitbox_id"]), "tuned")
 	errors.append_array(_expect(hp_before - target.current_hp == 17, "persisted move power changes runtime HP delta"))
-	for _frame in 3:
-		tuned.move_executor.tick()
-	errors.append_array(_expect(tuned.move_executor.is_executing() and tuned.move_executor.active_hitboxes_local().is_empty(), "recovery begins after three active frames"))
-	for _frame in 3:
-		tuned.move_executor.tick()
-	errors.append_array(_expect(tuned.move_executor.is_executing(), "move remains locked through recovery"))
 	tuned.move_executor.tick()
-	errors.append_array(_expect(not tuned.move_executor.is_executing(), "move finishes after startup+active+recovery"))
+	errors.append_array(_expect(tuned.move_executor.current_frame() == 2, "authored disable and hitstop events execute on frame 2"))
+	errors.append_array(_expect(tuned.move_executor.active_hitboxes_local().is_empty(), "hitstop freezes hitbox evaluation"))
+	for remaining in [2, 1, 0]:
+		tuned.move_executor.tick()
+		errors.append_array(_expect(tuned.move_executor.current_frame() == 2, "persisted three-frame hitstop freezes timing while %d remain" % remaining))
+	for _frame in 6:
+		tuned.move_executor.tick()
+	errors.append_array(_expect(tuned.move_executor.is_executing(), "move remains locked through authored recovery"))
+	tuned.move_executor.tick()
+	errors.append_array(_expect(not tuned.move_executor.is_executing(), "move finishes after timing resumes from hitstop"))
 
 	for path in backups.keys():
 		_write_text(str(path), str(backups[path]))

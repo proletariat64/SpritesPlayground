@@ -3,6 +3,7 @@ class_name MoveExecutor
 
 signal move_finished(move_id: String)
 signal move_started(move_id: String)
+signal state_context_requested(state_context: String)
 
 var move_templates: Dictionary = {}
 var active_move_id: String = ""
@@ -12,6 +13,8 @@ var animation_player: AnimationPlayer
 
 var _hit_marks: Dictionary = {}
 var _enabled_hitbox_windows: Dictionary = {}
+var _authored_velocity: Vector2 = Vector2.ZERO
+var _hitstop_frames_remaining: int = 0
 
 
 func configure(templates: Dictionary) -> void:
@@ -29,9 +32,11 @@ func start_attack_intent(move_id: String) -> bool:
 	frame_index = 0
 	_hit_marks.clear()
 	_enabled_hitbox_windows.clear()
+	_authored_velocity = Vector2.ZERO
+	_hitstop_frames_remaining = 0
 	animation_player.play(StringName(active_move_id))
-	animation_player.advance(0.0)
 	move_started.emit(active_move_id)
+	animation_player.advance(0.0)
 	return true
 
 
@@ -43,10 +48,15 @@ func cancel() -> void:
 	frame_index = 0
 	_hit_marks.clear()
 	_enabled_hitbox_windows.clear()
+	_authored_velocity = Vector2.ZERO
+	_hitstop_frames_remaining = 0
 
 
 func tick(delta: float = -1.0) -> void:
 	if not is_executing():
+		return
+	if _hitstop_frames_remaining > 0:
+		_hitstop_frames_remaining -= 1
 		return
 	var fps := maxf(1.0, float(active_move.get("fps", 60.0)))
 	var advance_delta := 1.0 / fps if delta < 0.0 else maxf(0.0, delta)
@@ -61,9 +71,21 @@ func current_frame() -> int:
 	return frame_index
 
 
+func authored_velocity() -> Vector2:
+	return _authored_velocity
+
+
+func is_hitstopped() -> bool:
+	return _hitstop_frames_remaining > 0
+
+
+func hitstop_frames_remaining() -> int:
+	return _hitstop_frames_remaining
+
+
 func active_hitboxes_local() -> Array:
 	var entries: Array = []
-	if not is_executing():
+	if not is_executing() or is_hitstopped():
 		return entries
 
 	var windows: Array = active_move.get("hitbox_windows", [])
@@ -175,6 +197,14 @@ func _timing_animation(move: Dictionary) -> Animation:
 			"method": &"_disable_hitbox_window",
 			"args": [window_index],
 		})
+	for event in move.get("events", []):
+		var event_track := animation.add_track(Animation.TYPE_METHOD)
+		animation.track_set_path(event_track, NodePath("."))
+		var event_frame := clampi(int(event.get("frame", 0)), 0, total_frames - 1)
+		animation.track_insert_key(event_track, float(event_frame) / fps, {
+			"method": &"_apply_frame_event",
+			"args": [event.duplicate(true)],
+		})
 	var completion_track := animation.add_track(Animation.TYPE_METHOD)
 	animation.track_set_path(completion_track, NodePath("."))
 	animation.track_insert_key(completion_track, animation.length, {
@@ -194,6 +224,32 @@ func _enable_hitbox_window(window_index: int) -> void:
 
 func _disable_hitbox_window(window_index: int) -> void:
 	_enabled_hitbox_windows.erase(window_index)
+
+
+func _apply_frame_event(event: Dictionary) -> void:
+	var payload: Dictionary = event.get("payload", {})
+	match str(event.get("event_type", "")):
+		"enable_hitbox":
+			_set_hitbox_id_enabled(str(payload.get("hitbox_id", "")), true)
+		"disable_hitbox":
+			_set_hitbox_id_enabled(str(payload.get("hitbox_id", "")), false)
+		"set_velocity":
+			_authored_velocity = Vector2(float(payload.get("x", 0.0)), float(payload.get("y", 0.0)))
+		"change_state_context":
+			state_context_requested.emit(str(payload.get("state", "")))
+		"apply_hitstop":
+			_hitstop_frames_remaining = maxi(0, int(payload.get("frames", active_move.get("hitstop_frames", 0))))
+
+
+func _set_hitbox_id_enabled(hitbox_id: String, enabled: bool) -> void:
+	for window_index in active_move.get("hitbox_windows", []).size():
+		var window: Dictionary = active_move["hitbox_windows"][window_index]
+		if str(window.get("hitbox_id", "")) != hitbox_id:
+			continue
+		if enabled:
+			_enabled_hitbox_windows[window_index] = true
+		else:
+			_enabled_hitbox_windows.erase(window_index)
 
 
 func _complete_timed_move() -> void:

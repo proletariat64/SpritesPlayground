@@ -37,12 +37,16 @@ func _run() -> void:
 	_expect(player.active_hitboxes_world().size() == 1, "AnimationPlayer callback enables the hitbox on frame 1")
 
 	player.tick_character(FULL_FRAME, playground.arena_center, playground.arena_radius)
-	_expect(player.state_machine.current_frame() == 2, "authored active timing includes frame 2")
-	_expect(player.active_hitboxes_world().size() == 1, "hitbox remains enabled through the second active frame")
+	_expect(player.state_machine.current_frame() == 2, "authored event timing reaches frame 2")
+	_expect(player.active_hitboxes_world().is_empty(), "authored disable callback closes the hitbox on frame 2")
+
+	for remaining in [2, 1, 0]:
+		player.tick_character(FULL_FRAME, playground.arena_center, playground.arena_radius)
+		_expect(player.state_machine.current_frame() == 2, "authored hitstop freezes frame 2 while %d frames remain" % remaining)
 
 	player.tick_character(FULL_FRAME, playground.arena_center, playground.arena_radius)
-	_expect(player.state_machine.current_frame() == 3, "authored recovery begins on frame 3 (got %d)" % player.state_machine.current_frame())
-	_expect(player.active_hitboxes_world().is_empty(), "AnimationPlayer callback disables the hitbox for recovery")
+	_expect(player.state_machine.current_frame() == 3, "authored recovery begins after hitstop (got %d)" % player.state_machine.current_frame())
+	_expect(player.active_hitboxes_world().is_empty(), "hitbox stays disabled for recovery")
 	_expect(player.state_machine.current_state == "attack", "recovery keeps the character attack-locked")
 
 	player.tick_character(FULL_FRAME, playground.arena_center, playground.arena_radius)

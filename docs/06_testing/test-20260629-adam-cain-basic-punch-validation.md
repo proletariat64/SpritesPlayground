@@ -59,11 +59,11 @@ The runnable Godot slice proves movement, attack start, active hitbox overlap, o
 
 | frame | Adam state | move | move frame | active | overlap | Cain HP | Cain state | hurtbox |
 | --- | --- | --- | ---: | ---: | --- | ---: | --- | --- |
-| 1 | attack | basic_punch | 2 | 0 | false | 100 | idle |  |
-| 2 | attack | basic_punch | 3 | 0 | false | 100 | idle |  |
-| 3 | attack | basic_punch | 4 | 0 | false | 100 | idle |  |
-| 4 | attack | basic_punch | 5 | 0 | false | 100 | idle |  |
-| 5 | attack | basic_punch | 6 | 0 | false | 100 | idle |  |
+| 1 | attack | basic_punch | 2 | 0 | false | 100 | idle | |
+| 2 | attack | basic_punch | 3 | 0 | false | 100 | idle | |
+| 3 | attack | basic_punch | 4 | 0 | false | 100 | idle | |
+| 4 | attack | basic_punch | 5 | 0 | false | 100 | idle | |
+| 5 | attack | basic_punch | 6 | 0 | false | 100 | idle | |
 | 6 | attack | basic_punch | 7 | 1 | true | 92 | hurt | hurt_head |
 | 7 | attack | basic_punch | 8 | 1 | true | 92 | hurt | hurt_head |
 | 8 | attack | basic_punch | 9 | 1 | true | 92 | hurt | hurt_head |
