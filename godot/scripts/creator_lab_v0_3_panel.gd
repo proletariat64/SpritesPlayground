@@ -323,10 +323,10 @@ func save_all() -> void:
 	var errors := validate_current()
 	if not errors.is_empty():
 		return
-	DataStore.save_template(template_json)
-	for move_id in moves_json.keys():
-		DataStore.save_move(moves_json[move_id])
-	DataStore.save_sprite_set(sprite_set_json)
+	var save_errors := DataStore.save_runtime_bundle(_runtime_bundle())
+	if not save_errors.is_empty():
+		_set_errors(save_errors)
+		return
 	var generation := SpriteFramesGeneratorScript.generate(sprite_set_json, {"moves": moves_json})
 	if bool(generation.get("ok", false)):
 		_set_status("saved %s + SpriteFrames generated" % str(template_json["template_id"]))
