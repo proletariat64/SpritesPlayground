@@ -6,6 +6,7 @@ const Runtime := preload("res://godot/scripts/prd_v0_3_runtime.gd")
 const Catalog := preload("res://godot/scripts/creator_lab_action_catalog.gd")
 const Coverage := preload("res://godot/scripts/creator_lab_action_coverage.gd")
 const ActionPreview := preload("res://godot/scripts/creator_lab_action_preview.gd")
+const AuthoringDraftScript := preload("res://godot/scripts/creator_lab_authoring_draft.gd")
 const SpriteFramesGeneratorScript := preload("res://godot/scripts/spriteframes_generator.gd")
 const COLOR_TITLE := Color(0.72, 0.86, 1.0)
 const COLOR_LABEL := Color(0.82, 0.88, 0.95)
@@ -102,10 +103,14 @@ var current_hurtbox_id: String = "hurt_head"
 var current_move_section: String = "summary"
 var nav_keys: Array = []
 var move_section_list: ItemList
+var _authoring_draft: RefCounted = AuthoringDraftScript.new()
+var _loading_authoring_draft: bool = false
 
 
 func setup() -> void:
 	set_process(true)
+	if not _authoring_draft.valid_snapshot_changed.is_connected(_on_authoring_draft_valid_snapshot_changed):
+		_authoring_draft.valid_snapshot_changed.connect(_on_authoring_draft_valid_snapshot_changed)
 	_build_ui()
 	_ensure_floating_preview_window()
 	load_template_id("combat_gray_s64")
@@ -134,15 +139,23 @@ func _process(delta: float) -> void:
 
 
 func load_template_id(template_id: String) -> Array:
-	template_json = DataStore.load_template(template_id)
-	if template_json.is_empty():
+	var loaded_template := DataStore.load_template(template_id)
+	if loaded_template.is_empty():
 		return _set_errors(["missing template %s" % template_id])
+	var loaded_sprite_set := DataStore.load_sprite_set(str(loaded_template["sprite_set_ref"]))
+	var loaded_moves := {}
+	for move_id in loaded_template["equipped_moves"]:
+		loaded_moves[str(move_id)] = DataStore.load_move(str(move_id))
+	_loading_authoring_draft = true
+	_authoring_draft.load_bundle({
+		"template": loaded_template,
+		"sprite_set": loaded_sprite_set,
+		"moves": loaded_moves,
+	})
+	_loading_authoring_draft = false
+	_sync_legacy_draft_aliases()
 	preview_playing = false
 	preview_frame = 0
-	sprite_set_json = DataStore.load_sprite_set(str(template_json["sprite_set_ref"]))
-	moves_json.clear()
-	for move_id in template_json["equipped_moves"]:
-		moves_json[str(move_id)] = DataStore.load_move(str(move_id))
 	if not template_json["equipped_moves"].is_empty():
 		selected_move = str(template_json["equipped_moves"][0])
 	_refresh_options()
@@ -325,6 +338,16 @@ func is_preview_window_visible() -> bool:
 	)
 
 
+func draft_status() -> Dictionary:
+	var snapshot: Dictionary = _authoring_draft.snapshot()
+	return {
+		"dirty": bool(snapshot.get("dirty", false)),
+		"diagnostics": snapshot.get("diagnostics", []).duplicate(true),
+		"can_save": bool(snapshot.get("can_save", false)),
+		"can_apply": bool(snapshot.get("can_apply", false)),
+	}
+
+
 func copy_template(copy_id: String = "") -> String:
 	var source_id := str(template_json["template_id"])
 	var next_id := copy_id if not copy_id.is_empty() else _next_copy_id(source_id)
@@ -354,30 +377,32 @@ func apply_to_bound_instance() -> bool:
 	var errors := validate_current()
 	if not errors.is_empty():
 		return false
+	_sync_authoring_draft_from_legacy_if_needed()
+	var draft_snapshot: Dictionary = _authoring_draft.snapshot()
+	if not bool(draft_snapshot.get("can_apply", false)):
+		var diagnostics: Array = draft_snapshot.get("diagnostics", []).duplicate(true)
+		if diagnostics.is_empty():
+			diagnostics.append("apply blocked: Authoring Draft is invalid")
+		_set_errors(diagnostics)
+		return false
+	var draft_bundle: Dictionary = draft_snapshot.get("bundle", {})
+	var draft_template: Dictionary = draft_bundle.get("template", {})
+	var draft_sprite_set: Dictionary = draft_bundle.get("sprite_set", {})
+	var draft_moves: Dictionary = draft_bundle.get("moves", {})
 	var instance := _bound_instance()
 	if instance == null:
 		_set_status("apply failed: no bound instance")
 		return false
 
-	var generation := SpriteFramesGeneratorScript.generate(sprite_set_json, {"moves": moves_json})
+	var generation := SpriteFramesGeneratorScript.generate(draft_sprite_set, {"moves": draft_moves})
 	if not bool(generation.get("ok", false)):
 		_set_status("apply blocked: SpriteFrames generation FAIL: %s" % _diagnostic_codes(generation.get("errors", [])))
 		return false
 
-	if instance.has_method("apply_v0_3_runtime_bundle"):
-		instance.apply_v0_3_runtime_bundle(template_json, sprite_set_json, moves_json)
-	else:
-		var max_hp := maxi(1, int(template_json.get("hp", 1)))
-		instance.set("template_id", str(template_json.get("template_id", "")))
-		instance.set("sprite_set_id", str(template_json.get("sprite_set_ref", "")))
-		instance.set("max_hp", max_hp)
-		instance.set("current_hp", mini(int(_node_property(instance, "current_hp")), max_hp))
-		instance.set("walk_speed", maxf(1.0, float(template_json.get("walk_speed", 95.0))))
-		instance.set("run_speed", maxf(1.0, float(template_json.get("run_speed", 150.0))))
-		instance.set("hurtbox_profile", _runtime_hurtbox_profile())
-		instance.set("foot_collision_profile", _runtime_foot_collision_profile())
-		if instance.has_method("queue_redraw"):
-			instance.queue_redraw()
+	if not instance.has_method("apply_v0_3_runtime_bundle"):
+		_set_status("apply failed: bound instance has no live bundle path")
+		return false
+	instance.apply_v0_3_runtime_bundle(draft_template, draft_sprite_set, draft_moves)
 	update_bound_instance_summary(instance)
 	_set_status("applied v0.3 bundle to %s" % bound_instance_id)
 	return true
@@ -483,6 +508,11 @@ func selected_move_json() -> Dictionary:
 
 
 func set_move_scalar(field: String, value) -> void:
+	if field == "damage":
+		_sync_authoring_draft_from_legacy_if_needed()
+		if not _authoring_draft.edit_move_scalar(selected_move, field, int(value)):
+			_set_status("Authoring Draft rejected %s edit" % field)
+		return
 	var move := selected_move_json()
 	match field:
 		"move_type":
@@ -492,7 +522,7 @@ func set_move_scalar(field: String, value) -> void:
 				move.erase("state_context_override")
 			else:
 				move["state_context_override"] = str(value)
-		"frame_count", "startup_frames", "active_frames", "recovery_frames", "damage", "hitstop_frames":
+		"frame_count", "startup_frames", "active_frames", "recovery_frames", "hitstop_frames":
 			move[field] = int(value)
 		"multi_hit":
 			move["multi_hit"] = bool(value)
@@ -1780,6 +1810,32 @@ func _refresh_runtime_label() -> void:
 		summary.get("active_hitbox_count", 0),
 		summary.get("sprite_set_ref", ""),
 	]
+
+
+func _on_authoring_draft_valid_snapshot_changed() -> void:
+	_sync_legacy_draft_aliases()
+	if _loading_authoring_draft:
+		return
+	_refresh_options()
+	_refresh_fields()
+
+
+func _sync_legacy_draft_aliases() -> void:
+	var bundle: Dictionary = _authoring_draft.legacy_bundle_view()
+	template_json = bundle.get("template", {})
+	sprite_set_json = bundle.get("sprite_set", {})
+	moves_json = bundle.get("moves", {})
+
+
+func _sync_authoring_draft_from_legacy_if_needed() -> void:
+	var legacy_bundle := _runtime_bundle()
+	var snapshot: Dictionary = _authoring_draft.snapshot()
+	if snapshot.get("bundle", {}) == legacy_bundle:
+		return
+	_loading_authoring_draft = true
+	_authoring_draft.load_bundle(legacy_bundle)
+	_loading_authoring_draft = false
+	_sync_legacy_draft_aliases()
 
 
 func _runtime_bundle() -> Dictionary:
