@@ -8,6 +8,11 @@ const STATE_JUMP := "jump"
 const STATE_ATTACK := "attack"
 const STATE_HURT := "hurt"
 const STATE_DEAD := "dead"
+const EVENT_FINISHED := &"ev_finished"
+const ENTER_STATE_EVENT_PREFIX := "ev_enter_"
+const FINISHED_ROUTER_STATE := "finished_router"
+const LIMBO_UPDATE_MODE_MANUAL := 2
+const AUTHORITY_STATES := [STATE_IDLE, STATE_WALK, STATE_DASH, STATE_JUMP, STATE_ATTACK, STATE_HURT, STATE_DEAD]
 
 const DIRECTION_SECTORS := {
 	"e": 0.0,
@@ -61,10 +66,14 @@ var _move_executor: Node
 var _attack_started_airborne: bool = false
 var _airborne_attack_start_offset: float = 0.0
 var _finish_uses_requested_context: bool = false
+var _state_authority_hsm: Node
+var _state_authority_states: Dictionary = {}
+var _state_authority_backend: String = "missing_limboai"
 
 
 func configure(move_executor: Node) -> void:
 	_move_executor = move_executor
+	_install_state_authority()
 	_move_executor.move_started.connect(_on_move_started)
 	_move_executor.move_finished.connect(_on_move_finished)
 	_move_executor.state_context_requested.connect(_on_state_context_requested)
@@ -99,6 +108,17 @@ func can_start_attack(allow_airborne: bool = false) -> bool:
 	if allow_airborne and current_state == STATE_JUMP:
 		return true
 	return current_state in [STATE_IDLE, STATE_WALK]
+
+
+func state_authority_backend() -> String:
+	return _state_authority_backend
+
+
+func state_authority_state() -> String:
+	if _state_authority_hsm == null or not is_instance_valid(_state_authority_hsm):
+		return ""
+	var active_state = _state_authority_hsm.call("get_active_state")
+	return str(active_state.name) if active_state is Node else ""
 
 
 func reset_to_idle() -> void:
@@ -325,6 +345,13 @@ func _angle_delta(a: float, b: float) -> float:
 
 
 func _enter_state(state_id: String) -> void:
+	if _state_authority_backend == "limboai" and _state_authority_hsm != null:
+		_state_authority_hsm.call("dispatch", StringName(ENTER_STATE_EVENT_PREFIX + state_id))
+	else:
+		_apply_state_entry(state_id)
+
+
+func _apply_state_entry(state_id: String) -> void:
 	current_state = state_id
 	state_elapsed = 0.0
 	if state_id != STATE_WALK:
@@ -373,23 +400,109 @@ func _on_state_context_requested(state_context: String) -> void:
 
 
 func _enter_finished_context(state_context: String) -> void:
+	var finished_context := state_context if _is_known_state_context(state_context) else STATE_IDLE
+	_prepare_finished_context(finished_context)
+	if _state_authority_backend == "limboai" and _state_authority_hsm != null:
+		_state_authority_hsm.call("dispatch", EVENT_FINISHED)
+		_state_authority_hsm.call("dispatch", StringName(ENTER_STATE_EVENT_PREFIX + finished_context))
+	else:
+		_apply_state_entry(finished_context)
+
+
+func _prepare_finished_context(state_context: String) -> void:
 	match state_context:
-		STATE_WALK:
-			_enter_state(STATE_WALK)
-		STATE_DASH:
-			_enter_state(STATE_DASH)
 		STATE_JUMP:
 			jump_mode = "jump"
-			_enter_state(STATE_JUMP)
 			jump_phase = "air"
 		STATE_HURT:
-			_enter_state(STATE_HURT)
 			reaction_mode = "hurt"
 			reaction_phase = "hurt"
 		STATE_DEAD:
-			enter_dead()
-		_:
-			_enter_state(STATE_IDLE)
+			velocity = Vector2.ZERO
+			visual_jump_offset = 0.0
+			death_phase = "fall_down"
+
+
+func _install_state_authority() -> void:
+	_state_authority_backend = "missing_limboai"
+	_state_authority_states.clear()
+	if not ClassDB.class_exists("LimboHSM") or not ClassDB.class_exists("LimboState"):
+		push_error("LimboAI 1.8.0 is required for live state authority")
+		return
+	var candidate_hsm = ClassDB.instantiate("LimboHSM")
+	var candidate_states := {}
+	for state_id in AUTHORITY_STATES:
+		candidate_states[state_id] = ClassDB.instantiate("LimboState")
+	candidate_states[FINISHED_ROUTER_STATE] = ClassDB.instantiate("LimboState")
+	if not candidate_hsm is Node or not _has_methods(candidate_hsm, ["add_transition", "initialize", "set_active", "dispatch", "set_update_mode", "get_active_state"]):
+		_dispose_candidate(candidate_hsm)
+		_dispose_candidates(candidate_states.values())
+		return
+	for state_id in candidate_states:
+		var candidate_state = candidate_states[state_id]
+		if not candidate_state is Node or not _has_methods(candidate_state, ["named", "call_on_enter"]):
+			_dispose_candidate(candidate_hsm)
+			_dispose_candidates(candidate_states.values())
+			return
+
+	_state_authority_hsm = candidate_hsm
+	_state_authority_hsm.name = "live_state_authority_hsm"
+	add_child(_state_authority_hsm)
+	for state_id in AUTHORITY_STATES:
+		var state: Node = candidate_states[state_id]
+		state.call("named", state_id)
+		state.call("call_on_enter", Callable(self, "_apply_state_entry").bind(state_id))
+		_state_authority_hsm.add_child(state)
+		_state_authority_states[state_id] = state
+	var finished_router: Node = candidate_states[FINISHED_ROUTER_STATE]
+	finished_router.call("named", FINISHED_ROUTER_STATE)
+	_state_authority_hsm.add_child(finished_router)
+	_state_authority_states[FINISHED_ROUTER_STATE] = finished_router
+	for source_id in AUTHORITY_STATES:
+		for target_id in AUTHORITY_STATES:
+			_state_authority_hsm.call(
+				"add_transition",
+				_state_authority_states[source_id],
+				_state_authority_states[target_id],
+				StringName(ENTER_STATE_EVENT_PREFIX + target_id)
+			)
+	_state_authority_hsm.call(
+		"add_transition",
+		_state_authority_states[STATE_ATTACK],
+		_state_authority_states[FINISHED_ROUTER_STATE],
+		EVENT_FINISHED
+	)
+	for target_id in [STATE_IDLE, STATE_WALK, STATE_DASH, STATE_JUMP, STATE_HURT, STATE_DEAD]:
+		_state_authority_hsm.call(
+			"add_transition",
+			_state_authority_states[FINISHED_ROUTER_STATE],
+			_state_authority_states[target_id],
+			StringName(ENTER_STATE_EVENT_PREFIX + target_id)
+		)
+	_state_authority_hsm.call("set_update_mode", LIMBO_UPDATE_MODE_MANUAL)
+	_state_authority_hsm.call("initialize", self)
+	_state_authority_hsm.call("set_active", true)
+	_state_authority_backend = "limboai"
+
+
+func _has_methods(candidate: Object, method_names: Array) -> bool:
+	for method_name in method_names:
+		if not candidate.has_method(str(method_name)):
+			return false
+	return true
+
+
+func _dispose_candidates(candidates: Array) -> void:
+	for candidate in candidates:
+		_dispose_candidate(candidate)
+
+
+func _dispose_candidate(candidate: Object) -> void:
+	if candidate == null:
+		return
+	if candidate is Node and candidate.get_parent() != null:
+		candidate.get_parent().remove_child(candidate)
+	candidate.free()
 
 
 func _is_known_state_context(state_context: String) -> bool:

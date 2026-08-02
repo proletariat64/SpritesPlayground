@@ -19,7 +19,9 @@ func _run() -> void:
 	player.apply_v0_3_runtime_bundle(_event_template(player), {}, {"event_probe": _event_move()})
 	player.reset_runtime(Vector2(245, 245))
 
+	_expect(str(player.debug_summary().get("state_authority_backend", "")) == "limboai", "live state decisions use the required LimboAI authority")
 	_expect(player.request_attack("event_probe"), "real Playground sprite starts the authored event Move")
+	_expect(str(player.debug_summary().get("state_authority_state", "")) == "attack", "LimboHSM authorizes the live attack state")
 	_expect(player.state_machine.current_frame() == 0, "event Move starts on frame 0")
 	_expect(player.active_hitboxes_world().is_empty(), "authored hitbox starts disabled")
 
@@ -33,6 +35,7 @@ func _run() -> void:
 	_expect(player.state_machine.current_frame() == 2, "Move reaches authored state-context frame 2")
 	_expect(str(player.debug_summary().get("state_context", "")) == "jump", "change_state_context dispatches jump through the live state authority")
 	_expect(player.state_machine.current_state == "attack", "state context does not create a competing runtime state machine")
+	_expect(str(player.debug_summary().get("state_authority_state", "")) == "attack", "LimboHSM keeps the Move active until AnimationPlayer completion")
 
 	var hitstop_position: Vector2 = player.position
 	player.tick_character(FRAME_DELTA, playground.arena_center, playground.arena_radius)
@@ -60,6 +63,7 @@ func _run() -> void:
 		player.tick_character(FRAME_DELTA, playground.arena_center, playground.arena_radius)
 	_expect(not player.move_executor.is_executing(), "AnimationPlayer completion finishes the authored Move")
 	_expect(player.state_machine.current_state == "jump", "Move completion dispatches the authored finished context through the live state path")
+	_expect(str(player.debug_summary().get("state_authority_state", "")) == "jump", "LimboHSM owns the finished state decision")
 
 	playground.free()
 	if _errors.is_empty():

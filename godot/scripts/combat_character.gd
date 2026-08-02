@@ -293,6 +293,8 @@ func debug_summary() -> Dictionary:
 		"sprite_set_id": sprite_set_id,
 		"state": state_machine.current_state,
 		"state_context": state_machine.current_state_context,
+		"state_authority_backend": state_machine.state_authority_backend(),
+		"state_authority_state": state_machine.state_authority_state(),
 		"move": state_machine.current_move,
 		"frame": state_machine.current_frame(),
 		"hitstop_frames": move_executor.hitstop_frames_remaining(),
