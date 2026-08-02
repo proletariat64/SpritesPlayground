@@ -5,7 +5,7 @@ status: "review"
 owner: "coding-agent"
 source: "chat"
 created: "2026-08-01"
-updated: "2026-08-01"
+updated: "2026-08-02"
 related_issue: ""
 related_pr: ""
 supersedes: ""
@@ -20,7 +20,8 @@ Feature: Reproducible local development environment
     Given Godot is pinned to `4.7.stable.official.5b4e0cb0f`
     And LimboAI is pinned to `1.8.0`
     And Godot AI is pinned to `3.0.7`
-    And third-party add-on trees are ignored by Git
+    And code-review-graph is pinned to `2.3.7`
+    And third-party add-on trees and generated graph data are ignored by Git
 
   Scenario: Healthy components are skipped
     Given all pinned components are healthy
@@ -59,6 +60,18 @@ Feature: Reproducible local development environment
     When its health check runs
     Then the registered export plugin is present
     And the plugin removes `autoload/_mcp_game_helper` from exported settings
+
+  Scenario: Healthy code-review-graph is not reinstalled
+    Given `code-review-graph --version` reports `2.3.7`
+    When the developer runs the default bootstrap
+    Then code-review-graph is reported ready
+    And `uv tool install` is not invoked
+
+  Scenario: Missing code-review-graph is installed declaratively
+    Given the pinned code-review-graph command is missing or mismatched
+    When the developer runs the default bootstrap
+    Then `uv tool install --force code-review-graph==2.3.7` is invoked
+    And generated graph data remains machine-local
 
   Scenario: Healthy Pi packages are not reinstalled
     Given every package in `dependencies/pi_packages.lock.json` is installed at its pinned version or commit

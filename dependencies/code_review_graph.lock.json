@@ -1,0 +1,7 @@
+{
+  "package": "code-review-graph",
+  "version": "2.3.7",
+  "command": "code-review-graph",
+  "source": "https://pypi.org/project/code-review-graph/2.3.7/",
+  "installer": "uv tool"
+}

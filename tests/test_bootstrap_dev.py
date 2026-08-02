@@ -17,10 +17,12 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 INSTALL_GODOT_AI = PROJECT_ROOT / "scripts" / "install_godot_ai.py"
+INSTALL_CODE_REVIEW_GRAPH = PROJECT_ROOT / "scripts" / "install_code_review_graph.py"
 INSTALL_PI_PACKAGES = PROJECT_ROOT / "scripts" / "install_pi_packages.py"
 BOOTSTRAP_DEV = PROJECT_ROOT / "scripts" / "bootstrap_dev.py"
 PINNED_GODOT_VERSION = "4.7.stable.official.5b4e0cb0f"
 PINNED_GODOT_AI_VERSION = "3.0.7"
+PINNED_CODE_REVIEW_GRAPH_VERSION = "2.3.7"
 
 
 def _run(*args: object, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
@@ -47,6 +49,10 @@ def _tool_env(temp: Path, godot_version: str = PINNED_GODOT_VERSION) -> dict[str
         f"#!/bin/sh\nprintf '%s\\n' '{godot_version}'\n",
     )
     _write_executable(bin_dir / "uv", "#!/bin/sh\nprintf '%s\\n' 'uv 0.11.7'\n")
+    _write_executable(
+        bin_dir / "code-review-graph",
+        f"#!/bin/sh\nprintf '%s\\n' 'code-review-graph {PINNED_CODE_REVIEW_GRAPH_VERSION}'\n",
+    )
     env = os.environ.copy()
     env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
     return env
@@ -102,6 +108,19 @@ def _write_ready_godot_ai(
         encoding="utf-8",
     )
     (install / "runtime" / "game_helper.gd").write_text("extends Node\n", encoding="utf-8")
+
+
+def _write_code_review_graph_lock(path: Path) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "package": "code-review-graph",
+                "version": PINNED_CODE_REVIEW_GRAPH_VERSION,
+                "command": "code-review-graph",
+            }
+        ),
+        encoding="utf-8",
+    )
 
 
 def _write_pi_manifest(path: Path) -> None:
@@ -196,6 +215,98 @@ class GodotAIInstallerCLITests(unittest.TestCase):
 
             self.assertNotEqual(check.returncode, 0)
             self.assertIn("export-strip", check.stdout + check.stderr)
+
+
+class CodeReviewGraphInstallerCLITests(unittest.TestCase):
+    def test_check_accepts_the_exact_pinned_version(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="code-review-graph-installer-test-") as temp_name:
+            temp = Path(temp_name)
+            bin_dir = temp / "bin"
+            bin_dir.mkdir()
+            lock = temp / "code-review-graph.lock.json"
+            _write_code_review_graph_lock(lock)
+            _write_executable(
+                bin_dir / "code-review-graph",
+                f"#!/bin/sh\nprintf '%s\\n' 'code-review-graph {PINNED_CODE_REVIEW_GRAPH_VERSION}'\n",
+            )
+            env = os.environ.copy()
+            env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
+
+            check = _run(INSTALL_CODE_REVIEW_GRAPH, "--check", "--lock", lock, env=env)
+
+            self.assertEqual(check.returncode, 0, check.stdout + check.stderr)
+            self.assertIn("code-review-graph 2.3.7 ready", check.stdout)
+
+    def test_default_ensure_skips_a_healthy_tool_without_calling_uv(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="code-review-graph-installer-test-") as temp_name:
+            temp = Path(temp_name)
+            bin_dir = temp / "bin"
+            bin_dir.mkdir()
+            lock = temp / "code-review-graph.lock.json"
+            _write_code_review_graph_lock(lock)
+            _write_executable(
+                bin_dir / "code-review-graph",
+                f"#!/bin/sh\nprintf '%s\\n' 'code-review-graph {PINNED_CODE_REVIEW_GRAPH_VERSION}'\n",
+            )
+            _write_executable(bin_dir / "uv", "#!/bin/sh\nexit 99\n")
+            env = os.environ.copy()
+            env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
+
+            ensure = _run(INSTALL_CODE_REVIEW_GRAPH, "--lock", lock, env=env)
+
+            self.assertEqual(ensure.returncode, 0, ensure.stdout + ensure.stderr)
+            self.assertIn("already healthy; skipping installation", ensure.stdout)
+
+    def test_default_ensure_installs_a_missing_tool_with_uv(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="code-review-graph-installer-test-") as temp_name:
+            temp = Path(temp_name)
+            bin_dir = temp / "bin"
+            bin_dir.mkdir()
+            lock = temp / "code-review-graph.lock.json"
+            call_log = temp / "uv-call.txt"
+            installed_command = bin_dir / "code-review-graph"
+            _write_code_review_graph_lock(lock)
+            _write_executable(
+                bin_dir / "uv",
+                "#!/bin/sh\n"
+                f"printf '%s\\n' \"$*\" > '{call_log}'\n"
+                f"printf '%s\\n' '#!/bin/sh' \"printf '%s\\\\n' "
+                f"'code-review-graph {PINNED_CODE_REVIEW_GRAPH_VERSION}'\" > '{installed_command}'\n"
+                f"/bin/chmod +x '{installed_command}'\n",
+            )
+            env = os.environ.copy()
+            env["PATH"] = str(bin_dir)
+
+            ensure = _run(INSTALL_CODE_REVIEW_GRAPH, "--lock", lock, env=env)
+
+            self.assertEqual(ensure.returncode, 0, ensure.stdout + ensure.stderr)
+            self.assertEqual(
+                call_log.read_text(encoding="utf-8").strip(),
+                "tool install --force code-review-graph==2.3.7",
+            )
+            self.assertIn("Installed code-review-graph==2.3.7", ensure.stdout)
+
+    def test_check_reports_an_installed_version_mismatch_without_calling_uv(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="code-review-graph-installer-test-") as temp_name:
+            temp = Path(temp_name)
+            bin_dir = temp / "bin"
+            bin_dir.mkdir()
+            lock = temp / "code-review-graph.lock.json"
+            _write_code_review_graph_lock(lock)
+            _write_executable(
+                bin_dir / "code-review-graph",
+                "#!/bin/sh\nprintf '%s\\n' 'code-review-graph 9.9.9'\n",
+            )
+            _write_executable(bin_dir / "uv", "#!/bin/sh\nexit 99\n")
+            env = os.environ.copy()
+            env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
+
+            check = _run(INSTALL_CODE_REVIEW_GRAPH, "--check", "--lock", lock, env=env)
+
+            self.assertNotEqual(check.returncode, 0)
+            output = check.stdout + check.stderr
+            self.assertIn(PINNED_CODE_REVIEW_GRAPH_VERSION, output)
+            self.assertIn("9.9.9", output)
 
 
 class PiPackageInstallerCLITests(unittest.TestCase):
