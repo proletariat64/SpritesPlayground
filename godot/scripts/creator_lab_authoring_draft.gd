@@ -16,6 +16,8 @@ var _last_operation_error: String = ""
 
 
 func load_bundle(source: Dictionary) -> Array:
+	if _dirty:
+		return ["cannot load bundle while Authoring Draft has unsaved changes"]
 	var candidate := source.duplicate(true)
 	var candidate_diagnostics := DocumentRules.validate_runtime_bundle(candidate)
 	_bundle = candidate
@@ -29,6 +31,40 @@ func load_bundle(source: Dictionary) -> Array:
 		if preview_changed:
 			valid_snapshot_changed.emit()
 	return _diagnostics.duplicate(true)
+
+
+func accept_persisted_bundle(saved_bundle: Dictionary) -> Array:
+	var candidate := saved_bundle.duplicate(true)
+	var candidate_diagnostics := DocumentRules.validate_runtime_bundle(candidate)
+	if not candidate_diagnostics.is_empty():
+		return candidate_diagnostics.duplicate(true)
+	var preview_changed := _preview_bundle != candidate
+	_bundle = candidate
+	_clean_bundle = candidate.duplicate(true)
+	_preview_bundle = candidate.duplicate(true)
+	_diagnostics = []
+	_dirty = false
+	_loaded = true
+	if preview_changed:
+		valid_snapshot_changed.emit()
+	return []
+
+
+func discard_changes() -> bool:
+	if not _loaded or _clean_bundle.is_empty():
+		return false
+	var candidate := _clean_bundle.duplicate(true)
+	var candidate_diagnostics := DocumentRules.validate_runtime_bundle(candidate)
+	if not candidate_diagnostics.is_empty():
+		return false
+	var preview_changed := _preview_bundle != candidate
+	_bundle = candidate
+	_preview_bundle = candidate.duplicate(true)
+	_diagnostics = candidate_diagnostics.duplicate(true)
+	_dirty = false
+	if preview_changed:
+		valid_snapshot_changed.emit()
+	return true
 
 
 func edit_move_scalar(move_id: String, field: String, value) -> bool:

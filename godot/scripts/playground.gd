@@ -111,9 +111,18 @@ func toggle_creator_lab() -> void:
 func select_character(character: Node2D) -> void:
 	if character == null or not is_instance_valid(character):
 		return
-	selected_character = character
+	if creator_lab != null and creator_lab.has_method("request_bound_instance_switch"):
+		creator_lab.request_bound_instance_switch(character)
+		return
+	_commit_selected_character(character)
 	if creator_lab != null and creator_lab.has_method("bind_instance"):
 		creator_lab.bind_instance(character)
+
+
+func _commit_selected_character(character: Node) -> void:
+	if not (character is Node2D) or not is_instance_valid(character):
+		return
+	selected_character = character as Node2D
 	_update_debug_gui()
 
 
@@ -202,6 +211,15 @@ func remove_npc(character: Node2D) -> bool:
 		return false
 	var removed_id := str(character.instance_id)
 	var removed_foot_center: Vector2 = character.foot_center_world()
+	if (
+		selected_character == character
+		and creator_lab != null
+		and creator_lab.has_method("request_bound_instance_switch")
+	):
+		var replacement := _replacement_for_removed_npc(character, removed_foot_center)
+		var switch_result: Dictionary = creator_lab.request_bound_instance_switch(replacement)
+		if str(switch_result.get("outcome", "")) != "switched":
+			return false
 	npcs.remove_at(index)
 	characters.erase(character)
 	if selected_character == character:
@@ -360,6 +378,21 @@ func _nearest_npc_to_position(world_position: Vector2) -> Node2D:
 	return nearest
 
 
+func _replacement_for_removed_npc(character: Node2D, world_position: Vector2) -> Node2D:
+	var nearest: Node2D = null
+	var nearest_distance := INF
+	for npc in npcs:
+		if npc == character or npc == null or not is_instance_valid(npc):
+			continue
+		var distance := world_position.distance_squared_to(npc.foot_center_world())
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest = npc
+	if nearest != null:
+		return nearest
+	return player if player != null and is_instance_valid(player) else null
+
+
 func _spawn_npc_position(index: int) -> Vector2:
 	if index == 0:
 		return Vector2(405, 245)
@@ -418,6 +451,8 @@ func _build_creator_lab() -> void:
 	creator_lab.visible = false
 	layer.add_child(creator_lab)
 	creator_lab.setup()
+	if creator_lab.has_signal("bound_instance_switch_committed"):
+		creator_lab.bound_instance_switch_committed.connect(_commit_selected_character)
 	creator_lab.bind_player_requested.connect(select_player_character)
 	creator_lab.bind_dummy_requested.connect(select_dummy_character)
 	if creator_lab.has_signal("add_npc_requested"):

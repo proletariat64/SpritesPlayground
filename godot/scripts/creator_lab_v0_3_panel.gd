@@ -21,12 +21,15 @@ const COLOR_PASS := Color(0.42, 0.88, 0.56)
 const COLOR_WARN := Color(1.0, 0.78, 0.28)
 const COLOR_FAIL := Color(1.0, 0.42, 0.36)
 const COLOR_STATUS := Color(0.72, 0.78, 0.84)
+const SWITCH_TEMPLATE := "template"
+const SWITCH_BOUND_INSTANCE := "bound_instance"
 signal bind_player_requested
 signal bind_dummy_requested
 signal add_npc_requested(template_id: String)
 signal remove_selected_npc_requested
 signal bind_npc_requested(index: int)
 signal npc_template_selected(template_id: String)
+signal bound_instance_switch_committed(instance: Node)
 
 var template_json: Dictionary = {}
 var sprite_set_json: Dictionary = {}
@@ -55,6 +58,7 @@ var npc_count_current: int = 1
 var npc_limit: int = 10
 var selected_npc_index: int = 0
 var npc_status: String = ""
+var _data_root: String = DataStore.DEFAULT_DATA_ROOT
 
 var template_select: OptionButton
 var npc_template_select: OptionButton
@@ -64,6 +68,11 @@ var move_select: OptionButton
 var sprite_set_select: OptionButton
 var coverage_list: ItemList
 var status_label: Label
+var draft_state_label: Label
+var save_button: Button
+var discard_button: Button
+var apply_bound_button: Button
+var switch_dialog: ConfirmationDialog
 var runtime_label: Label
 var preview_frame_label: Label
 var preview_frame_slider: HSlider
@@ -105,9 +114,15 @@ var nav_keys: Array = []
 var move_section_list: ItemList
 var _authoring_draft: RefCounted = AuthoringDraftScript.new()
 var _loading_authoring_draft: bool = false
+var _pending_switch_kind: String = ""
+var _pending_template_id: String = ""
+var _pending_instance_ref = null
+var _pending_instance_id: String = ""
+var _pending_instance_template_id: String = ""
 
 
-func setup() -> void:
+func setup(data_root: String = DataStore.DEFAULT_DATA_ROOT) -> void:
+	_data_root = data_root.strip_edges() if not data_root.strip_edges().is_empty() else DataStore.DEFAULT_DATA_ROOT
 	set_process(true)
 	if not _authoring_draft.valid_snapshot_changed.is_connected(_on_authoring_draft_valid_snapshot_changed):
 		_authoring_draft.valid_snapshot_changed.connect(_on_authoring_draft_valid_snapshot_changed)
@@ -139,46 +154,15 @@ func _process(delta: float) -> void:
 
 
 func load_template_id(template_id: String) -> Array:
-	var loaded_template := DataStore.load_template(template_id)
-	if loaded_template.is_empty():
-		return _set_errors(["missing template %s" % template_id])
-	var loaded_sprite_set := DataStore.load_sprite_set(str(loaded_template["sprite_set_ref"]))
-	var loaded_moves := {}
-	for move_id in loaded_template["equipped_moves"]:
-		loaded_moves[str(move_id)] = DataStore.load_move(str(move_id))
-	_loading_authoring_draft = true
-	_authoring_draft.load_bundle({
-		"template": loaded_template,
-		"sprite_set": loaded_sprite_set,
-		"moves": loaded_moves,
-	})
-	_loading_authoring_draft = false
-	_sync_legacy_draft_aliases()
-	preview_playing = false
-	preview_frame = 0
-	if not template_json["equipped_moves"].is_empty():
-		selected_move = str(template_json["equipped_moves"][0])
-	_refresh_options()
-	_refresh_fields()
-	return validate_current()
+	var result := request_template_switch(template_id)
+	var errors: Array = result.get("errors", []).duplicate(true)
+	if errors.is_empty() and not bool(result.get("ok", false)):
+		errors.append("Authoring Draft lifecycle %s" % str(result.get("outcome", "failed")))
+	return errors
 
 
-func bind_instance(instance: Node) -> void:
-	if instance == null:
-		_set_status("bind failed: missing instance")
-		return
-	bound_instance_ref = weakref(instance)
-	update_bound_instance_summary(instance)
-	if bound_template_id.is_empty():
-		_set_status("bound %s without template id" % bound_instance_id)
-		_refresh_fields()
-		return
-	if not DataStore.list_template_ids().has(bound_template_id):
-		_set_status("bound %s; missing v0.3 template %s" % [bound_instance_id, bound_template_id])
-		_refresh_fields()
-		return
-	load_template_id(bound_template_id)
-	_set_status("bound %s" % bound_instance_id)
+func bind_instance(instance: Node) -> Dictionary:
+	return request_bound_instance_switch(instance)
 
 
 func update_bound_instance_summary(instance: Node) -> void:
@@ -341,11 +325,122 @@ func is_preview_window_visible() -> bool:
 func draft_status() -> Dictionary:
 	var snapshot: Dictionary = _authoring_draft.snapshot()
 	return {
+		"template_id": str(snapshot.get("bundle", {}).get("template", {}).get("template_id", "")),
+		"bound_instance_id": bound_instance_id,
 		"dirty": bool(snapshot.get("dirty", false)),
 		"diagnostics": snapshot.get("diagnostics", []).duplicate(true),
 		"can_save": bool(snapshot.get("can_save", false)),
 		"can_apply": bool(snapshot.get("can_apply", false)),
 	}
+
+
+func pending_switch_status() -> Dictionary:
+	var snapshot: Dictionary = _authoring_draft.snapshot()
+	return {
+		"pending": not _pending_switch_kind.is_empty(),
+		"kind": _pending_switch_kind,
+		"target_template_id": _pending_template_id,
+		"target_instance_id": _pending_instance_id,
+		"can_save": bool(snapshot.get("can_save", false)),
+		"can_discard": bool(snapshot.get("dirty", false)),
+		"choices": ["save", "discard", "cancel"],
+	}
+
+
+func request_template_switch(template_id: String) -> Dictionary:
+	var target_id := template_id.strip_edges()
+	if target_id.is_empty():
+		return _switch_outcome(false, "failed", ["missing template id"])
+	if not _pending_switch_kind.is_empty():
+		_show_switch_dialog()
+		return _switch_outcome(false, "decision_required", ["resolve the pending switch first"])
+	if target_id == str(template_json.get("template_id", "")):
+		_restore_template_selector()
+		return _switch_outcome(true, "unchanged")
+	var loaded := _load_bundle_from_root(target_id)
+	var load_errors: Array = loaded.get("errors", [])
+	if not load_errors.is_empty():
+		_restore_template_selector()
+		_set_errors(load_errors)
+		return _switch_outcome(false, "failed", load_errors)
+	if bool(_authoring_draft.snapshot().get("dirty", false)):
+		_set_pending_template_switch(target_id)
+		_restore_template_selector()
+		_set_status("switch decision required: template %s" % target_id)
+		_show_switch_dialog()
+		return _switch_outcome(false, "decision_required")
+	return _commit_template_switch(target_id, loaded.get("bundle", {}))
+
+
+func request_bound_instance_switch(instance: Node) -> Dictionary:
+	if instance == null or not is_instance_valid(instance):
+		return _switch_outcome(false, "target_unavailable", ["missing bound instance"])
+	if not _pending_switch_kind.is_empty():
+		_show_switch_dialog()
+		return _switch_outcome(false, "decision_required", ["resolve the pending switch first"])
+	var summary := _instance_summary(instance)
+	var target_instance_id := str(summary.get("instance_id", ""))
+	var target_template_id := str(summary.get("template_id", ""))
+	if _bound_instance() == instance and target_template_id == bound_template_id:
+		update_bound_instance_summary(instance)
+		return _switch_outcome(true, "unchanged")
+	if target_template_id.is_empty():
+		var errors := ["bound %s without template id" % target_instance_id]
+		_set_errors(errors)
+		return _switch_outcome(false, "failed", errors)
+	var loaded := _load_bundle_from_root(target_template_id)
+	var load_errors: Array = loaded.get("errors", [])
+	if not load_errors.is_empty():
+		_set_errors(load_errors)
+		return _switch_outcome(false, "failed", load_errors)
+	if bool(_authoring_draft.snapshot().get("dirty", false)):
+		_set_pending_bound_instance_switch(instance, target_instance_id, target_template_id)
+		_set_status("switch decision required: bind %s" % target_instance_id)
+		_show_switch_dialog()
+		return _switch_outcome(false, "decision_required")
+	return _commit_bound_instance_switch(instance, loaded.get("bundle", {}))
+
+
+func resolve_pending_switch(decision: String) -> Dictionary:
+	if _pending_switch_kind.is_empty():
+		return _switch_outcome(false, "failed", ["no pending switch"])
+	if decision == "cancel":
+		_clear_pending_switch()
+		_restore_template_selector()
+		_set_status("switch cancelled")
+		_hide_switch_dialog()
+		_refresh_draft_lifecycle_ui()
+		return _switch_outcome(true, "cancelled")
+	if not ["save", "discard"].has(decision):
+		return _switch_outcome(false, "invalid_decision", ["invalid switch decision %s" % decision])
+
+	var prepared := _prepare_pending_target()
+	var prepare_errors: Array = prepared.get("errors", [])
+	if not prepare_errors.is_empty():
+		_set_errors(prepare_errors)
+		return _switch_outcome(false, "target_unavailable", prepare_errors)
+	if decision == "save":
+		var save_errors := save_all()
+		if not save_errors.is_empty():
+			_show_switch_dialog()
+			return _switch_outcome(false, "save_failed", save_errors)
+	else:
+		if not discard_current():
+			var errors := ["discard failed"]
+			_set_errors(errors)
+			return _switch_outcome(false, "failed", errors)
+
+	prepared = _prepare_pending_target()
+	prepare_errors = prepared.get("errors", [])
+	if not prepare_errors.is_empty():
+		_set_errors(prepare_errors)
+		return _switch_outcome(false, "target_unavailable", prepare_errors)
+	var result := _commit_prepared_pending_target(prepared)
+	if str(result.get("outcome", "")) == "switched":
+		_clear_pending_switch()
+		_hide_switch_dialog()
+		return _switch_outcome(true, "switched")
+	return result
 
 
 func copy_template(copy_id: String = "") -> String:
@@ -359,23 +454,72 @@ func copy_template(copy_id: String = "") -> String:
 	return next_id if accepted else ""
 
 
-func save_all() -> void:
+func save_all() -> Array:
 	var errors := validate_current()
 	if not errors.is_empty():
-		return
+		_refresh_draft_lifecycle_ui()
+		return errors
 	var draft_bundle: Dictionary = _authoring_draft.snapshot().get("bundle", {})
 	var draft_template: Dictionary = draft_bundle.get("template", {})
-	var draft_sprite_set: Dictionary = draft_bundle.get("sprite_set", {})
-	var draft_moves: Dictionary = draft_bundle.get("moves", {})
-	var save_errors := DataStore.save_runtime_bundle(draft_bundle)
+	var save_errors := DataStore.save_runtime_bundle(draft_bundle, _data_root)
 	if not save_errors.is_empty():
 		_set_errors(save_errors)
-		return
-	var generation := SpriteFramesGeneratorScript.generate(draft_sprite_set, {"moves": draft_moves})
+		_refresh_draft_lifecycle_ui()
+		return save_errors
+
+	var template_id := str(draft_template.get("template_id", ""))
+	var reloaded := _load_bundle_from_root(template_id)
+	var reload_errors: Array = reloaded.get("errors", [])
+	if not reload_errors.is_empty():
+		_set_errors(reload_errors)
+		_refresh_draft_lifecycle_ui()
+		return reload_errors
+	var persisted_bundle: Dictionary = reloaded.get("bundle", {})
+	_loading_authoring_draft = true
+	var baseline_errors: Array = _authoring_draft.accept_persisted_bundle(persisted_bundle)
+	_loading_authoring_draft = false
+	if not baseline_errors.is_empty():
+		_set_errors(baseline_errors)
+		_refresh_draft_lifecycle_ui()
+		return baseline_errors
+	_sync_legacy_draft_aliases()
+	_refresh_options()
+	_refresh_fields()
+
+	var persisted_sprite_set: Dictionary = persisted_bundle.get("sprite_set", {})
+	var persisted_moves: Dictionary = persisted_bundle.get("moves", {})
+	var generation_options := {"moves": persisted_moves}
+	if _data_root != DataStore.DEFAULT_DATA_ROOT:
+		generation_options["output_path"] = _data_root.path_join("sprite_frames").path_join(
+			"%s.tres" % str(persisted_sprite_set.get("sprite_set_id", ""))
+		)
+	var generation := SpriteFramesGeneratorScript.generate(persisted_sprite_set, generation_options)
 	if bool(generation.get("ok", false)):
-		_set_status("saved %s + SpriteFrames generated" % str(draft_template.get("template_id", "")))
+		_set_status("saved %s + SpriteFrames generated" % template_id)
 	else:
 		_set_status("saved JSON; SpriteFrames generation FAIL: %s" % _diagnostic_codes(generation.get("errors", [])))
+	_refresh_draft_lifecycle_ui()
+	return []
+
+
+func discard_current() -> bool:
+	_loading_authoring_draft = true
+	var discarded: bool = _authoring_draft.discard_changes()
+	_loading_authoring_draft = false
+	if not discarded:
+		_set_status("discard failed")
+		_refresh_draft_lifecycle_ui()
+		return false
+	_sync_legacy_draft_aliases()
+	preview_playing = false
+	preview_frame = 0
+	if not moves_json.has(selected_move) and not template_json.get("equipped_moves", []).is_empty():
+		selected_move = str(template_json["equipped_moves"][0])
+	_refresh_options()
+	_refresh_fields()
+	_set_status("discarded unsaved Authoring Draft changes")
+	_refresh_draft_lifecycle_ui()
+	return true
 
 
 func apply_to_bound_instance() -> bool:
@@ -411,30 +555,42 @@ func apply_to_bound_instance() -> bool:
 
 
 func reload_current() -> Array:
-	return load_template_id(str(template_json["template_id"]))
+	var template_id := str(template_json.get("template_id", ""))
+	if bool(_authoring_draft.snapshot().get("dirty", false)):
+		if not _pending_switch_kind.is_empty():
+			_show_switch_dialog()
+			return ["Authoring Draft lifecycle decision required: resolve the pending switch first"]
+		var pending_reload := _load_bundle_from_root(template_id)
+		var pending_errors: Array = pending_reload.get("errors", [])
+		if not pending_errors.is_empty():
+			return _set_errors(pending_errors)
+		_set_pending_template_switch(template_id)
+		_restore_template_selector()
+		_set_status("reload decision required: template %s" % template_id)
+		_show_switch_dialog()
+		return ["Authoring Draft lifecycle decision required: reload"]
+	var loaded := _load_bundle_from_root(template_id)
+	var errors: Array = loaded.get("errors", [])
+	if not errors.is_empty():
+		return _set_errors(errors)
+	var result := _commit_template_switch(template_id, loaded.get("bundle", {}), true)
+	return result.get("errors", []).duplicate(true)
 
 
 func save_reload_exact() -> bool:
 	if not validate_current().is_empty():
 		return false
 	var before := _normalized_json_text(_current_state())
-	save_all()
+	if not save_all().is_empty():
+		return false
 	var template_id := str(template_json["template_id"])
-	var loaded_template := DataStore.load_template(template_id)
-	var loaded_sprite_set := DataStore.load_sprite_set(str(loaded_template["sprite_set_ref"]))
-	var loaded_moves := {}
-	for move_id in loaded_template["equipped_moves"]:
-		loaded_moves[str(move_id)] = DataStore.load_move(str(move_id))
-	var after := _normalized_json_text({
-		"template": loaded_template,
-		"sprite_set": loaded_sprite_set,
-		"moves": loaded_moves,
-	})
+	var reloaded := _load_bundle_from_root(template_id)
+	if not reloaded.get("errors", []).is_empty():
+		_set_errors(reloaded.get("errors", []))
+		return false
+	var after := _normalized_json_text(reloaded.get("bundle", {}))
 	var ok := before == after
 	if ok:
-		template_json = loaded_template
-		sprite_set_json = loaded_sprite_set
-		moves_json = loaded_moves
 		_set_status("roundtrip PASS")
 	else:
 		_set_status("roundtrip FAIL")
@@ -484,7 +640,7 @@ func set_movement_speeds(walk_speed: float, run_speed: float) -> void:
 
 
 func set_sprite_set_ref(sprite_set_id: String) -> void:
-	var sprite_set_document := DataStore.load_sprite_set(sprite_set_id)
+	var sprite_set_document := DataStore.load_sprite_set(sprite_set_id, _data_root)
 	if sprite_set_document.is_empty():
 		sprite_set_document = {"sprite_set_id": sprite_set_id}
 	_sync_authoring_draft_from_legacy_if_needed()
@@ -497,7 +653,7 @@ func set_sprite_set_ref(sprite_set_id: String) -> void:
 func set_equipped_moves(move_ids: Array) -> void:
 	var move_documents := {}
 	for move_id in move_ids:
-		move_documents[str(move_id)] = DataStore.load_move(str(move_id))
+		move_documents[str(move_id)] = DataStore.load_move(str(move_id), _data_root)
 	_sync_authoring_draft_from_legacy_if_needed()
 	_loading_authoring_draft = true
 	var accepted: bool = _authoring_draft.set_equipped_moves(move_ids, move_documents)
@@ -719,14 +875,20 @@ func _build_ui() -> void:
 	top.add_child(template_select)
 	top.add_child(_button("Bind P", _on_bind_player_pressed, 48))
 	top.add_child(_button("Bind D", _on_bind_dummy_pressed, 48))
-	top.add_child(_button("Save", _on_save_pressed))
+	save_button = _button("Save", _on_save_pressed)
+	top.add_child(save_button)
 	top.add_child(_button("Check", _on_check_pressed))
 
 	var tools := HBoxContainer.new()
 	tools.add_theme_constant_override("separation", 3)
 	root.add_child(tools)
+	discard_button = _button("Discard", _on_discard_pressed)
+	tools.add_child(discard_button)
 	tools.add_child(_button("Reload", _on_reload_pressed))
 	tools.add_child(_button("Roundtrip", _on_exact_pressed))
+	draft_state_label = _label("Draft: clean", COLOR_STATUS)
+	draft_state_label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	tools.add_child(draft_state_label)
 
 	var main := HBoxContainer.new()
 	main.custom_minimum_size = Vector2(546, 288)
@@ -770,6 +932,17 @@ func _build_ui() -> void:
 	status_label.add_theme_font_size_override("font_size", 8)
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(status_label)
+
+	switch_dialog = ConfirmationDialog.new()
+	switch_dialog.title = "Unsaved Authoring Draft"
+	switch_dialog.get_ok_button().text = "Save"
+	switch_dialog.get_cancel_button().text = "Cancel"
+	switch_dialog.add_button("Discard", true, "discard")
+	switch_dialog.confirmed.connect(_on_switch_save_confirmed)
+	switch_dialog.canceled.connect(_on_switch_cancelled)
+	switch_dialog.custom_action.connect(_on_switch_custom_action)
+	add_child(switch_dialog)
+	_refresh_draft_lifecycle_ui()
 
 
 func _refresh_navigation() -> void:
@@ -856,6 +1029,7 @@ func _reset_editor_refs() -> void:
 	runtime_label = null
 	preview_frame_slider = null
 	move_section_list = null
+	apply_bound_button = null
 
 
 func _build_values_panel() -> void:
@@ -959,7 +1133,9 @@ func _build_instance_detail(parent: VBoxContainer) -> void:
 	parent.add_child(row)
 	row.add_child(_button("Bind P", _on_bind_player_pressed, 48))
 	row.add_child(_button("Bind D", _on_bind_dummy_pressed, 48))
-	row.add_child(_button("Apply Bound", _on_apply_bound_pressed, 74))
+	apply_bound_button = _button("Apply Bound", _on_apply_bound_pressed, 74)
+	row.add_child(apply_bound_button)
+	_refresh_draft_lifecycle_ui()
 	_build_npc_controls(parent)
 	_add_detail_value(parent, "instance", _bound_or_none(bound_instance_id), COLOR_INSTANCE)
 	_add_detail_value(parent, "template", _bound_or_none(bound_template_id), COLOR_INSTANCE)
@@ -1349,7 +1525,7 @@ func _build_wardrobe_detail(parent: VBoxContainer) -> void:
 	parent.add_child(_label("Wardrobe coverage - sprite-set view", COLOR_WARDROBE))
 	sprite_set_select = OptionButton.new()
 	_style_control(sprite_set_select, 118, 18)
-	for id in DataStore.list_sprite_set_ids():
+	for id in DataStore.list_sprite_set_ids(_data_root):
 		sprite_set_select.add_item(id)
 		if id == str(template_json.get("sprite_set_ref", "")):
 			sprite_set_select.select(sprite_set_select.item_count - 1)
@@ -1495,7 +1671,7 @@ func _populate_npc_template_select() -> void:
 	if npc_template_select == null:
 		return
 	npc_template_select.clear()
-	var ids := DataStore.list_template_ids()
+	var ids := DataStore.list_template_ids(_data_root)
 	if ids.is_empty():
 		return
 	if npc_template_id.is_empty() or not ids.has(npc_template_id):
@@ -1721,9 +1897,14 @@ func _clear_children(node: Node) -> void:
 func _refresh_options() -> void:
 	if template_select != null:
 		template_select.clear()
-		for id in DataStore.list_template_ids():
+		var template_ids := DataStore.list_template_ids(_data_root)
+		var active_template_id := str(template_json.get("template_id", ""))
+		if not active_template_id.is_empty() and not template_ids.has(active_template_id):
+			template_ids.append(active_template_id)
+			template_ids.sort()
+		for id in template_ids:
 			template_select.add_item(id)
-			if id == str(template_json.get("template_id", "")):
+			if id == active_template_id:
 				template_select.select(template_select.item_count - 1)
 	if move_select != null:
 		move_select.clear()
@@ -1733,7 +1914,7 @@ func _refresh_options() -> void:
 				move_select.select(move_select.item_count - 1)
 	if sprite_set_select != null:
 		sprite_set_select.clear()
-		for id in DataStore.list_sprite_set_ids():
+		for id in DataStore.list_sprite_set_ids(_data_root):
 			sprite_set_select.add_item(id)
 			if id == str(template_json.get("sprite_set_ref", "")):
 				sprite_set_select.select(sprite_set_select.item_count - 1)
@@ -1748,6 +1929,7 @@ func _refresh_fields() -> void:
 	_refresh_three_panel()
 	_refresh_action_preview()
 	_refresh_runtime()
+	_refresh_draft_lifecycle_ui()
 
 
 func _refresh_runtime() -> Array:
@@ -1823,6 +2005,200 @@ func _sync_authoring_draft_from_legacy_if_needed() -> bool:
 	return accepted
 
 
+func _load_bundle_from_root(template_id: String) -> Dictionary:
+	var errors: Array = []
+	if not DataStore.list_template_ids(_data_root).has(template_id):
+		return {"bundle": {}, "errors": ["missing template %s" % template_id]}
+	var loaded_template := DataStore.load_template(template_id, _data_root)
+	if loaded_template.is_empty():
+		return {"bundle": {}, "errors": ["missing template %s" % template_id]}
+	var sprite_set_id := str(loaded_template.get("sprite_set_ref", ""))
+	if sprite_set_id.is_empty():
+		errors.append("template %s is missing sprite_set_ref" % template_id)
+	var loaded_sprite_set := (
+		DataStore.load_sprite_set(sprite_set_id, _data_root) if not sprite_set_id.is_empty() else {}
+	)
+	if loaded_sprite_set.is_empty():
+		errors.append("missing sprite set %s" % sprite_set_id)
+	var equipped_moves = loaded_template.get("equipped_moves", null)
+	var loaded_moves := {}
+	if typeof(equipped_moves) != TYPE_ARRAY:
+		errors.append("template %s has invalid equipped_moves" % template_id)
+	else:
+		for move_id in equipped_moves:
+			var id := str(move_id)
+			var loaded_move := DataStore.load_move(id, _data_root)
+			if loaded_move.is_empty():
+				errors.append("missing move %s" % id)
+			else:
+				loaded_moves[id] = loaded_move
+	if not errors.is_empty():
+		return {"bundle": {}, "errors": errors}
+	var bundle := {
+		"template": loaded_template,
+		"sprite_set": loaded_sprite_set,
+		"moves": loaded_moves,
+	}
+	var validation_errors := DataStore.validate_runtime_bundle(bundle)
+	if not validation_errors.is_empty():
+		return {"bundle": {}, "errors": validation_errors}
+	return {"bundle": bundle, "errors": []}
+
+
+func _commit_template_switch(template_id: String, bundle: Dictionary, force_reload: bool = false) -> Dictionary:
+	if not force_reload and template_id == str(template_json.get("template_id", "")):
+		_restore_template_selector()
+		return _switch_outcome(true, "unchanged")
+	_loading_authoring_draft = true
+	var load_errors: Array = _authoring_draft.load_bundle(bundle)
+	_loading_authoring_draft = false
+	if not load_errors.is_empty():
+		_set_errors(load_errors)
+		return _switch_outcome(false, "failed", load_errors)
+	_sync_legacy_draft_aliases()
+	preview_playing = false
+	preview_frame = 0
+	if not template_json.get("equipped_moves", []).is_empty():
+		selected_move = str(template_json["equipped_moves"][0])
+	_refresh_options()
+	_refresh_fields()
+	_set_status("switched template %s" % template_id)
+	return _switch_outcome(true, "switched")
+
+
+func _commit_bound_instance_switch(instance: Node, bundle: Dictionary) -> Dictionary:
+	if instance == null or not is_instance_valid(instance):
+		return _switch_outcome(false, "target_unavailable", ["bound instance is no longer available"])
+	var template_id := str(bundle.get("template", {}).get("template_id", ""))
+	var loaded_result := _commit_template_switch(template_id, bundle, true)
+	if str(loaded_result.get("outcome", "")) != "switched":
+		return loaded_result
+	bound_instance_ref = weakref(instance)
+	update_bound_instance_summary(instance)
+	_set_status("bound %s" % bound_instance_id)
+	bound_instance_switch_committed.emit(instance)
+	_refresh_draft_lifecycle_ui()
+	return _switch_outcome(true, "switched")
+
+
+func _prepare_pending_target() -> Dictionary:
+	if _pending_switch_kind == SWITCH_TEMPLATE:
+		var loaded := _load_bundle_from_root(_pending_template_id)
+		return {
+			"kind": SWITCH_TEMPLATE,
+			"bundle": loaded.get("bundle", {}),
+			"errors": loaded.get("errors", []),
+		}
+	if _pending_switch_kind == SWITCH_BOUND_INSTANCE:
+		var instance: Node = _pending_instance_ref.get_ref() if _pending_instance_ref != null else null
+		if not (instance is Node) or not is_instance_valid(instance):
+			return {"kind": SWITCH_BOUND_INSTANCE, "errors": ["bound instance is no longer available"]}
+		var loaded := _load_bundle_from_root(_pending_instance_template_id)
+		return {
+			"kind": SWITCH_BOUND_INSTANCE,
+			"instance": instance,
+			"bundle": loaded.get("bundle", {}),
+			"errors": loaded.get("errors", []),
+		}
+	return {"errors": ["invalid pending switch"]}
+
+
+func _commit_prepared_pending_target(prepared: Dictionary) -> Dictionary:
+	match str(prepared.get("kind", "")):
+		SWITCH_TEMPLATE:
+			return _commit_template_switch(_pending_template_id, prepared.get("bundle", {}), true)
+		SWITCH_BOUND_INSTANCE:
+			return _commit_bound_instance_switch(prepared.get("instance", null), prepared.get("bundle", {}))
+	return _switch_outcome(false, "failed", ["invalid pending switch"])
+
+
+func _set_pending_template_switch(template_id: String) -> void:
+	_pending_switch_kind = SWITCH_TEMPLATE
+	_pending_template_id = template_id
+	_pending_instance_ref = null
+	_pending_instance_id = ""
+	_pending_instance_template_id = ""
+
+
+func _set_pending_bound_instance_switch(instance: Node, instance_id: String, template_id: String) -> void:
+	_pending_switch_kind = SWITCH_BOUND_INSTANCE
+	_pending_template_id = template_id
+	_pending_instance_ref = weakref(instance)
+	_pending_instance_id = instance_id
+	_pending_instance_template_id = template_id
+
+
+func _clear_pending_switch() -> void:
+	_pending_switch_kind = ""
+	_pending_template_id = ""
+	_pending_instance_ref = null
+	_pending_instance_id = ""
+	_pending_instance_template_id = ""
+
+
+func _switch_outcome(ok: bool, outcome: String, errors: Array = []) -> Dictionary:
+	var safe_errors: Array = []
+	for error in errors:
+		safe_errors.append(str(error))
+	return {
+		"ok": ok,
+		"outcome": outcome,
+		"status": outcome,
+		"pending": not _pending_switch_kind.is_empty(),
+		"kind": _pending_switch_kind,
+		"target_template_id": _pending_template_id,
+		"target_instance_id": _pending_instance_id,
+		"errors": safe_errors,
+	}
+
+
+func _instance_summary(instance: Node) -> Dictionary:
+	var summary: Dictionary = {}
+	if instance.has_method("debug_summary"):
+		summary = instance.debug_summary()
+	return {
+		"instance_id": str(summary.get("instance_id", _node_property(instance, "instance_id"))),
+		"template_id": str(summary.get("template_id", _node_property(instance, "template_id"))),
+	}
+
+
+func _restore_template_selector() -> void:
+	_select_option(template_select, str(template_json.get("template_id", "")))
+
+
+func _refresh_draft_lifecycle_ui() -> void:
+	var snapshot: Dictionary = _authoring_draft.snapshot()
+	var dirty: bool = bool(snapshot.get("dirty", false))
+	var valid: bool = snapshot.get("diagnostics", []).is_empty() and bool(snapshot.get("can_apply", false))
+	if draft_state_label != null:
+		draft_state_label.text = "Draft: %s" % ("invalid dirty" if dirty and not valid else ("dirty" if dirty else "clean"))
+		draft_state_label.add_theme_color_override("font_color", COLOR_FAIL if dirty and not valid else (COLOR_WARN if dirty else COLOR_PASS))
+	if save_button != null:
+		save_button.disabled = not bool(snapshot.get("can_save", false))
+	if discard_button != null:
+		discard_button.disabled = not dirty
+	if apply_bound_button != null:
+		apply_bound_button.disabled = not bool(snapshot.get("can_apply", false))
+	if switch_dialog != null:
+		switch_dialog.get_ok_button().disabled = not bool(snapshot.get("can_save", false))
+
+
+func _show_switch_dialog() -> void:
+	if switch_dialog == null or _pending_switch_kind.is_empty():
+		return
+	var target_text := _pending_template_id
+	if _pending_switch_kind == SWITCH_BOUND_INSTANCE:
+		target_text = "%s (template %s)" % [_pending_instance_id, _pending_instance_template_id]
+	switch_dialog.dialog_text = "Unsaved Authoring Draft changes.\nSwitch %s to %s?" % [_pending_switch_kind, target_text]
+	_refresh_draft_lifecycle_ui()
+	switch_dialog.popup_centered()
+
+
+func _hide_switch_dialog() -> void:
+	if switch_dialog != null:
+		switch_dialog.hide()
+
+
 func _runtime_bundle() -> Dictionary:
 	return {
 		"template": template_json,
@@ -1849,7 +2225,7 @@ func _normalized_json_text(data: Dictionary) -> String:
 
 func _next_copy_id(source_id: String) -> String:
 	var base_id := "%s_copy" % source_id
-	var ids := DataStore.list_template_ids()
+	var ids := DataStore.list_template_ids(_data_root)
 	if not ids.has(base_id):
 		return base_id
 	var index := 2
@@ -2179,7 +2555,7 @@ func _set_errors(errors: Array) -> Array:
 
 
 func _on_template_selected(index: int) -> void:
-	load_template_id(template_select.get_item_text(index))
+	request_template_switch(template_select.get_item_text(index))
 
 
 func _on_bind_player_pressed() -> void:
@@ -2422,6 +2798,10 @@ func _on_save_pressed() -> void:
 	save_all()
 
 
+func _on_discard_pressed() -> void:
+	discard_current()
+
+
 func _on_reload_pressed() -> void:
 	reload_current()
 
@@ -2432,6 +2812,22 @@ func _on_check_pressed() -> void:
 
 func _on_exact_pressed() -> void:
 	save_reload_exact()
+
+
+func _on_switch_save_confirmed() -> void:
+	var result := resolve_pending_switch("save")
+	if str(result.get("outcome", "")) == "save_failed":
+		call_deferred("_show_switch_dialog")
+
+
+func _on_switch_cancelled() -> void:
+	if not _pending_switch_kind.is_empty():
+		resolve_pending_switch("cancel")
+
+
+func _on_switch_custom_action(action: StringName) -> void:
+	if str(action) == "discard":
+		resolve_pending_switch("discard")
 
 
 func _on_sprite_ref_submitted() -> void:
