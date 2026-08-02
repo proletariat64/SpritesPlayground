@@ -363,13 +363,17 @@ func save_all() -> void:
 	var errors := validate_current()
 	if not errors.is_empty():
 		return
-	var save_errors := DataStore.save_runtime_bundle(_runtime_bundle())
+	var draft_bundle: Dictionary = _authoring_draft.snapshot().get("bundle", {})
+	var draft_template: Dictionary = draft_bundle.get("template", {})
+	var draft_sprite_set: Dictionary = draft_bundle.get("sprite_set", {})
+	var draft_moves: Dictionary = draft_bundle.get("moves", {})
+	var save_errors := DataStore.save_runtime_bundle(draft_bundle)
 	if not save_errors.is_empty():
 		_set_errors(save_errors)
 		return
-	var generation := SpriteFramesGeneratorScript.generate(sprite_set_json, {"moves": moves_json})
+	var generation := SpriteFramesGeneratorScript.generate(draft_sprite_set, {"moves": draft_moves})
 	if bool(generation.get("ok", false)):
-		_set_status("saved %s + SpriteFrames generated" % str(template_json["template_id"]))
+		_set_status("saved %s + SpriteFrames generated" % str(draft_template.get("template_id", "")))
 	else:
 		_set_status("saved JSON; SpriteFrames generation FAIL: %s" % _diagnostic_codes(generation.get("errors", [])))
 
@@ -440,7 +444,13 @@ func save_reload_exact() -> bool:
 
 
 func validate_current() -> Array:
-	var errors := DataStore.validate_runtime_bundle(_runtime_bundle())
+	var synchronized := _sync_authoring_draft_from_legacy_if_needed()
+	var draft_snapshot: Dictionary = _authoring_draft.snapshot()
+	var errors: Array = draft_snapshot.get("diagnostics", []).duplicate(true)
+	if not synchronized and errors.is_empty():
+		errors.append("Authoring Draft rejected legacy edit")
+	if not bool(draft_snapshot.get("can_apply", false)) and errors.is_empty():
+		errors.append("validation blocked: Authoring Draft is invalid")
 	if errors.is_empty():
 		_set_status("validation PASS")
 	else:
@@ -525,76 +535,72 @@ func select_move(move_id: String) -> void:
 
 
 func selected_move_json() -> Dictionary:
-	return moves_json[selected_move]
+	return moves_json.get(selected_move, {}).duplicate(true)
 
 
 func set_move_scalar(field: String, value) -> void:
-	if field == "damage":
-		_sync_authoring_draft_from_legacy_if_needed()
-		_loading_authoring_draft = true
-		var accepted: bool = _authoring_draft.edit_move_scalar(selected_move, field, int(value))
-		_loading_authoring_draft = false
-		_finish_authoring_draft_edit(accepted)
-		return
-	var move := selected_move_json()
-	match field:
-		"move_type":
-			move["move_type"] = str(value)
-		"state_context_override":
-			if str(value).is_empty():
-				move.erase("state_context_override")
-			else:
-				move["state_context_override"] = str(value)
-		"frame_count", "startup_frames", "active_frames", "recovery_frames", "hitstop_frames":
-			move[field] = int(value)
-		"multi_hit":
-			move["multi_hit"] = bool(value)
-	_refresh_fields()
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_move_scalar(selected_move, field, value)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func set_move_rhythm(startup_frames: int, active_frames: int, recovery_frames: int) -> void:
-	var move := selected_move_json()
-	move["startup_frames"] = maxi(0, startup_frames)
-	move["active_frames"] = maxi(1, active_frames)
-	move["recovery_frames"] = maxi(0, recovery_frames)
-	_refresh_fields()
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_move_rhythm(
+		selected_move,
+		startup_frames,
+		active_frames,
+		recovery_frames
+	)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func set_move_active_window(start_frame: int, end_frame: int) -> void:
-	var move := selected_move_json()
-	move["active_window"] = {"start_frame": start_frame, "end_frame": end_frame}
-	_refresh_fields()
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_move_active_window(selected_move, start_frame, end_frame)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func set_first_hitbox(hitbox_id: String, start_frame: int, end_frame: int, rect: Dictionary) -> void:
-	var move := selected_move_json()
-	if move["hitboxes"].is_empty():
-		move["hitboxes"].append({})
-	move["hitboxes"][0] = {
-		"hitbox_id": hitbox_id,
-		"active_window": {"start_frame": start_frame, "end_frame": end_frame},
-		"rect": _rect_json(rect),
-	}
-	_refresh_fields()
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_first_hitbox(
+		selected_move,
+		hitbox_id,
+		start_frame,
+		end_frame,
+		rect.duplicate(true)
+	)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func set_first_attack_hurtbox(hurtbox_id: String, start_frame: int, end_frame: int, rect: Dictionary) -> void:
-	var move := selected_move_json()
-	if not move.has("hurtboxes"):
-		move["hurtboxes"] = []
-	if move["hurtboxes"].is_empty():
-		move["hurtboxes"].append({})
-	move["hurtboxes"][0] = {
-		"hurtbox_id": hurtbox_id,
-		"active_window": {"start_frame": start_frame, "end_frame": end_frame},
-		"rect": _rect_json(rect),
-	}
-	_refresh_fields()
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_first_attack_hurtbox(
+		selected_move,
+		hurtbox_id,
+		start_frame,
+		end_frame,
+		rect.duplicate(true)
+	)
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted)
 
 
 func set_move_events(events: Array) -> void:
-	selected_move_json()["events"] = events.duplicate(true)
-	_refresh_fields()
+	_sync_authoring_draft_from_legacy_if_needed()
+	_loading_authoring_draft = true
+	var accepted: bool = _authoring_draft.edit_move_events(selected_move, events.duplicate(true))
+	_loading_authoring_draft = false
+	_finish_authoring_draft_edit(accepted, false, "events applied")
 
 
 func insert_empty_frame_slot(sequence_id: String, frame_index: int, shift_timing: bool = false) -> bool:
@@ -1864,9 +1870,9 @@ func _refresh_runtime_label() -> void:
 
 
 func _on_authoring_draft_valid_snapshot_changed() -> void:
-	_sync_legacy_draft_aliases()
 	if _loading_authoring_draft:
 		return
+	_sync_legacy_draft_aliases()
 	_refresh_options()
 	_refresh_fields()
 
@@ -1895,15 +1901,17 @@ func _finish_authoring_draft_edit(accepted: bool, refresh_options: bool = false,
 		_set_status(success_status)
 
 
-func _sync_authoring_draft_from_legacy_if_needed() -> void:
+func _sync_authoring_draft_from_legacy_if_needed() -> bool:
 	var legacy_bundle := _runtime_bundle()
 	var snapshot: Dictionary = _authoring_draft.snapshot()
 	if snapshot.get("bundle", {}) == legacy_bundle:
-		return
+		return true
 	_loading_authoring_draft = true
-	_authoring_draft.import_legacy_bundle(legacy_bundle)
+	var accepted: bool = _authoring_draft.import_legacy_bundle(legacy_bundle)
 	_loading_authoring_draft = false
-	_sync_legacy_draft_aliases()
+	if not accepted:
+		_sync_legacy_draft_aliases()
+	return accepted
 
 
 func _runtime_bundle() -> Dictionary:
@@ -2591,7 +2599,6 @@ func _on_hurtbox_selected(index: int) -> void:
 
 
 func _on_box_fields_submitted() -> void:
-	var changed := false
 	if hurtbox_select != null and not hurt_inputs.is_empty():
 		if not _validate_number_inputs(hurt_inputs, ["x", "y", "w", "h"]):
 			return
@@ -2611,6 +2618,7 @@ func _on_box_fields_submitted() -> void:
 			{"x": _number_from(foot_inputs, "radius_x"), "y": _number_from(foot_inputs, "radius_y")}
 		)
 		return
+	var next_hitbox := {}
 	if hitbox_id_input != null and not hitbox_inputs.is_empty():
 		var hitbox_id := hitbox_id_input.text.strip_edges()
 		var hitbox_id_valid := _is_hitbox_id_valid(hitbox_id)
@@ -2620,23 +2628,18 @@ func _on_box_fields_submitted() -> void:
 			return
 		if not _validate_number_inputs(hitbox_inputs, ["start_frame", "end_frame", "x", "y", "w", "h"]):
 			return
-		var move := selected_move_json()
-		if move["hitboxes"].is_empty():
-			move["hitboxes"].append({})
-		move["hitboxes"][0] = {
+		next_hitbox = {
 			"hitbox_id": hitbox_id,
-			"active_window": {
-				"start_frame": int(_number_from(hitbox_inputs, "start_frame")),
-				"end_frame": int(_number_from(hitbox_inputs, "end_frame")),
-			},
-			"rect": _rect_json({
+			"start_frame": int(_number_from(hitbox_inputs, "start_frame")),
+			"end_frame": int(_number_from(hitbox_inputs, "end_frame")),
+			"rect": {
 				"x": _number_from(hitbox_inputs, "x"),
 				"y": _number_from(hitbox_inputs, "y"),
 				"w": _number_from(hitbox_inputs, "w"),
 				"h": _number_from(hitbox_inputs, "h"),
-			}),
+			},
 		}
-		changed = true
+	var next_attack_hurtbox := {}
 	if attack_hurtbox_id_input != null and not attack_hurtbox_inputs.is_empty():
 		var hurtbox_id := attack_hurtbox_id_input.text.strip_edges()
 		var hurtbox_id_valid := hurtbox_id.begins_with("hurt_")
@@ -2646,27 +2649,31 @@ func _on_box_fields_submitted() -> void:
 			return
 		if not _validate_number_inputs(attack_hurtbox_inputs, ["start_frame", "end_frame", "x", "y", "w", "h"]):
 			return
-		var move := selected_move_json()
-		if not move.has("hurtboxes"):
-			move["hurtboxes"] = []
-		if move["hurtboxes"].is_empty():
-			move["hurtboxes"].append({})
-		move["hurtboxes"][0] = {
+		next_attack_hurtbox = {
 			"hurtbox_id": hurtbox_id,
-			"active_window": {
-				"start_frame": int(_number_from(attack_hurtbox_inputs, "start_frame")),
-				"end_frame": int(_number_from(attack_hurtbox_inputs, "end_frame")),
-			},
-			"rect": _rect_json({
+			"start_frame": int(_number_from(attack_hurtbox_inputs, "start_frame")),
+			"end_frame": int(_number_from(attack_hurtbox_inputs, "end_frame")),
+			"rect": {
 				"x": _number_from(attack_hurtbox_inputs, "x"),
 				"y": _number_from(attack_hurtbox_inputs, "y"),
 				"w": _number_from(attack_hurtbox_inputs, "w"),
 				"h": _number_from(attack_hurtbox_inputs, "h"),
-			}),
+			},
 		}
-		changed = true
-	if changed:
-		_refresh_fields()
+	if not next_hitbox.is_empty():
+		set_first_hitbox(
+			str(next_hitbox["hitbox_id"]),
+			int(next_hitbox["start_frame"]),
+			int(next_hitbox["end_frame"]),
+			next_hitbox["rect"]
+		)
+	if not next_attack_hurtbox.is_empty():
+		set_first_attack_hurtbox(
+			str(next_attack_hurtbox["hurtbox_id"]),
+			int(next_attack_hurtbox["start_frame"]),
+			int(next_attack_hurtbox["end_frame"]),
+			next_attack_hurtbox["rect"]
+		)
 
 
 func _on_events_apply_pressed() -> void:
@@ -2675,9 +2682,6 @@ func _on_events_apply_pressed() -> void:
 		_set_status("events JSON invalid")
 		return
 	set_move_events(json.data)
-	var errors := validate_current()
-	if errors.is_empty():
-		_set_status("events applied")
 
 
 func _on_runtime_start_pressed() -> void:

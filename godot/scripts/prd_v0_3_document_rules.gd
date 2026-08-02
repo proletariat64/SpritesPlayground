@@ -114,6 +114,11 @@ static func _validate_move(move_id: String, move: Dictionary) -> Array:
 		errors.append("move %s move_type is unsupported" % move_id)
 	if move.has("state_context_override") and not ["idle", "walk", "dash", "jump", "hurt", "dead"].has(str(move["state_context_override"])):
 		errors.append("move %s state_context_override is unsupported" % move_id)
+	if int(move.get("damage", 0)) < 0:
+		errors.append("move %s damage must be >= 0" % move_id)
+	var hitstop_frames := int(move.get("hitstop_frames", 0))
+	if hitstop_frames < 0 or hitstop_frames > 60:
+		errors.append("move %s hitstop_frames must be 0..60" % move_id)
 	var frame_count := int(move.get("frame_count", 0))
 	if frame_count < 1:
 		errors.append("move %s frame_count must be >= 1" % move_id)
@@ -250,6 +255,10 @@ static func _validate_frame_window(move_id: String, label: String, window: Dicti
 		return errors
 	var start_frame := int(window["start_frame"])
 	var end_frame := int(window["end_frame"])
+	if start_frame < 0:
+		errors.append("move %s %s start_frame must be >= 0" % [move_id, label])
+	if end_frame < 0:
+		errors.append("move %s %s end_frame must be >= 0" % [move_id, label])
 	if start_frame > end_frame:
 		errors.append("move %s %s start_frame must be <= end_frame" % [move_id, label])
 	if end_frame >= frame_count:

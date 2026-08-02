@@ -195,7 +195,7 @@ func _run_panel_tracer(persisted_move_before: String) -> void:
 	if has_draft_status:
 		_expect(
 			bool(panel.draft_status().get("dirty", false)),
-			"legacy compatibility edit does not clear the prior CharacterTemplate Draft dirty state"
+			"Panel hitbox edit is owned by the Authoring Draft and remains dirty"
 		)
 	panel.set_move_scalar("damage", EDITED_DAMAGE)
 	if has_draft_status:
@@ -225,6 +225,50 @@ func _run_panel_tracer(persisted_move_before: String) -> void:
 		"Panel edit does not save basic_punch"
 	)
 
+	panel.current_nav = "move:%s" % MOVE_ID
+	panel.current_move_section = "timing"
+	panel.select_move(MOVE_ID)
+	panel.set_preview_frame(ACTIVE_FRAME)
+	var trusted_move_preview: Dictionary = panel.preview_observation().duplicate(true)
+	var trusted_preview_frame_count: int = panel.preview_frame_count()
+	panel.set_move_scalar("frame_count", 5)
+	var invalid_move_status: Dictionary = panel.draft_status()
+	_expect(
+		int(panel.selected_move_json().get("frame_count", -1)) == 5,
+		"temporarily invalid Move remains visible and editable through the Panel public seam"
+	)
+	_expect(
+		panel.frame_count_input != null and panel.frame_count_input.text == "5",
+		"Panel renders the current invalid frame count instead of the Preview snapshot value"
+	)
+	_expect(not invalid_move_status.get("diagnostics", []).is_empty(), "Panel exposes invalid Move timing diagnostics")
+	_expect(not bool(invalid_move_status.get("can_save", true)), "Panel blocks Save for an invalid Move Draft")
+	_expect(not bool(invalid_move_status.get("can_apply", true)), "Panel blocks Apply for an invalid Move Draft")
+	_expect(panel.preview_frame_count() == trusted_preview_frame_count, "invalid Move retains the last valid Preview frame count")
+	_expect(panel.preview_observation() == trusted_move_preview, "invalid Move retains the last valid real Preview observation")
+
+	panel.save_all()
+	_expect(
+		FileAccess.get_file_as_string(DataStore.move_path(MOVE_ID)) == persisted_move_before,
+		"invalid Move Save leaves the persisted JSON bytes unchanged"
+	)
+	_expect(not panel.apply_to_bound_instance(), "invalid Move Draft cannot Apply")
+	var invalid_apply_damage := _run_live_move_to_first_hitbox(playable_sprite, playground)
+	_expect(invalid_apply_damage == ORIGINAL_DAMAGE, "invalid Move Apply leaves Playground damage unchanged")
+	_expect(is_equal_approx(_active_hitbox_width(playable_sprite), 24.0), "invalid Move Apply leaves Playground hitbox geometry unchanged")
+
+	panel.set_move_scalar("frame_count", 8)
+	var repaired_move_status: Dictionary = panel.draft_status()
+	refreshed = panel.preview_observation()
+	_expect(repaired_move_status.get("diagnostics", []).is_empty(), "Panel can repair a temporarily invalid Move")
+	_expect(bool(repaired_move_status.get("can_save", false)), "repaired Move Draft can Save")
+	_expect(bool(repaired_move_status.get("can_apply", false)), "repaired Move Draft can Apply")
+	_expect(
+		int(refreshed.get("frame", -1)) == ACTIVE_FRAME
+		and _observation_hitbox_damage(refreshed) == EDITED_DAMAGE,
+		"repair advances the real Preview to the latest valid Move Draft"
+	)
+
 	_expect(panel.apply_to_bound_instance(), "explicit Apply succeeds for the valid Draft")
 	var applied_damage := _run_live_move_to_first_hitbox(playable_sprite, playground)
 	_expect(applied_damage == EDITED_DAMAGE, "explicit Apply reaches Playground through the real Move execution path")
@@ -238,13 +282,61 @@ func _run_panel_tracer(persisted_move_before: String) -> void:
 	)
 	_expect(
 		is_equal_approx(_active_hitbox_width(playable_sprite), LEGACY_HITBOX_WIDTH),
-		"legacy hitbox edit is explicitly re-imported before the Draft damage edit and survives Apply"
+		"Draft-owned hitbox edit survives explicit Apply through the real Move path"
 	)
 	if has_draft_status:
 		_expect(bool(panel.draft_status().get("dirty", false)), "Apply does not clear the unsaved Draft dirty state")
 	_expect(
 		FileAccess.get_file_as_string(DataStore.move_path(MOVE_ID)) == persisted_move_before,
 		"Apply is not Save and leaves basic_punch JSON unchanged"
+	)
+
+	var mapping: Dictionary = panel.sprite_set_json.get("required_moves_mapping", {})
+	var clips: Dictionary = panel.sprite_set_json.get("animation_clips", {})
+	var clip_id := str(mapping.get(MOVE_ID, ""))
+	var sequence_ref := str(clips.get(clip_id, {}).get("frame_sequence_ref", ""))
+	var held_sequences: Dictionary = panel.sprite_set_json.get("frame_sequences", {})
+	var held_sequence: Array = held_sequences.get(sequence_ref, [])
+	var sequence_size_before := held_sequence.size()
+	var frame_count_before := int(panel.selected_move_json().get("frame_count", 0))
+	_expect(not sequence_ref.is_empty() and sequence_size_before > 0, "remaining SpriteSet bridge exposes the selected Move frame sequence")
+	_expect(
+		panel.insert_empty_frame_slot(sequence_ref, sequence_size_before, true),
+		"public frame-slot edit accepts an explicit timing shift through the remaining legacy bridge"
+	)
+	_expect(
+		is_same(held_sequence, panel.sprite_set_json.get("frame_sequences", {}).get(sequence_ref, [])),
+		"accepted legacy import preserves a held nested frame-sequence alias"
+	)
+	_expect(
+		held_sequence.size() == sequence_size_before + 1
+		and int(panel.selected_move_json().get("frame_count", 0)) == frame_count_before + 1,
+		"accepted legacy frame-slot import keeps sequence and Move timing changes coherent"
+	)
+
+	var accepted_preview: Dictionary = panel.preview_observation().duplicate(true)
+	var accepted_preview_frame_count: int = panel.preview_frame_count()
+	panel.sprite_set_json.clear()
+	var rejected_legacy_errors: Array = panel.validate_current()
+	_expect(
+		not rejected_legacy_errors.is_empty()
+		and str(rejected_legacy_errors[0]).contains("Authoring Draft rejected legacy edit"),
+		"public validation surfaces a structurally rejected legacy import"
+	)
+	_expect(
+		panel.status_label != null and str(panel.status_label.text).contains("Authoring Draft rejected legacy edit"),
+		"Panel renders the rejected legacy import failure"
+	)
+	_expect(
+		str(panel.sprite_set_json.get("sprite_set_id", "")) == str(panel.template_json.get("sprite_set_ref", ""))
+		and panel.sprite_set_json.get("frame_sequences", {}).get(sequence_ref, []).size() == sequence_size_before + 1
+		and int(panel.selected_move_json().get("frame_count", 0)) == frame_count_before + 1,
+		"rejected legacy import rolls Panel aliases back to the accepted Draft snapshot"
+	)
+	_expect(
+		panel.preview_frame_count() == accepted_preview_frame_count
+		and panel.preview_observation() == accepted_preview,
+		"rejected legacy import does not advance the latest valid real Preview"
 	)
 
 	panel.queue_free()

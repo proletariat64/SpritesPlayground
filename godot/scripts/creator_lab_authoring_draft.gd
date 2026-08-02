@@ -30,14 +30,141 @@ func load_bundle(source: Dictionary) -> Array:
 
 
 func edit_move_scalar(move_id: String, field: String, value) -> bool:
-	if not _loaded or field != "damage" or typeof(value) != TYPE_INT:
-		return false
-	var moves: Dictionary = _bundle.get("moves", {})
-	if not moves.has(move_id) or typeof(moves[move_id]) != TYPE_DICTIONARY:
+	if not _has_editable_move(move_id):
 		return false
 
 	var candidate := _bundle.duplicate(true)
-	candidate["moves"][move_id]["damage"] = value
+	var move: Dictionary = candidate["moves"][move_id]
+	match field:
+		"move_type":
+			if typeof(value) != TYPE_STRING:
+				return false
+			move[field] = value
+		"state_context_override":
+			if typeof(value) != TYPE_STRING:
+				return false
+			if str(value).is_empty():
+				move.erase(field)
+			else:
+				move[field] = value
+		"frame_count", "startup_frames", "active_frames", "recovery_frames", "damage", "hitstop_frames":
+			if typeof(value) != TYPE_INT:
+				return false
+			move[field] = value
+		"multi_hit":
+			if typeof(value) != TYPE_BOOL:
+				return false
+			move[field] = value
+		_:
+			return false
+	return _commit_candidate(candidate)
+
+
+func edit_move_rhythm(move_id: String, startup_frames, active_frames, recovery_frames) -> bool:
+	if (
+		not _has_editable_move(move_id)
+		or typeof(startup_frames) != TYPE_INT
+		or typeof(active_frames) != TYPE_INT
+		or typeof(recovery_frames) != TYPE_INT
+	):
+		return false
+	var candidate := _bundle.duplicate(true)
+	var move: Dictionary = candidate["moves"][move_id]
+	move["startup_frames"] = startup_frames
+	move["active_frames"] = active_frames
+	move["recovery_frames"] = recovery_frames
+	return _commit_candidate(candidate)
+
+
+func edit_move_active_window(move_id: String, start_frame, end_frame) -> bool:
+	if (
+		not _has_editable_move(move_id)
+		or typeof(start_frame) != TYPE_INT
+		or typeof(end_frame) != TYPE_INT
+	):
+		return false
+	var candidate := _bundle.duplicate(true)
+	candidate["moves"][move_id]["active_window"] = {
+		"start_frame": start_frame,
+		"end_frame": end_frame,
+	}
+	return _commit_candidate(candidate)
+
+
+func edit_first_hitbox(
+	move_id: String,
+	hitbox_id,
+	start_frame,
+	end_frame,
+	rect
+) -> bool:
+	if (
+		not _has_editable_move(move_id)
+		or typeof(hitbox_id) != TYPE_STRING
+		or not _is_hitbox_id(str(hitbox_id))
+		or typeof(start_frame) != TYPE_INT
+		or typeof(end_frame) != TYPE_INT
+		or not _has_exact_numeric_fields(rect, ["x", "y", "w", "h"])
+	):
+		return false
+	var hitboxes = _bundle["moves"][move_id].get("hitboxes", null)
+	if typeof(hitboxes) != TYPE_ARRAY:
+		return false
+	var candidate := _bundle.duplicate(true)
+	var candidate_hitboxes: Array = candidate["moves"][move_id]["hitboxes"]
+	var next_hitbox := {
+		"hitbox_id": hitbox_id,
+		"active_window": {"start_frame": start_frame, "end_frame": end_frame},
+		"rect": rect.duplicate(true),
+	}
+	if candidate_hitboxes.is_empty():
+		candidate_hitboxes.append(next_hitbox)
+	else:
+		candidate_hitboxes[0] = next_hitbox
+	return _commit_candidate(candidate)
+
+
+func edit_first_attack_hurtbox(
+	move_id: String,
+	hurtbox_id,
+	start_frame,
+	end_frame,
+	rect
+) -> bool:
+	if (
+		not _has_editable_move(move_id)
+		or typeof(hurtbox_id) != TYPE_STRING
+		or not str(hurtbox_id).begins_with("hurt_")
+		or typeof(start_frame) != TYPE_INT
+		or typeof(end_frame) != TYPE_INT
+		or not _has_exact_numeric_fields(rect, ["x", "y", "w", "h"])
+	):
+		return false
+	var current_move: Dictionary = _bundle["moves"][move_id]
+	if current_move.has("hurtboxes") and typeof(current_move["hurtboxes"]) != TYPE_ARRAY:
+		return false
+	var candidate := _bundle.duplicate(true)
+	var move: Dictionary = candidate["moves"][move_id]
+	if not move.has("hurtboxes"):
+		move["hurtboxes"] = []
+	var hurtboxes: Array = move["hurtboxes"]
+	var next_hurtbox := {
+		"hurtbox_id": hurtbox_id,
+		"active_window": {"start_frame": start_frame, "end_frame": end_frame},
+		"rect": rect.duplicate(true),
+	}
+	if hurtboxes.is_empty():
+		hurtboxes.append(next_hurtbox)
+	else:
+		hurtboxes[0] = next_hurtbox
+	return _commit_candidate(candidate)
+
+
+func edit_move_events(move_id: String, events) -> bool:
+	if not _has_editable_move(move_id) or not _is_safe_event_list(events):
+		return false
+	var candidate := _bundle.duplicate(true)
+	candidate["moves"][move_id]["events"] = events.duplicate(true)
 	return _commit_candidate(candidate)
 
 
@@ -195,6 +322,13 @@ func _has_bundle_documents(value) -> bool:
 	)
 
 
+func _has_editable_move(move_id: String) -> bool:
+	if not _loaded or typeof(_bundle.get("moves", null)) != TYPE_DICTIONARY:
+		return false
+	var moves: Dictionary = _bundle["moves"]
+	return moves.has(move_id) and typeof(moves[move_id]) == TYPE_DICTIONARY
+
+
 func _is_sprite_set_document(value) -> bool:
 	return (
 		typeof(value) == TYPE_DICTIONARY
@@ -204,6 +338,21 @@ func _is_sprite_set_document(value) -> bool:
 
 func _is_move_document(value) -> bool:
 	return typeof(value) == TYPE_DICTIONARY
+
+
+func _is_safe_event_list(value) -> bool:
+	if typeof(value) != TYPE_ARRAY:
+		return false
+	for event in value:
+		if typeof(event) != TYPE_DICTIONARY:
+			return false
+		if event.has("frame") and not _is_integral_number(event["frame"]):
+			return false
+		if event.has("event_type") and typeof(event["event_type"]) != TYPE_STRING:
+			return false
+		if event.has("payload") and typeof(event["payload"]) != TYPE_DICTIONARY:
+			return false
+	return true
 
 
 func _has_exact_numeric_fields(value, fields: Array) -> bool:
@@ -221,9 +370,19 @@ func _is_finite_number(value) -> bool:
 	return not is_nan(float(value)) and not is_inf(float(value))
 
 
+func _is_integral_number(value) -> bool:
+	return _is_finite_number(value) and is_equal_approx(float(value), roundf(float(value)))
+
+
 func _is_snake_id(value: String) -> bool:
 	if value.is_empty():
 		return false
 	var expression := RegEx.new()
 	expression.compile("^[a-z][a-z0-9_]*$")
+	return expression.search(value) != null
+
+
+func _is_hitbox_id(value: String) -> bool:
+	var expression := RegEx.new()
+	expression.compile("^hit_[a-z0-9_]+$")
 	return expression.search(value) != null
