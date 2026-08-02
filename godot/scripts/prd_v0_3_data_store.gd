@@ -2,7 +2,7 @@ extends RefCounted
 class_name PrdV03DataStore
 
 const DocumentRules := preload("res://godot/scripts/prd_v0_3_document_rules.gd")
-const DEFAULT_DATA_ROOT := "res://data/v0_3"
+const DEFAULT_DATA_ROOT := "res://data/v0_6"
 const TEMPLATE_DIR := DEFAULT_DATA_ROOT + "/templates"
 const MOVE_DIR := DEFAULT_DATA_ROOT + "/moves"
 const SPRITE_SET_DIR := DEFAULT_DATA_ROOT + "/sprite_sets"

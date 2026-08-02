@@ -51,8 +51,8 @@ Check whether any target-owned paths already exist. Derive move ownership from t
 
 ```bash
 for path in \
-  "data/v0_3/templates/$CHARACTER_ID.json" \
-  "data/v0_3/sprite_sets/$CHARACTER_ID.json" \
+  "data/v0_6/templates/$CHARACTER_ID.json" \
+  "data/v0_6/sprite_sets/$CHARACTER_ID.json" \
   "data/imports/$CHARACTER_ID" \
   "godot/assets/frames/$CHARACTER_ID" \
   "godot/resources/sprite_frames/$CHARACTER_ID.tres"; do
@@ -62,10 +62,10 @@ python3 - "$CHARACTER_ID" <<'PY'
 import json, sys
 from pathlib import Path
 cid = sys.argv[1]
-template = Path("data/v0_3/templates") / f"{cid}.json"
+template = Path("data/v0_6/templates") / f"{cid}.json"
 if template.is_file():
     for move_id in json.loads(template.read_text(encoding="utf-8")).get("equipped_moves", []):
-        path = Path("data/v0_3/moves") / f"{move_id}.json"
+        path = Path("data/v0_6/moves") / f"{move_id}.json"
         print(path)
 PY
 ```
@@ -105,9 +105,9 @@ Do not pass `--skip-spriteframes` for the final run. The expected generated area
 
 - `godot/assets/frames/<character_id>/`
 - `data/imports/<character_id>/` including `eden_package.json`, behavior manifests, previews, and `import_report.json`
-- `data/v0_3/templates/<character_id>.json`
-- `data/v0_3/sprite_sets/<character_id>.json`
-- `data/v0_3/moves/<character_id>_*.json`
+- `data/v0_6/templates/<character_id>.json`
+- `data/v0_6/sprite_sets/<character_id>.json`
+- `data/v0_6/moves/<character_id>_*.json`
 - `godot/resources/sprite_frames/<character_id>.tres`
 
 The Eden package is read-only source. Never move, rename, recolor, or edit its files.

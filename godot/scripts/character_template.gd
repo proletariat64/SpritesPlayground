@@ -1,7 +1,6 @@
 extends Resource
 class_name CharacterTemplate
 
-const CreatorDataStoreScript := preload("res://godot/scripts/creator_data_store.gd")
 const PrdV03DataStoreScript := preload("res://godot/scripts/prd_v0_3_data_store.gd")
 
 
@@ -10,11 +9,6 @@ static func combat_gray_s64() -> Dictionary:
 
 
 static func load_template(template_id: String) -> Dictionary:
-	if FileAccess.file_exists(CreatorDataStoreScript.template_path(template_id)):
-		var template_json := CreatorDataStoreScript.load_template_json(template_id)
-		if not template_json.is_empty():
-			return CreatorDataStoreScript.template_json_to_runtime(template_json)
-	# Imported characters (e.g. Eden imports) persist only as v0.3 bundles.
 	return _load_v0_3_template(template_id)
 
 
@@ -22,7 +16,7 @@ static func _load_v0_3_template(template_id: String) -> Dictionary:
 	var bundle := PrdV03DataStoreScript.load_runtime_bundle(template_id)
 	var template: Dictionary = bundle.get("template", {})
 	if template.is_empty():
-		push_error("Missing template in legacy and v0.3 stores: %s" % template_id)
+		push_error("Missing template in active authored-data store: %s" % template_id)
 		return {}
 	var move_templates := {}
 	for move_id in template.get("equipped_moves", []):

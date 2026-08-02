@@ -136,8 +136,8 @@ def check_common_outputs(root: Path, character_id: str, report: dict[str, Any]) 
         report.get("outputs"), "report outputs must be an object"
     )
     expected = {
-        "template": f"data/v0_3/templates/{character_id}.json",
-        "sprite_set": f"data/v0_3/sprite_sets/{character_id}.json",
+        "template": f"data/v0_6/templates/{character_id}.json",
+        "sprite_set": f"data/v0_6/sprite_sets/{character_id}.json",
         "frames": f"godot/assets/frames/{character_id}",
         "provenance": f"data/imports/{character_id}",
     }
@@ -156,7 +156,7 @@ def check_common_outputs(root: Path, character_id: str, report: dict[str, Any]) 
     mapping = sprite_set.get("required_moves_mapping", {})
     for move_id in moves:
         require(str(move_id).startswith(f"{character_id}_"), f"move is not character scoped: {move_id}")
-        move_path = root / "data/v0_3/moves" / f"{move_id}.json"
+        move_path = root / "data/v0_6/moves" / f"{move_id}.json"
         require(move_path.is_file(), f"missing equipped move: {move_path}")
         require(read_json(move_path).get("move_id") == move_id, f"move identity mismatch: {move_id}")
         require(move_id in mapping, f"missing sprite-set mapping: {move_id}")

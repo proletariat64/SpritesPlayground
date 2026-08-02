@@ -53,7 +53,11 @@ func _run() -> void:
 	fallback.is_test_dummy = true
 	root.add_child(fallback)
 	await process_frame
-	errors.append_array(_expect(not bool(fallback.has_spriteframes_playback()), "missing default SpriteFrames uses fallback"))
+	var fallback_template: Dictionary = fallback.template.duplicate(true)
+	fallback_template["sprite_set_id"] = "missing_v0_6_sprite_set"
+	fallback.apply_runtime_template(fallback_template)
+	await process_frame
+	errors.append_array(_expect(not bool(fallback.has_spriteframes_playback()), "missing SpriteFrames uses fallback"))
 
 	if errors.is_empty():
 		print("spriteframes_runtime_smoke=PASS")

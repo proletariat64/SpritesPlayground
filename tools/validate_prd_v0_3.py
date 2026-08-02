@@ -15,7 +15,7 @@ from referencing import Registry, Resource
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = ROOT / "data" / "schemas" / "v0_3"
-DATA_DIR = ROOT / "data" / "v0_3"
+DATA_DIR = ROOT / "data" / "v0_6"
 
 FORBIDDEN_KEYS = {
     "action",

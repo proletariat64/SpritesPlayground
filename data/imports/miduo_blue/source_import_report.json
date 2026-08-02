@@ -408,8 +408,8 @@
     "frames": "godot/assets/frames/miduo",
     "provenance": "data/imports/miduo",
     "report": "data/imports/miduo/import_report.json",
-    "sprite_set": "data/v0_3/sprite_sets/miduo.json",
-    "template": "data/v0_3/templates/miduo.json"
+    "sprite_set": "data/v0_6/sprite_sets/miduo.json",
+    "template": "data/v0_6/templates/miduo.json"
   },
   "schema_version": 1,
   "source": {

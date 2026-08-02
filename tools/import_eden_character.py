@@ -190,8 +190,8 @@ def import_character(
 
     imported_root = project_root / "godot/assets/frames" / character_id
     provenance_root = project_root / "data/imports" / character_id
-    template_path = project_root / "data/v0_3/templates" / f"{character_id}.json"
-    sprite_set_path = project_root / "data/v0_3/sprite_sets" / f"{character_id}.json"
+    template_path = project_root / "data/v0_6/templates" / f"{character_id}.json"
+    sprite_set_path = project_root / "data/v0_6/sprite_sets" / f"{character_id}.json"
     report_path = provenance_root / "import_report.json"
 
     if imported_root.exists():
@@ -204,7 +204,7 @@ def import_character(
 
     # Character-scoped move cleanup: remove stale outputs from earlier imports of
     # this character id without touching moves owned by other characters.
-    moves_dir = project_root / "data/v0_3/moves"
+    moves_dir = project_root / "data/v0_6/moves"
     if moves_dir.is_dir():
         for stale in moves_dir.glob(f"{character_id}_*.json"):
             stale.unlink()
@@ -216,7 +216,7 @@ def import_character(
         equipped_actions,
     )
     # Move ids are character-scoped so imported data can never overwrite moves
-    # owned by other characters sharing data/v0_3/moves.
+        # owned by other characters sharing data/v0_6/moves.
     move_ids = {action_id: f"{character_id}_{action_id}" for action_id in equipped_actions}
     moves = {
         move_ids[action_id]: _build_move(
@@ -230,7 +230,7 @@ def import_character(
     _write_json(template_path, template)
     _write_json(sprite_set_path, sprite_set)
     for move_id, move in moves.items():
-        _write_json(project_root / "data/v0_3/moves" / f"{move_id}.json", move)
+        _write_json(project_root / "data/v0_6/moves" / f"{move_id}.json", move)
 
     imported_rows = []
     for record in records:
@@ -324,16 +324,16 @@ def recolor_character(
         raise ImportFailure("palette mapping requires a stable mapping_id")
 
     source_frames = project_root / "godot/assets/frames" / source_id
-    source_template_path = project_root / "data/v0_3/templates" / f"{source_id}.json"
-    source_sprite_set_path = project_root / "data/v0_3/sprite_sets" / f"{source_id}.json"
+    source_template_path = project_root / "data/v0_6/templates" / f"{source_id}.json"
+    source_sprite_set_path = project_root / "data/v0_6/sprite_sets" / f"{source_id}.json"
     source_report_path = project_root / "data/imports" / source_id / "import_report.json"
     for required in (source_frames, source_template_path, source_sprite_set_path, source_report_path):
         if not required.exists():
             raise ImportFailure(f"missing imported source character input: {required}")
 
     target_frames = project_root / "godot/assets/frames" / character_id
-    target_template_path = project_root / "data/v0_3/templates" / f"{character_id}.json"
-    target_sprite_set_path = project_root / "data/v0_3/sprite_sets" / f"{character_id}.json"
+    target_template_path = project_root / "data/v0_6/templates" / f"{character_id}.json"
+    target_sprite_set_path = project_root / "data/v0_6/sprite_sets" / f"{character_id}.json"
     provenance_root = project_root / "data/imports" / character_id
     report_path = provenance_root / "recolor_report.json"
     palette_path = provenance_root / "palette_mapping.json"
@@ -397,7 +397,7 @@ def recolor_character(
         for move_id, clip_id in source_mapping.items()
     }
 
-    moves_dir = project_root / "data/v0_3/moves"
+    moves_dir = project_root / "data/v0_6/moves"
     for stale in moves_dir.glob(f"{character_id}_*.json"):
         stale.unlink()
     for source_move_id, target_move_id in zip(source_moves, target_moves):

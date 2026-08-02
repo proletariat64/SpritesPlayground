@@ -730,6 +730,7 @@ Current verification commands:
 
 ```bash
 python3 tools/validate_prd_v0_3.py
+godot --headless --path . --script tools/v0_6_data_root_smoke.gd
 godot --headless --path . --script tools/prd_v0_3_runtime_smoke.gd
 godot --headless --path . --script tools/live_animationplayer_timing_smoke.gd
 godot --headless --path . --script tools/creator_lab_v0_3_smoke.gd
@@ -745,9 +746,9 @@ godot --headless --path . --script tools/spriteframes_runtime_smoke.gd
 Current data roots:
 
 ```text
-data/v0_3/templates/*.json
-data/v0_3/moves/*.json
-data/v0_3/sprite_sets/*.json
+data/v0_6/templates/*.json
+data/v0_6/moves/*.json
+data/v0_6/sprite_sets/*.json
 data/schemas/v0_3/*.schema.json
 godot/resources/sprite_frames/*.tres
 ```
