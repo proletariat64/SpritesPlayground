@@ -393,14 +393,14 @@ func _run_preview_smoke(panel: PanelContainer) -> Array:
 	panel.sprite_set_json["frame_sequences"][mismatch_sequence_ref] = mismatch_original_sequence
 	panel.set_move_scalar("frame_count", mismatch_original_frame_count)
 	panel.preview_reset()
+	var before_play: Dictionary = panel.preview_observation()
 	panel.preview_play()
-	panel._process(0.2)
-	errors.append_array(_expect(panel.preview_frame > 0, "preview play advances multi-frame action"))
+	errors.append_array(_expect(panel.preview_playing, "preview play activates real advancement"))
 	panel.preview_pause()
-	var paused_frame: int = panel.preview_frame
-	panel._process(0.4)
-	errors.append_array(_expect(panel.preview_frame == paused_frame, "preview pause freezes frame"))
-	errors.append_array(_expect(int(panel.action_preview_control.frame_index) == int(panel.floating_preview_control.frame_index), "embedded and floating preview share selected frame"))
+	errors.append_array(_expect(not panel.preview_playing, "preview pause stops real advancement"))
+	errors.append_array(_expect(panel.preview_observation() == before_play, "preview pause preserves the real sprite observation"))
+	errors.append_array(_expect(panel.action_preview_control.real_sprite() == panel.floating_preview_control.real_sprite(), "embedded and floating preview share one real sprite"))
+	errors.append_array(_expect(panel.action_preview_control.observation() == panel.floating_preview_control.observation(), "embedded and floating preview share one real observation"))
 	panel.preview_reset()
 	errors.append_array(_expect(panel.preview_frame == 0, "preview reset"))
 	panel.set_preview_speed(0.5)
@@ -415,19 +415,20 @@ func _run_preview_smoke(panel: PanelContainer) -> Array:
 	panel._on_preview_hit_toggled(true)
 	panel._on_preview_foot_toggled(true)
 	panel.set_first_hitbox("hit_fist_1", 2, 6, {"x": 14, "y": -46, "w": 26, "h": 16})
-	var preview_moves: Dictionary = panel.action_preview_control.get("moves")
-	var floating_preview_moves: Dictionary = panel.floating_preview_control.get("moves")
-	errors.append_array(_expect(int(preview_moves["basic_punch"]["hitboxes"][0]["rect"]["w"]) == 26, "preview updates hitbox edit"))
-	errors.append_array(_expect(int(floating_preview_moves["basic_punch"]["hitboxes"][0]["rect"]["w"]) == 26, "floating preview updates hitbox edit"))
+	panel.set_preview_frame(2)
+	var edited_hitbox := _box_by_id(panel.preview_observation().get("hitboxes", []), "hitbox_id", "hit_fist_1")
+	errors.append_array(_expect(not edited_hitbox.is_empty(), "real preview activates the edited hitbox"))
+	errors.append_array(_expect(edited_hitbox.get("rect", Rect2()).size == Vector2(26, 16), "real preview updates hitbox edit"))
+	errors.append_array(_expect(panel.floating_preview_control.observation() == panel.preview_observation(), "floating preview observes the edited real hitbox"))
 	errors.append_array(_expect(str(panel.current_nav) == "action_preview", "hitbox edit keeps preview surface visible"))
 	panel.set_hurtbox_rect("hurt_head", {"x": -9, "y": -62, "w": 26, "h": 20})
-	var preview_template: Dictionary = panel.action_preview_control.get("template")
-	errors.append_array(_expect(float(preview_template["hurtboxes"]["hurt_head"]["w"]) == 26.0, "preview updates hurtbox edit"))
+	var edited_hurtbox := _box_by_id(panel.preview_observation().get("hurtboxes", []), "hurtbox_id", "hurt_head")
+	errors.append_array(_expect(edited_hurtbox.get("rect", Rect2()).size == Vector2(26, 20), "real preview updates hurtbox edit"))
 	panel.set_foot_collision({"x": 2, "y": -6}, {"x": 20, "y": 10})
-	preview_template = panel.action_preview_control.get("template")
-	errors.append_array(_expect(float(preview_template["foot_collision"]["radius"]["x"]) == 20.0, "preview updates foot edit"))
+	var edited_foot: Dictionary = panel.preview_sprite().foot_contact_ellipse()
+	errors.append_array(_expect(edited_foot.get("radius", Vector2.ZERO) == Vector2(20, 10), "real preview updates foot edit"))
 	panel.set_move_scalar("frame_count", 8)
-	errors.append_array(_expect(panel._preview_frame_count() == 8, "preview updates timing edit"))
+	errors.append_array(_expect(panel.preview_frame_count() == 8, "preview updates timing edit"))
 	panel.set_sprite_set_ref(str(panel.template_json["sprite_set_ref"]))
 	errors.append_array(_expect(panel._coverage_row_for("basic_punch")["warnings"].has(Coverage.PLACEHOLDER_ANIMATION), "preview refreshes mapping coverage"))
 	var preview_row: Dictionary = panel._coverage_row_for("basic_punch")
@@ -502,6 +503,13 @@ func _row_warnings(coverage: Dictionary, action_id: String) -> Array:
 		if str(row.get("action_id", "")) == action_id:
 			return row.get("warnings", [])
 	return []
+
+
+func _box_by_id(boxes: Array, id_key: String, target_id: String) -> Dictionary:
+	for box in boxes:
+		if str(box.get(id_key, "")) == target_id:
+			return box
+	return {}
 
 
 func _remove_if_exists(path: String) -> void:

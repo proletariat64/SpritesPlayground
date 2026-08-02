@@ -136,6 +136,16 @@ func apply_v0_3_runtime_bundle(next_template: Dictionary, _next_sprite_set: Dict
 	queue_redraw()
 
 
+func apply_runtime_sprite_frames(frames: SpriteFrames) -> void:
+	_ensure_animated_sprite()
+	sprite_frames_path = ""
+	animated_sprite.sprite_frames = frames
+	sprite_frames_valid = frames != null
+	animated_sprite.visible = sprite_frames_valid
+	_sync_visual_animation()
+	queue_redraw()
+
+
 func _apply_template_data(runtime_template: Dictionary) -> void:
 	template_id = str(runtime_template["template_id"])
 	sprite_size_class = str(runtime_template["sprite_size_class"])

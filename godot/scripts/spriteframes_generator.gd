@@ -57,10 +57,32 @@ static func validate_frame_slot(slot: String) -> Array:
 
 
 static func generate(sprite_set: Dictionary, options: Dictionary = {}) -> Dictionary:
+	var sprite_set_id := str(sprite_set.get("sprite_set_id", ""))
+	var output_path := str(options.get("output_path", sprite_frames_path(sprite_set_id)))
+	var built := build_in_memory(sprite_set, options)
+	var warnings: Array = built.get("warnings", []).duplicate(true)
+	var errors: Array = built.get("errors", []).duplicate(true)
+	var frames: SpriteFrames = built.get("sprite_frames", null)
+
+	if not errors.is_empty():
+		return _result(false, output_path, warnings, errors, frames)
+
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(output_path.get_base_dir()))
+	var save_error := ResourceSaver.save(frames, output_path)
+	if save_error != OK:
+		errors.append(_error(ERROR_RESOURCE_SAVE_FAILED, "%s:%d" % [output_path, save_error]))
+		return _result(false, output_path, warnings, errors, frames)
+
+	var validation := validate_generated(sprite_set, output_path, options)
+	warnings.append_array(validation["warnings"])
+	errors.append_array(validation["errors"])
+	return _result(errors.is_empty(), output_path, warnings, errors, frames)
+
+
+static func build_in_memory(sprite_set: Dictionary, options: Dictionary = {}) -> Dictionary:
 	var warnings: Array = []
 	var errors: Array = []
 	var sprite_set_id := str(sprite_set.get("sprite_set_id", ""))
-	var output_path := str(options.get("output_path", sprite_frames_path(sprite_set_id)))
 	var frames := SpriteFrames.new()
 	if frames.has_animation("default"):
 		frames.remove_animation("default")
@@ -94,20 +116,13 @@ static func generate(sprite_set: Dictionary, options: Dictionary = {}) -> Dictio
 			if texture == null:
 				texture = _generated_placeholder_texture(SLOT_STATE_INVALID)
 			frames.add_frame(clip_id, texture)
-
-	if not errors.is_empty():
-		return _result(false, output_path, warnings, errors, frames)
-
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(output_path.get_base_dir()))
-	var save_error := ResourceSaver.save(frames, output_path)
-	if save_error != OK:
-		errors.append(_error(ERROR_RESOURCE_SAVE_FAILED, "%s:%d" % [output_path, save_error]))
-		return _result(false, output_path, warnings, errors, frames)
-
-	var validation := validate_generated(sprite_set, output_path, options)
-	warnings.append_array(validation["warnings"])
-	errors.append_array(validation["errors"])
-	return _result(errors.is_empty(), output_path, warnings, errors, frames)
+	return {
+		"ok": errors.is_empty(),
+		"warnings": warnings,
+		"errors": errors,
+		"animation_names": frames.get_animation_names(),
+		"sprite_frames": frames,
+	}
 
 
 static func load_generated(sprite_set_id: String) -> SpriteFrames:

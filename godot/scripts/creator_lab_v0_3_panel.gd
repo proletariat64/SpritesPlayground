@@ -20,8 +20,6 @@ const COLOR_PASS := Color(0.42, 0.88, 0.56)
 const COLOR_WARN := Color(1.0, 0.78, 0.28)
 const COLOR_FAIL := Color(1.0, 0.42, 0.36)
 const COLOR_STATUS := Color(0.72, 0.78, 0.84)
-const PREVIEW_FRAME_SECONDS := 1.0 / 12.0
-
 signal bind_player_requested
 signal bind_dummy_requested
 signal add_npc_requested(template_id: String)
@@ -51,7 +49,6 @@ var preview_frame: int = 0
 var preview_show_hurtboxes: bool = true
 var preview_show_hitboxes: bool = true
 var preview_show_foot: bool = true
-var _preview_elapsed: float = 0.0
 var npc_template_id: String = "combat_gray_s64"
 var npc_count_current: int = 1
 var npc_limit: int = 10
@@ -114,26 +111,34 @@ func setup() -> void:
 	load_template_id("combat_gray_s64")
 
 
+func _exit_tree() -> void:
+	if floating_preview_window != null and is_instance_valid(floating_preview_window):
+		floating_preview_window.queue_free()
+	floating_preview_window = null
+	floating_preview_control = null
+	floating_preview_frame_label = null
+
+
 func _process(delta: float) -> void:
 	if not preview_playing:
 		return
-	_preview_elapsed += delta * preview_speed
-	if _preview_elapsed < PREVIEW_FRAME_SECONDS:
-		return
-	_preview_elapsed = 0.0
-	var last_frame: int = maxi(0, _preview_frame_count() - 1)
-	if preview_frame >= last_frame:
+	if action_preview_control == null or not action_preview_control.has_method("advance_time"):
 		preview_playing = false
-		_refresh_action_preview()
 		return
-	preview_frame = mini(preview_frame + 1, last_frame)
-	_refresh_action_preview()
+	action_preview_control.advance_time(maxf(0.0, delta) * preview_speed)
+	var observation := preview_observation()
+	_sync_preview_frame_from_observation(observation)
+	if bool(observation.get("completed", false)):
+		preview_playing = false
+	_refresh_action_preview_chrome()
 
 
 func load_template_id(template_id: String) -> Array:
 	template_json = DataStore.load_template(template_id)
 	if template_json.is_empty():
 		return _set_errors(["missing template %s" % template_id])
+	preview_playing = false
+	preview_frame = 0
 	sprite_set_json = DataStore.load_sprite_set(str(template_json["sprite_set_ref"]))
 	moves_json.clear()
 	for move_id in template_json["equipped_moves"]:
@@ -189,12 +194,13 @@ func refresh_action_coverage() -> Dictionary:
 func select_action(action_id: String) -> void:
 	if Catalog.action_for(action_id).is_empty():
 		return
+	preview_playing = false
+	preview_frame = 0
 	current_action_id = action_id
 	var row := _coverage_row_for(action_id)
 	var move_id := str(row.get("backing_move_id", ""))
 	if moves_json.has(move_id):
 		selected_move = move_id
-	preview_frame = clampi(preview_frame, 0, maxi(0, _preview_frame_count() - 1))
 	_refresh_fields()
 
 
@@ -235,46 +241,44 @@ func selected_npc_bind_index() -> int:
 
 
 func preview_play() -> void:
-	if preview_frame >= maxi(0, _preview_frame_count() - 1):
-		preview_frame = 0
-	_preview_elapsed = 0.0
-	preview_playing = true
 	_refresh_action_preview()
+	var observation := preview_observation()
+	if bool(observation.get("completed", false)) or preview_frame >= maxi(0, _preview_frame_count() - 1):
+		_seek_preview_to(0)
+		observation = preview_observation()
+	preview_playing = not bool(observation.get("completed", true))
+	_refresh_action_preview_chrome()
 
 
 func preview_pause() -> void:
 	preview_playing = false
-	_refresh_action_preview()
+	_refresh_action_preview_chrome()
 
 
 func preview_step_forward() -> void:
 	preview_playing = false
-	preview_frame = mini(preview_frame + 1, maxi(0, _preview_frame_count() - 1))
 	_refresh_action_preview()
+	if action_preview_control != null and action_preview_control.has_method("step_forward"):
+		action_preview_control.step_forward()
+	var observation := preview_observation()
+	_sync_preview_frame_from_observation(observation)
+	_refresh_action_preview_chrome()
 
 
 func preview_step_backward() -> void:
-	preview_playing = false
-	preview_frame = maxi(0, preview_frame - 1)
-	_refresh_action_preview()
+	_seek_preview_to(maxi(0, preview_frame - 1))
 
 
 func preview_first() -> void:
-	preview_playing = false
-	preview_frame = 0
-	_refresh_action_preview()
+	_seek_preview_to(0)
 
 
 func preview_last() -> void:
-	preview_playing = false
-	preview_frame = maxi(0, _preview_frame_count() - 1)
-	_refresh_action_preview()
+	_seek_preview_to(maxi(0, _preview_frame_count() - 1))
 
 
 func set_preview_frame(frame_index: int) -> void:
-	preview_playing = false
-	preview_frame = clampi(frame_index, 0, maxi(0, _preview_frame_count() - 1))
-	_refresh_action_preview()
+	_seek_preview_to(frame_index)
 
 
 func preview_frame_count() -> int:
@@ -282,12 +286,20 @@ func preview_frame_count() -> int:
 
 
 func preview_reset() -> void:
-	preview_first()
+	_seek_preview_to(0)
+
+
+func preview_sprite() -> Node:
+	return action_preview_control.real_sprite() if action_preview_control != null else null
+
+
+func preview_observation() -> Dictionary:
+	return action_preview_control.observation() if action_preview_control != null else {}
 
 
 func set_preview_speed(value: float) -> void:
 	preview_speed = 0.5 if value < 0.75 else 1.0
-	_refresh_action_preview()
+	_refresh_action_preview_chrome()
 
 
 func toggle_preview_window() -> void:
@@ -306,7 +318,11 @@ func set_preview_window_visible(next_visible: bool) -> void:
 
 
 func is_preview_window_visible() -> bool:
-	return floating_preview_window != null and floating_preview_window.visible
+	return (
+		floating_preview_window != null
+		and is_instance_valid(floating_preview_window)
+		and floating_preview_window.visible
+	)
 
 
 func copy_template(copy_id: String = "") -> String:
@@ -1326,8 +1342,11 @@ func _build_persistent_preview_surface(parent: VBoxContainer) -> void:
 
 
 func _ensure_floating_preview_window() -> void:
-	if floating_preview_window != null:
+	if floating_preview_window != null and is_instance_valid(floating_preview_window):
 		return
+	floating_preview_window = null
+	floating_preview_control = null
+	floating_preview_frame_label = null
 	var host := get_parent()
 	if host == null:
 		call_deferred("_ensure_floating_preview_window")
@@ -1365,6 +1384,7 @@ func _ensure_floating_preview_window() -> void:
 	root.add_child(floating_preview_frame_label)
 
 	floating_preview_control = ActionPreview.new()
+	floating_preview_control.bind_preview_source(action_preview_control)
 	floating_preview_control.custom_minimum_size = Vector2(276, 202)
 	floating_preview_control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	floating_preview_control.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -1613,6 +1633,25 @@ func _clamp_preview_frame() -> void:
 
 func _refresh_action_preview() -> void:
 	_clamp_preview_frame()
+	var requested_frame := preview_frame
+	_apply_preview_to_control(action_preview_control)
+	_apply_preview_to_control(floating_preview_control)
+	var observation := preview_observation()
+	if (
+		action_preview_control != null
+		and action_preview_control.has_method("seek_frame")
+		and not observation.is_empty()
+		and not bool(observation.get("completed", false))
+		and int(observation.get("frame", requested_frame)) != requested_frame
+	):
+		action_preview_control.seek_frame(requested_frame)
+		observation = preview_observation()
+	_sync_preview_frame_from_observation(observation)
+	_refresh_action_preview_chrome()
+
+
+func _refresh_action_preview_chrome() -> void:
+	_clamp_preview_frame()
 	var status_text := _preview_status_text()
 	if preview_frame_label != null:
 		preview_frame_label.text = status_text
@@ -1623,17 +1662,29 @@ func _refresh_action_preview() -> void:
 		preview_frame_slider.set_value_no_signal(preview_frame)
 	if frame_slot_path_input != null and not frame_slot_path_input.has_focus():
 		frame_slot_path_input.text = _current_frame_slot_text()
-	_apply_preview_to_control(action_preview_control)
-	_apply_preview_to_control(floating_preview_control)
+	for control in [action_preview_control, floating_preview_control]:
+		if control == null:
+			continue
+		if control.has_method("set_overlay_visibility"):
+			control.set_overlay_visibility(preview_show_hurtboxes, preview_show_hitboxes, preview_show_foot)
+		if control.has_method("set_frame"):
+			control.set_frame(preview_frame)
 
 
 func _preview_status_text() -> String:
-	return "%s %s  f:%d/%d  %.1fx" % [
+	var observation := preview_observation()
+	var runtime_state := str(observation.get("state", "none"))
+	var runtime_move := str(observation.get("move", "none"))
+	if bool(observation.get("completed", false)):
+		runtime_state = "complete"
+	return "%s %s  f:%d/%d  %.1fx  state:%s move:%s" % [
 		"play" if preview_playing else "pause",
 		current_action_id,
 		preview_frame + 1,
 		_preview_frame_count(),
 		preview_speed,
+		runtime_state,
+		runtime_move,
 	]
 
 
@@ -1643,6 +1694,27 @@ func _apply_preview_to_control(control: Control) -> void:
 	control.set_preview_data(_coverage_row_for(current_action_id), template_json, sprite_set_json, moves_json)
 	control.set_overlay_visibility(preview_show_hurtboxes, preview_show_hitboxes, preview_show_foot)
 	control.set_frame(preview_frame)
+
+
+func _seek_preview_to(target_frame: int) -> void:
+	preview_playing = false
+	preview_frame = clampi(target_frame, 0, maxi(0, _preview_frame_count() - 1))
+	_apply_preview_to_control(action_preview_control)
+	_apply_preview_to_control(floating_preview_control)
+	if action_preview_control != null and action_preview_control.has_method("seek_frame"):
+		action_preview_control.seek_frame(preview_frame)
+	_sync_preview_frame_from_observation(preview_observation())
+	_refresh_action_preview_chrome()
+
+
+func _sync_preview_frame_from_observation(observation: Dictionary) -> void:
+	if observation.is_empty():
+		return
+	preview_frame = clampi(
+		int(observation.get("frame", preview_frame)),
+		0,
+		maxi(0, _preview_frame_count() - 1)
+	)
 
 
 func _node_property(instance: Node, property_name: String):
@@ -2227,17 +2299,17 @@ func _on_preview_normal_speed_pressed() -> void:
 
 func _on_preview_hurt_toggled(value: bool) -> void:
 	preview_show_hurtboxes = value
-	_refresh_action_preview()
+	_refresh_action_preview_chrome()
 
 
 func _on_preview_hit_toggled(value: bool) -> void:
 	preview_show_hitboxes = value
-	_refresh_action_preview()
+	_refresh_action_preview_chrome()
 
 
 func _on_preview_foot_toggled(value: bool) -> void:
 	preview_show_foot = value
-	_refresh_action_preview()
+	_refresh_action_preview_chrome()
 
 
 func _on_preview_window_toggle_pressed() -> void:
