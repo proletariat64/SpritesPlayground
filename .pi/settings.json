@@ -11,7 +11,7 @@
         ]
       },
       "reviewer": {
-        "model": "qoder-cloud/Qwen3.8-Max-Preview",
+        "model": "qoder-cloud/Qwen3.8-Max",
         "thinking": "high",
         "fallbackModels": [
           "antchat/GLM-5.2",
