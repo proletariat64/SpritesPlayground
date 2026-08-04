@@ -4,26 +4,20 @@ class_name CharacterTemplate
 const PrdV03DataStoreScript := preload("res://godot/scripts/prd_v0_3_data_store.gd")
 
 
-static func combat_gray_s64() -> Dictionary:
-	return load_template("combat_gray_s64")
-
-
 static func load_template(template_id: String) -> Dictionary:
 	return _load_v0_3_template(template_id)
 
 
 static func _load_v0_3_template(template_id: String) -> Dictionary:
 	var bundle := PrdV03DataStoreScript.load_runtime_bundle(template_id)
-	var template: Dictionary = bundle.get("template", {})
-	if template.is_empty():
-		push_error("Missing template in active authored-data store: %s" % template_id)
+	var errors := PrdV03DataStoreScript.validate_runtime_load_bundle(bundle)
+	if not errors.is_empty():
+		push_error("Invalid authored template %s: %s" % [template_id, "; ".join(errors)])
 		return {}
+	var template: Dictionary = bundle["template"]
 	var move_templates := {}
-	for move_id in template.get("equipped_moves", []):
-		var move: Dictionary = bundle.get("moves", {}).get(str(move_id), {})
-		if move.is_empty():
-			push_error("Missing v0.3 move %s for template %s" % [move_id, template_id])
-			continue
+	for move_id in template["equipped_moves"]:
+		var move: Dictionary = bundle["moves"][str(move_id)]
 		move_templates[str(move_id)] = v0_3_move_to_runtime(str(move_id), move, template_id)
 	return {
 		"template_id": template_id,

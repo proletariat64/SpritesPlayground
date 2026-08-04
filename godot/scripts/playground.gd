@@ -283,31 +283,62 @@ func _spawn_character(template_id: String, instance_id: String, spawn_position: 
 
 func _process_all_hits() -> void:
 	var active_characters := all_characters()
+	var snapshots: Array = []
+	var accepted_keys: Dictionary = {}
 	for attacker in active_characters:
 		for target in active_characters:
-			_process_hits(attacker, target)
+			snapshots.append_array(_collect_hit_snapshots(attacker, target, accepted_keys))
+	for snapshot in snapshots:
+		snapshot["executor"].mark_target_hit(snapshot["target_instance_id"], snapshot["window_index"])
+	for snapshot in snapshots:
+		snapshot["target"].take_hit(
+			snapshot["damage"],
+			snapshot["hitbox_id"],
+			snapshot["source_instance_id"],
+			snapshot["resolved_hurtbox_id"],
+			snapshot["contact_hurtboxes"]
+		)
 
 
-func _process_hits(attacker: Node2D, target: Node2D) -> void:
-	if attacker == target:
-		return
-	if attacker.current_hp <= 0 or target.current_hp <= 0:
-		return
-
+func _collect_hit_snapshots(attacker: Node2D, target: Node2D, accepted_keys: Dictionary) -> Array:
+	var snapshots: Array = []
+	if attacker == target or attacker.current_hp <= 0 or target.current_hp <= 0:
+		return snapshots
+	var target_hurtboxes: Array = target.hurtboxes_world()
 	for hitbox in attacker.active_hitboxes_world():
 		var window_index := int(hitbox["window_index"])
 		if not attacker.move_executor.can_hit_target(target.instance_id, window_index):
 			continue
+		var dedupe_key := "%s:%s:%d:%s" % [
+			attacker.get_instance_id(),
+			attacker.move_executor.active_move_id,
+			window_index,
+			target.instance_id,
+		]
+		if accepted_keys.has(dedupe_key):
+			continue
 		var hit_rect: Rect2 = hitbox["rect"]
 		var contact_hurtboxes: Array = []
-		for hurtbox in target.hurtboxes_world():
+		for hurtbox in target_hurtboxes:
 			var hurt_rect: Rect2 = hurtbox["rect"]
-			if hit_rect.intersects(hurt_rect):
-				contact_hurtboxes.append(str(hurtbox["hurtbox_id"]))
-		if not contact_hurtboxes.is_empty():
-			var resolved_hurtbox_id := str(contact_hurtboxes[0])
-			target.take_hit(int(hitbox["damage"]), str(hitbox["hitbox_id"]), attacker.instance_id, resolved_hurtbox_id, contact_hurtboxes)
-			attacker.move_executor.mark_target_hit(target.instance_id, window_index)
+			var hurtbox_id := str(hurtbox["hurtbox_id"])
+			if hit_rect.intersects(hurt_rect) and not contact_hurtboxes.has(hurtbox_id):
+				contact_hurtboxes.append(hurtbox_id)
+		if contact_hurtboxes.is_empty():
+			continue
+		accepted_keys[dedupe_key] = true
+		snapshots.append({
+			"executor": attacker.move_executor,
+			"target": target,
+			"target_instance_id": str(target.instance_id),
+			"source_instance_id": str(attacker.instance_id),
+			"window_index": window_index,
+			"damage": int(hitbox["damage"]),
+			"hitbox_id": str(hitbox["hitbox_id"]),
+			"resolved_hurtbox_id": str(contact_hurtboxes[0]),
+			"contact_hurtboxes": contact_hurtboxes,
+		})
+	return snapshots
 
 
 func _resolve_all_foot_spacing() -> void:
@@ -517,7 +548,7 @@ func _update_debug_gui() -> void:
 			s.get("frame", 0),
 			s.get("hp", ""),
 			s.get("mode", ""),
-			s.get("ai_backend", "deterministic_fallback"),
+			s.get("ai_backend", "missing"),
 		],
 		"[color=#c7d2fe]wasd[/color] move  ctrl run  j/k atk  sh dash  sp jump  tab ai  b box  c lab v0.3  v preview  r reset  %s" % playground_status,
 	])

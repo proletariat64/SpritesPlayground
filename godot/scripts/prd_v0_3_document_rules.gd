@@ -24,7 +24,16 @@ const SUPPORTED_EVENT_TYPES := {
 
 
 static func validate_runtime_bundle(bundle: Dictionary) -> Array:
+	return _validate_runtime_bundle(bundle, true)
+
+
+static func validate_runtime_load_bundle(bundle: Dictionary) -> Array:
+	return _validate_runtime_bundle(bundle, false)
+
+
+static func _validate_runtime_bundle(bundle: Dictionary, validate_sequence_lengths: bool) -> Array:
 	var errors: Array = []
+	errors.append_array(ActionCatalog.validate())
 	var template: Dictionary = bundle.get("template", {})
 	var sprite_set: Dictionary = bundle.get("sprite_set", {})
 	var moves: Dictionary = bundle.get("moves", {})
@@ -64,7 +73,8 @@ static func validate_runtime_bundle(bundle: Dictionary) -> Array:
 		var sequence_ref := str(clip.get("frame_sequence_ref", ""))
 		if not sequences.has(sequence_ref):
 			errors.append("animation clip %s missing frame sequence %s" % [clip_id, sequence_ref])
-	errors.append_array(_validate_mapped_sequence_lengths(mapping, clips, sequences, moves))
+	if validate_sequence_lengths:
+		errors.append_array(_validate_mapped_sequence_lengths(mapping, clips, sequences, moves))
 	return errors
 
 

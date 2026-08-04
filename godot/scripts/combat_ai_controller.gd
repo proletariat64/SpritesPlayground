@@ -75,8 +75,9 @@ func _limbo_spacing_attack_update(_delta: float) -> void:
 
 
 func _request_basic_attack() -> void:
-	var move_id := "jab" if _attack_index % 2 == 0 else "high_kick"
-	if agent.request_attack(move_id):
+	var family := "punch" if _attack_index % 2 == 0 else "kick"
+	var alternate_family := "kick" if family == "punch" else "punch"
+	if agent.request_basic_attack(family) or agent.request_basic_attack(alternate_family):
 		_attack_index += 1
 		_attack_cooldown_remaining = ATTACK_COOLDOWN
 
