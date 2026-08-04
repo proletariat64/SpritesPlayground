@@ -34,12 +34,54 @@ This project uses **code-review-graph** for structural exploration, review, and 
 
 <!-- code-review-graph:end -->
 
-## Candidate fingerprints
+## Codex subagent workflow
 
-Freeze a review candidate and compute a stable hash with:
+Project-scoped custom roles live in `.codex/agents/`. Use them for non-trivial
+ticket implementation, review, and UAT. Do not create parallel production-code
+writers.
 
-```bash
-make fingerprint
-```
+### Roles
 
-`scripts/candidate_fingerprint.sh` hashes tracked-file status, binary diffs, and intended untracked source files, while Git ignore rules exclude machine-local analyzer, session, editor, and generated churn (`.pi-lens/`, `.godot/`, `.import/`, `.code-review-graph/`, `.pi-subagents/`, `.claude/`, `.letta/`, `.qoder/`, `*.gd.uid`, `.codex/config.toml`, `.codex/scripts/`). Recomputing it without source changes returns the same hash even while diagnostics rewrite ignored state. See `docs/07_runbooks/runbook-development-environment-bootstrap.md` for the full contract.
+- `spec_guardian` — turn the issue and governing PRD/spec into an acceptance map.
+- `impact_mapper` — produce read-only code-review-graph impact evidence.
+- `ticket_implementer` — the sole production-code writer for one ready ticket.
+- `qoder_reviewer` — external semantic discovery and final gate certification.
+- `regression_reviewer` — independent correctness and regression review.
+- `uat_operator` — installed/runtime, input, animation, and visual evidence.
+
+### Required orchestration
+
+For a non-trivial implementation against an existing issue or specification:
+
+1. Spawn `spec_guardian` and `impact_mapper` in parallel. Wait for both and
+   combine their evidence into one implementation contract. Resolve any
+   acceptance contradiction or HIGH/CRITICAL graph risk before editing.
+2. Close the completed analysis threads, then spawn `ticket_implementer` as the
+   only writer. The parent and all other subagents remain read-only while it
+   writes.
+3. When focused implementation checks pass, freeze the candidate and compute a
+   fingerprint from tracked changes, untracked paths, and untracked contents:
+
+   ```bash
+   make fingerprint
+   ```
+
+   `scripts/candidate_fingerprint.sh` excludes Git-ignored analyzer, session,
+   editor, and generated churn while retaining intended candidate files.
+
+4. Stop all writes. Spawn `qoder_reviewer` in discovery mode and
+   `regression_reviewer` in parallel against that exact fingerprint. Wait for
+   both, then combine findings before asking `ticket_implementer` for one repair
+   batch. Any repair creates a new candidate and invalidates prior review proof.
+5. After both reviewers are clean on one unchanged candidate, run
+   `qoder_reviewer` in certification mode. It runs the applicable final Makefile
+   gates once and returns an exit-status table; it does not repair failures.
+6. Spawn `uat_operator` when acceptance includes Godot runtime/editor behavior,
+   input, animation, visual output, restart behavior, exported builds, or live
+   provider work. Paid provider work always requires explicit authorization and
+   a hard submission budget.
+
+The project allows at most two open subagent threads at once. Close completed
+threads before starting the next pair. Simple explanation, tiny documentation,
+or obviously isolated maintenance tasks may stay single-agent unless the user
+explicitly asks for the full workflow.
