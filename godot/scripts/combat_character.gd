@@ -52,7 +52,7 @@ func _ready() -> void:
 	move_executor = MoveExecutorScript.new()
 	move_executor.name = "move_executor"
 	add_child(move_executor)
-	move_executor.configure(template["move_templates"])
+	move_executor.configure(template.get("move_templates", {}))
 
 	state_machine = StateMachineScript.new()
 	state_machine.name = "state_machine"
@@ -72,68 +72,68 @@ func _ready() -> void:
 	queue_redraw()
 
 
-func _load_template() -> void:
-	template = CharacterTemplateScript.load_template(template_id)
-	_apply_template_data(template)
+func _load_template() -> bool:
+	var candidate := CharacterTemplateScript.load_template(template_id)
+	var errors := _runtime_template_errors(candidate)
+	if not errors.is_empty():
+		push_error("Template %s rejected: %s" % [template_id, "; ".join(errors)])
+		return false
+	_commit_runtime_template(candidate, true)
+	return true
 
 
 func apply_template_id(next_template_id: String) -> void:
-	template_id = next_template_id
-	_load_template()
-	if move_executor != null:
-		move_executor.configure(template["move_templates"])
-	if state_machine != null:
-		state_machine.reset_to_idle()
-	current_hp = max_hp
-	_load_sprite_frames_for_sprite_set()
-	queue_redraw()
+	var candidate := CharacterTemplateScript.load_template(next_template_id)
+	var errors := _runtime_template_errors(candidate)
+	if not errors.is_empty():
+		push_error("Template %s rejected: %s" % [next_template_id, "; ".join(errors)])
+		return
+	_commit_runtime_template(candidate, true)
 
 
 func apply_runtime_template(runtime_template: Dictionary) -> void:
-	template = runtime_template.duplicate(true)
-	_apply_template_data(template)
-	if move_executor != null:
-		move_executor.configure(template["move_templates"])
-	if state_machine != null:
-		state_machine.reset_to_idle()
-	current_hp = max_hp
-	_load_sprite_frames_for_sprite_set()
-	queue_redraw()
+	var candidate := runtime_template.duplicate(true)
+	var errors := _runtime_template_errors(candidate)
+	if not errors.is_empty():
+		push_error("Runtime template rejected: %s" % "; ".join(errors))
+		return
+	_commit_runtime_template(candidate, true)
 
 
-func apply_v0_3_runtime_bundle(next_template: Dictionary, _next_sprite_set: Dictionary, next_moves: Dictionary) -> void:
-	var next_max_hp := maxi(1, int(next_template.get("hp", max_hp)))
-	template_id = str(next_template.get("template_id", template_id))
-	sprite_set_id = str(next_template.get("sprite_set_ref", sprite_set_id))
-	max_hp = next_max_hp
-	current_hp = mini(current_hp, max_hp)
-	walk_speed = maxf(1.0, float(next_template.get("walk_speed", 95.0)))
-	run_speed = maxf(1.0, float(next_template.get("run_speed", 150.0)))
-	hurtbox_profile = _v0_3_hurtboxes_to_runtime(next_template.get("hurtboxes", {}))
-	foot_collision_profile = _v0_3_foot_to_runtime(next_template.get("foot_collision", {}))
+func apply_v0_3_runtime_bundle(
+	next_template: Dictionary,
+	_next_sprite_set: Dictionary,
+	next_moves: Dictionary
+) -> void:
+	var errors := _v0_3_runtime_errors(next_template, next_moves)
+	if not errors.is_empty():
+		push_error("Runtime v0.3 bundle rejected: %s" % "; ".join(errors))
+		return
+	var next_template_id := str(next_template["template_id"])
 	var move_templates := {}
 	for move_id in next_moves.keys():
-		move_templates[str(move_id)] = _v0_3_move_to_runtime(next_moves[move_id])
-	template = {
-		"template_id": template_id,
+		move_templates[str(move_id)] = CharacterTemplateScript.v0_3_move_to_runtime(
+			str(move_id),
+			next_moves[move_id],
+			next_template_id
+		)
+	var candidate := {
+		"template_id": next_template_id,
 		"sprite_size_class": sprite_size_class,
-		"sprite_set_id": sprite_set_id,
+		"sprite_set_id": str(next_template["sprite_set_ref"]),
 		"frame_size": frame_size,
-		"max_hp": max_hp,
-		"walk_speed": walk_speed,
-		"run_speed": run_speed,
-		"hurtbox_profile": hurtbox_profile,
-		"foot_collision_profile": foot_collision_profile,
+		"max_hp": int(next_template["hp"]),
+		"walk_speed": maxf(1.0, float(next_template.get("walk_speed", 95.0))),
+		"run_speed": maxf(1.0, float(next_template.get("run_speed", 150.0))),
+		"hurtbox_profile": _v0_3_hurtboxes_to_runtime(next_template["hurtboxes"]),
+		"foot_collision_profile": _v0_3_foot_to_runtime(next_template["foot_collision"]),
 		"move_templates": move_templates,
 	}
-	if move_executor != null:
-		move_executor.configure(move_templates)
-	if state_machine != null:
-		state_machine.walk_speed = walk_speed
-		state_machine.run_speed = run_speed
-		state_machine.reset_to_idle()
-	_load_sprite_frames_for_sprite_set()
-	queue_redraw()
+	errors = _runtime_template_errors(candidate)
+	if not errors.is_empty():
+		push_error("Converted runtime v0.3 bundle rejected: %s" % "; ".join(errors))
+		return
+	_commit_runtime_template(candidate, false)
 
 
 func apply_runtime_sprite_frames(frames: SpriteFrames) -> void:
@@ -146,20 +146,170 @@ func apply_runtime_sprite_frames(frames: SpriteFrames) -> void:
 	queue_redraw()
 
 
+func _commit_runtime_template(runtime_template: Dictionary, reset_hp: bool) -> void:
+	var previous_hp := current_hp
+	template = runtime_template.duplicate(true)
+	_apply_template_data(template)
+	current_hp = max_hp if reset_hp else mini(previous_hp, max_hp)
+	if move_executor != null:
+		move_executor.configure(template["move_templates"])
+	if state_machine != null:
+		state_machine.reset_to_idle()
+	_load_sprite_frames_for_sprite_set()
+	queue_redraw()
+
+
 func _apply_template_data(runtime_template: Dictionary) -> void:
 	template_id = str(runtime_template["template_id"])
 	sprite_size_class = str(runtime_template["sprite_size_class"])
-	sprite_set_id = str(runtime_template.get("sprite_set_id", ""))
+	sprite_set_id = str(runtime_template["sprite_set_id"])
 	frame_size = int(runtime_template["frame_size"])
 	max_hp = int(runtime_template["max_hp"])
-	current_hp = max_hp
-	walk_speed = maxf(1.0, float(runtime_template.get("walk_speed", 95.0)))
-	run_speed = maxf(1.0, float(runtime_template.get("run_speed", 150.0)))
+	walk_speed = maxf(1.0, float(runtime_template["walk_speed"]))
+	run_speed = maxf(1.0, float(runtime_template["run_speed"]))
 	hurtbox_profile = runtime_template["hurtbox_profile"].duplicate(true)
 	foot_collision_profile = runtime_template["foot_collision_profile"].duplicate(true)
 	if state_machine != null:
 		state_machine.walk_speed = walk_speed
 		state_machine.run_speed = run_speed
+
+
+func _runtime_template_errors(runtime_template: Dictionary) -> Array:
+	var errors: Array = []
+	for field in ["template_id", "sprite_size_class", "sprite_set_id"]:
+		var valid_string := typeof(runtime_template.get(field)) == TYPE_STRING
+		if not valid_string or str(runtime_template.get(field, "")).is_empty():
+			errors.append("%s must be a non-empty string" % field)
+	for field in ["frame_size", "max_hp", "walk_speed", "run_speed"]:
+		if not _is_number(runtime_template.get(field)) or float(runtime_template.get(field, 0)) <= 0.0:
+			errors.append("%s must be a positive number" % field)
+	var runtime_hurtboxes = runtime_template.get("hurtbox_profile")
+	if typeof(runtime_hurtboxes) != TYPE_DICTIONARY or runtime_hurtboxes.is_empty():
+		errors.append("hurtbox_profile must be a non-empty dictionary")
+	else:
+		for hurtbox_id in runtime_template["hurtbox_profile"]:
+			if typeof(runtime_template["hurtbox_profile"][hurtbox_id]) != TYPE_RECT2:
+				errors.append("hurtbox_profile.%s must be a Rect2" % hurtbox_id)
+	var foot = runtime_template.get("foot_collision_profile")
+	if typeof(foot) != TYPE_DICTIONARY:
+		errors.append("foot_collision_profile must be a dictionary")
+	elif typeof(foot.get("center")) != TYPE_VECTOR2 or typeof(foot.get("radius")) != TYPE_VECTOR2:
+		errors.append("foot_collision_profile must contain Vector2 center and radius")
+	elif foot["radius"].x <= 0.0 or foot["radius"].y <= 0.0:
+		errors.append("foot_collision_profile radius must be positive")
+	var moves = runtime_template.get("move_templates")
+	if typeof(moves) != TYPE_DICTIONARY or moves.is_empty():
+		errors.append("move_templates must be a non-empty dictionary")
+	else:
+		for move_id in moves:
+			if typeof(moves[move_id]) != TYPE_DICTIONARY:
+				errors.append("move_templates.%s must be a dictionary" % move_id)
+	return errors
+
+
+func _v0_3_runtime_errors(next_template: Dictionary, next_moves: Dictionary) -> Array:
+	var errors: Array = []
+	for field in ["template_id", "sprite_set_ref"]:
+		var valid_string := typeof(next_template.get(field)) == TYPE_STRING
+		if not valid_string or str(next_template.get(field, "")).is_empty():
+			errors.append("template.%s must be a non-empty string" % field)
+	if not _is_number(next_template.get("hp")) or int(next_template.get("hp", 0)) <= 0:
+		errors.append("template.hp must be a positive number")
+	for field in ["walk_speed", "run_speed"]:
+		if next_template.has(field) and (
+			not _is_number(next_template[field]) or float(next_template[field]) <= 0.0
+		):
+			errors.append("template.%s must be a positive number" % field)
+	var authored_hurtboxes = next_template.get("hurtboxes")
+	if typeof(authored_hurtboxes) != TYPE_DICTIONARY or authored_hurtboxes.is_empty():
+		errors.append("template.hurtboxes must be a non-empty dictionary")
+	else:
+		for hurtbox_id in authored_hurtboxes:
+			errors.append_array(
+				_v0_3_rect_errors(
+					authored_hurtboxes[hurtbox_id],
+					"template.hurtboxes.%s" % hurtbox_id
+				)
+			)
+	var foot = next_template.get("foot_collision")
+	if typeof(foot) != TYPE_DICTIONARY:
+		errors.append("template.foot_collision must be a dictionary")
+	else:
+		errors.append_array(
+			_v0_3_vector_errors(foot.get("center"), "template.foot_collision.center", false)
+		)
+		errors.append_array(
+			_v0_3_vector_errors(foot.get("radius"), "template.foot_collision.radius", true)
+		)
+	if typeof(next_moves) != TYPE_DICTIONARY or next_moves.is_empty():
+		errors.append("moves must be a non-empty dictionary")
+	else:
+		for move_id in next_moves:
+			var move = next_moves[move_id]
+			if typeof(move) != TYPE_DICTIONARY:
+				errors.append("move %s must be a dictionary" % move_id)
+				continue
+			if str(move.get("move_id", "")) != str(move_id):
+				errors.append("move %s move_id must match its key" % move_id)
+			if not _is_number(move.get("frame_count")) or int(move.get("frame_count", 0)) <= 0:
+				errors.append("move %s frame_count must be positive" % move_id)
+			for collection in ["hitboxes", "hurtboxes", "events"]:
+				if typeof(move.get(collection, [])) != TYPE_ARRAY:
+					errors.append("move %s %s must be an array" % [move_id, collection])
+			for collection in ["hitboxes", "hurtboxes"]:
+				if typeof(move.get(collection, [])) != TYPE_ARRAY:
+					continue
+				for index in move.get(collection, []).size():
+					var box = move[collection][index]
+					if typeof(box) != TYPE_DICTIONARY:
+						errors.append("move %s %s[%d] must be a dictionary" % [move_id, collection, index])
+						continue
+					if typeof(box.get("active_window")) != TYPE_DICTIONARY:
+						errors.append(
+							"move %s %s[%d].active_window must be a dictionary"
+							% [move_id, collection, index]
+						)
+					errors.append_array(
+						_v0_3_rect_errors(
+							box.get("rect"),
+							"move %s %s[%d].rect" % [move_id, collection, index]
+						)
+					)
+			if typeof(move.get("events", [])) == TYPE_ARRAY:
+				for index in move.get("events", []).size():
+					if typeof(move["events"][index]) != TYPE_DICTIONARY:
+						errors.append("move %s events[%d] must be a dictionary" % [move_id, index])
+	return errors
+
+
+func _v0_3_rect_errors(value, label: String) -> Array:
+	var errors: Array = []
+	if typeof(value) != TYPE_DICTIONARY:
+		return ["%s must be a dictionary" % label]
+	for field in ["x", "y", "w", "h"]:
+		if not _is_number(value.get(field)):
+			errors.append("%s.%s must be a number" % [label, field])
+	if _is_number(value.get("w")) and float(value["w"]) <= 0.0:
+		errors.append("%s.w must be positive" % label)
+	if _is_number(value.get("h")) and float(value["h"]) <= 0.0:
+		errors.append("%s.h must be positive" % label)
+	return errors
+
+
+func _v0_3_vector_errors(value, label: String, positive: bool) -> Array:
+	var errors: Array = []
+	if typeof(value) != TYPE_DICTIONARY:
+		return ["%s must be a dictionary" % label]
+	for field in ["x", "y"]:
+		if not _is_number(value.get(field)):
+			errors.append("%s.%s must be a number" % [label, field])
+		elif positive and float(value[field]) <= 0.0:
+			errors.append("%s.%s must be positive" % [label, field])
+	return errors
+
+
+func _is_number(value) -> bool:
+	return typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT
 
 
 func tick_character(delta: float, arena_center: Vector2, arena_radius: Vector2) -> void:
@@ -255,7 +405,7 @@ func hurtboxes_world() -> Array:
 
 
 func foot_center_world() -> Vector2:
-	return global_position + foot_collision_profile["center"]
+	return global_position + foot_collision_profile.get("center", Vector2.ZERO)
 
 
 func depth_sort_key() -> float:
@@ -345,7 +495,7 @@ func _handle_punch_input() -> void:
 	if state_machine.current_state == StateMachineScript.STATE_ATTACK:
 		_queue_combo("jab", "cross_punch")
 		return
-	_start_combo_first("jab")
+	_start_semantic_combo_first("punch")
 
 
 func _handle_kick_input() -> void:
@@ -360,12 +510,18 @@ func _handle_kick_input() -> void:
 	if state_machine.current_state == StateMachineScript.STATE_ATTACK:
 		_queue_combo("high_kick", "roundhouse_kick")
 		return
-	_start_combo_first("high_kick")
+	_start_semantic_combo_first("kick")
 
 
 func _start_combo_first(move_id: String) -> void:
 	_clear_combo_buffer()
 	if request_attack(move_id):
+		_combo_started_at_msec = Time.get_ticks_msec()
+
+
+func _start_semantic_combo_first(family: String) -> void:
+	_clear_combo_buffer()
+	if request_basic_attack(family):
 		_combo_started_at_msec = Time.get_ticks_msec()
 
 
@@ -408,6 +564,15 @@ func request_attack(move_id: String, allow_airborne: bool = false) -> bool:
 	return started
 
 
+func request_basic_attack(family: String) -> bool:
+	var move_id := ""
+	if family == "punch":
+		move_id = _punch_move_id()
+	elif family == "kick":
+		move_id = _kick_move_id()
+	return not move_id.is_empty() and request_attack(move_id)
+
+
 func mark_combat_engaged() -> void:
 	_combat_context_remaining = COMBAT_CONTEXT_SECONDS
 
@@ -428,7 +593,7 @@ func _first_available_move(candidates: Array) -> String:
 		var resolved := _resolve_move_id(str(candidate))
 		if move_executor.move_templates.has(resolved):
 			return resolved
-	return str(candidates[0]) if not candidates.is_empty() else ""
+	return ""
 
 
 func _punch_move_id() -> String:
@@ -446,7 +611,7 @@ func set_combat_target(next_target: Node2D) -> void:
 
 
 func ai_backend() -> String:
-	return str(ai_controller.backend()) if ai_controller != null else "deterministic_fallback"
+	return str(ai_controller.backend()) if ai_controller != null else "missing"
 
 
 func _tick_ai(delta: float) -> Vector2:
@@ -736,7 +901,11 @@ func _draw() -> void:
 		draw_rect(hit_rect, Color(1.0, 0.18, 0.08, 0.26), true)
 		draw_rect(hit_rect, Color(1.0, 0.18, 0.08), false, 1.0)
 
-	_draw_ellipse(foot_collision_profile["center"], foot_collision_profile["radius"], Color(0.1, 1.0, 0.35))
+	_draw_ellipse(
+		foot_collision_profile.get("center", Vector2.ZERO),
+		foot_collision_profile.get("radius", Vector2.ZERO),
+		Color(0.1, 1.0, 0.35)
+	)
 
 
 func _draw_ellipse(center: Vector2, radius: Vector2, color: Color) -> void:

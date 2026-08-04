@@ -65,6 +65,16 @@ static func list_sprite_set_ids(data_root: String = DEFAULT_DATA_ROOT) -> Array:
 
 static func load_runtime_bundle(template_id: String, data_root: String = DEFAULT_DATA_ROOT) -> Dictionary:
 	var template := load_template(template_id, data_root)
+	var empty_bundle := {"template": template, "sprite_set": {}, "moves": {}}
+	if template.is_empty():
+		return empty_bundle
+	var valid_sprite_ref := typeof(template.get("sprite_set_ref")) == TYPE_STRING
+	if not valid_sprite_ref or str(template.get("sprite_set_ref", "")).is_empty():
+		push_error("Malformed template %s: sprite_set_ref must be a non-empty string" % template_id)
+		return empty_bundle
+	if typeof(template.get("equipped_moves")) != TYPE_ARRAY:
+		push_error("Malformed template %s: equipped_moves must be an array" % template_id)
+		return empty_bundle
 	var sprite_set := load_sprite_set(str(template["sprite_set_ref"]), data_root)
 	var moves := {}
 	for move_id in template["equipped_moves"]:
@@ -96,6 +106,10 @@ static func save_runtime_bundle(bundle: Dictionary, data_root: String = DEFAULT_
 
 static func validate_runtime_bundle(bundle: Dictionary) -> Array:
 	return DocumentRules.validate_runtime_bundle(bundle)
+
+
+static func validate_runtime_load_bundle(bundle: Dictionary) -> Array:
+	return DocumentRules.validate_runtime_load_bundle(bundle)
 
 
 static func _read_json(path: String) -> Dictionary:
