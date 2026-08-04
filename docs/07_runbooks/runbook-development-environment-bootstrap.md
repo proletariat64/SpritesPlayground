@@ -89,6 +89,38 @@ python3 scripts/install_pi_packages.py
 
 The installer accepts already healthy global or project installations and calls `pi install` only for missing/mismatched entries. `AGENTS.md`, `.pi/settings.json`, and `.pi/skills/` are project source. Do not commit `auth.json`, API keys, OAuth tokens, sessions, `.pi/npm/`, or `.pi/git/`.
 
+## Validate PRD Schemas
+
+Use the development requirements file to run the PRD schema and fixture validator without manually discovering packages:
+
+```bash
+make validate-prd
+```
+
+The target runs:
+
+```bash
+uv run --with-requirements requirements-dev.txt python3 tools/validate_prd_v0_3.py
+```
+
+This uses the `uv` prerequisite listed above and resolves the validator dependencies declared in `requirements-dev.txt`: `jsonschema`, `Pillow`, and `referencing`.
+
+## Candidate Fingerprint
+
+Freeze a review candidate from the repository root:
+
+```bash
+make fingerprint
+```
+
+The fingerprint includes tracked-file status and binary diffs plus the paths and contents of intended untracked source files. Standard Git ignore rules exclude machine-local or generated churn, including `.pi-lens/`, `.godot/`, `.import/`, `.code-review-graph/`, `.pi-subagents/`, `.claude/`, `.letta/`, `.qoder/`, `*.gd.uid`, `.codex/config.toml`, and `.codex/scripts/`. The shared role definitions under `.codex/agents/` are tracked repository source and therefore remain part of the candidate.
+
+Recomputing the command without source changes must return the same hash, including while diagnostics rewrite ignored state such as `.pi-lens/`.
+
+## AI PR Review (Non-blocking)
+
+Qoder renamed `Qwen3.8-Max-Preview` to `Qwen3.8-Max`; the old identifier was stale, not a model capability gap. The supported fallback sequence is `Qwen3.8-Max` → `GLM-5.2` → implicit `Auto` (`implicit_auto_fallback`). Classifying Qoder account entitlement or pricing failures is a separate tooling concern tracked outside issue #55; provider availability does not replace deterministic release gates.
+
 ## Dependency Roles
 
 - LimboAI 1.8.0 is required by development, tests, and exported game runtime.

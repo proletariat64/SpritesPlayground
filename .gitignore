@@ -17,6 +17,17 @@ mono_crash.*.json
 # Legacy GitNexus data; retained only to keep old local indexes untracked.
 .gitnexus/
 
+# Pi-lens machine-local diagnostics/session cache (rewrites per agent turn)
+/.pi-lens/
+
+# Godot 4 editor UID cache files
+*.gd.uid
+
+# .codex/ role TOMLs (.codex/agents/) are intentionally tracked repository source.
+# Machine-local Codex state below is ignored:
+/.codex/config.toml
+/.codex/scripts/
+
 # Generated assets, local dependency archives, and scratch output
 /tmp/
 local_cache/

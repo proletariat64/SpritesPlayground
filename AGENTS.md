@@ -33,3 +33,13 @@ This project uses **code-review-graph** for structural exploration, review, and 
 | Inspect architecture and execution flows | `code-review-graph architecture`; `code-review-graph flows` |
 
 <!-- code-review-graph:end -->
+
+## Candidate fingerprints
+
+Freeze a review candidate and compute a stable hash with:
+
+```bash
+make fingerprint
+```
+
+`scripts/candidate_fingerprint.sh` hashes tracked-file status, binary diffs, and intended untracked source files, while Git ignore rules exclude machine-local analyzer, session, editor, and generated churn (`.pi-lens/`, `.godot/`, `.import/`, `.code-review-graph/`, `.pi-subagents/`, `.claude/`, `.letta/`, `.qoder/`, `*.gd.uid`, `.codex/config.toml`, `.codex/scripts/`). Recomputing it without source changes returns the same hash even while diagnostics rewrite ignored state. See `docs/07_runbooks/runbook-development-environment-bootstrap.md` for the full contract.
