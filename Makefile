@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help doc-check doc-guard fake-check fake-check-test agent-docs lint test release-check
+.PHONY: help doc-check doc-guard fake-check fake-check-test agent-docs lint test validate-prd fingerprint release-check
 
 help:
 	@echo "Available commands:"
@@ -11,6 +11,8 @@ help:
 	@echo "  make agent-docs    Print a safe agent documentation review prompt"
 	@echo "  make lint          Compile-check project Python automation"
 	@echo "  make test          Run project Python behavior tests"
+	@echo "  make validate-prd  Validate PRD schemas and fixtures"
+	@echo "  make fingerprint   Hash the review candidate working-tree state"
 	@echo "  make release-check Run documentation release checks"
 
 doc-check:
@@ -33,5 +35,11 @@ lint:
 
 test:
 	@python3 -m unittest discover -s tests -p 'test_*.py' -v
+
+validate-prd:
+	@uv run --with-requirements requirements-dev.txt python3 tools/validate_prd_v0_3.py
+
+fingerprint:
+	@bash scripts/candidate_fingerprint.sh
 
 release-check: doc-check doc-guard fake-check lint test
