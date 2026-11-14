@@ -46,6 +46,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+      - name: Install Python test dependencies
+        run: python3 -m pip install --requirement requirements-dev.txt
       - name: Documentation checks
         run: |
           make doc-check

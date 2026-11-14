@@ -1,0 +1,53 @@
+{
+  "cell_size": 80,
+  "baseline": 68,
+  "alpha_threshold": 128,
+  "resample": "NEAREST",
+  "rows": [
+    "walk",
+    "punch",
+    "kick",
+    "hurt3_fall3",
+    "run",
+    "dash",
+    "source_idle_not_runtime",
+    "fall3_getup3"
+  ],
+  "characters": [
+    {
+      "identity": "red_jacket_brawler",
+      "scale": 0.29608938547486036,
+      "source_standing_foot": 237.0,
+      "source_standing_height": 179.0,
+      "guard_source": "core row 1 col 0"
+    },
+    {
+      "identity": "track_sprinter",
+      "scale": 0.263681592039801,
+      "source_standing_foot": 238.0,
+      "source_standing_height": 201.0,
+      "guard_source": "core row 1 col 0"
+    },
+    {
+      "identity": "violet_kicker",
+      "scale": 0.2676767676767677,
+      "source_standing_foot": 234.0,
+      "source_standing_height": 198.0,
+      "guard_source": "core row 1 col 0"
+    },
+    {
+      "identity": "iron_leg",
+      "scale": 0.31382978723404253,
+      "source_standing_foot": 241.0,
+      "source_standing_height": 188.0,
+      "guard_source": "core row 1 col 0"
+    },
+    {
+      "identity": "crossroads_captain",
+      "scale": 0.29457364341085274,
+      "source_standing_foot": 243.0,
+      "source_standing_height": 200.0,
+      "guard_source": "core row 1 col 0"
+    }
+  ]
+}
