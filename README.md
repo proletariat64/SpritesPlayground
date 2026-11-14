@@ -82,6 +82,13 @@ The bootstrap checks before installing: healthy components are skipped without n
 
 Third-party add-ons and Pi package trees are not committed to Git. Project-owned `AGENTS.md`, `.pi/settings.json`, and `.pi/skills/` are tracked; credentials, sessions, and caches remain local. See `dependencies/`, the [bootstrap runbook](docs/07_runbooks/runbook-development-environment-bootstrap.md), and the [bootstrap test plan](docs/06_testing/test-20260801-development-environment-bootstrap.md).
 
+For Python artwork tests and `make release-check`, install the existing development requirements in your Python environment first:
+
+```bash
+python3 -m pip install --requirement requirements-dev.txt
+make release-check
+```
+
 ## MVP Focus
 
 The first working MVP should prove this loop:
