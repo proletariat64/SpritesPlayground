@@ -1,6 +1,10 @@
 # SpritesPlayground
 
-SpritesPlayground is a Godot-side development lab for **Miduo Character Combat Lab**.
+SpritesPlayground includes **米多放学路**, a playable Godot pixel beat-em-up stage, alongside the original **Miduo Character Combat Lab**.
+
+Run `godot --path .` and choose **开始回家** (Enter). Travel from the school gate through four encounters to Miduo's home. The title menu also opens the unchanged Playground. See the [stage controls, design and verification runbook](docs/07_runbooks/runbook-miduo-homeward-stage.md).
+
+The stage uses three AI-generated background PNGs and **five new animated enemy identities**: red-jacket brawler, track sprinter, violet kicker, iron-leg mini-boss and silver-haired crossroads captain. Offline-curated frames include walk/run/dash, punch/kick, hurt, fall and get-up; guard intentionally holds one pose. Enemies have two mirrored facings; boss specials reuse their kick/punch art, not unique special sheets. Miduo's original animations and combat timing remain unchanged. Batch 2 used 13 of 16 slots; integration made no provider calls. See the [art provenance and historical batch ledger](godot/assets/homeward/art_provenance.json).
 
 This repository is no longer a verification dump for generated sprite resources. It has been reset into a clean project skeleton for designing and implementing a limited, template-based pixel character playground.
 
@@ -93,7 +97,7 @@ combat gray s64 template
 
 ## What This Repo Does Not Do Yet
 
-- No formal game stages.
+- One standalone homeward stage; no multi-stage campaign.
 - No weapon system.
 - No projectile system.
 - No stamina or mana system.

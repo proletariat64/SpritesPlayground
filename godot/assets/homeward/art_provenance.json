@@ -1,0 +1,241 @@
+{
+  "current_runtime": {
+    "background_pngs": 3,
+    "enemy_identities": [
+      "red_jacket_brawler",
+      "track_sprinter",
+      "violet_kicker",
+      "iron_leg",
+      "crossroads_captain"
+    ],
+    "enemy_frames": "godot/assets/homeward/enemies/<identity>.png",
+    "facings": "two; originals face left, runtime flips for east",
+    "player": "unchanged original Miduo eight-direction resources",
+    "factory": "godot/scripts/homeward_enemy_frames.gd",
+    "preparation": "python3 tools/build_homeward_enemy_art.py; Pillow, NEAREST, binary alpha threshold >=128",
+    "baseline": "80px cells, floor y=68; actor visual y=-32 and centered cell => local foot -4",
+    "guard": "one held core punch[0] pose; source idle includes steps/lifted knees, not breathing",
+    "attack_clock": "unchanged MoveExecutor 12fps; punch clock 0..5 -> source [0,2,3,4,5,5] because authored contact is 1..2; kick clock 0..5 -> source [0,1,2,3,4,5], authored contact 2..3",
+    "specials": "iron-leg heavy kick and captain roundhouse reuse real kick art; rush uses real punch art with inherited velocity events; no unique special sheets generated"
+  },
+  "batches": {
+    "batch1": {
+      "scope": "Historical first-batch record, not current runtime status or future authorization policy",
+      "source_tool": "Codex native image_gen.imagegen",
+      "requested_agent_model": "gpt-5.6-luna",
+      "actual_image_model": "unknown; not exposed by the tool transport",
+      "authorized_attempt_slots": 8,
+      "consumed_attempt_slots": 8,
+      "successful_png_outputs": 5,
+      "missing_designs": [
+        "red_jacket_brawler",
+        "track_sprinter",
+        "iron_leg"
+      ],
+      "remaining_authorized_attempts": 0,
+      "audit_limitation": "8 Codex invocations, first failed before model startup. Other 7 final messages each report one native call (including one router rejection and one uncertain yield). Codex --json does not expose native image tool events; counts are agent-reported, not independently tool-event-verified.",
+      "further_provider_calls_during_integration": 0,
+      "reference_source": "/home/ubuntu/dev/SpritesPlayground/godot/assets/frames/miduo/bhv_idle_breath/dir_e/000.png",
+      "original_manifest_path": "/tmp/miduo-gpt-assets/manifest.json",
+      "original_report_path": "/tmp/miduo-gpt-assets/continuation_report.json",
+      "contact_sheet": "docs/06_testing/evidence/homeward-art/contact_sheet.png",
+      "limitations": [
+        "Only three backgrounds are consumed by gameplay.",
+        "Violet kicker and crossroads captain are single-frame design drafts, not sprite sheets or animation sets.",
+        "Violet kicker has a soft alpha halo; captain also needs edge cleanup and style/proportion curation.",
+        "Gameplay enemies still use provisional existing animated Miduo-blue frames, not these new character designs.",
+        "Brawler, sprinter and iron-leg designs are missing; no retries or additional generations are authorized."
+      ],
+      "assets": [
+        {
+          "asset_id": "violet_kicker",
+          "source_path": "/tmp/miduo-gpt-assets/raw/violet_kicker.png",
+          "preserved_original": "godot/assets/homeward/source_art/violet_kicker.png",
+          "original_size": [
+            1024,
+            1536
+          ],
+          "prompt": "Use the attached 80x80 source ONLY as a style and proportion guide: compact chibi 16-bit game sprite, body about 45 source pixels tall, oversized head, short limbs, 1-pixel charcoal outline, flat muted limited colors, warm skin, compact hard-edged pixel shading. Design a genuinely DIFFERENT NEW PERSON, never a recolor or edit of the reference girl. A single full-body enemy cutout, head to boots, facing screen-LEFT in three-quarter low top-down belt-scroll beat-em-up perspective, neutral battle-ready pose. Centered with generous transparent margin. Deliberate chunky pixel-art clusters, as if a roughly 80x80 game sprite enlarged by nearest-neighbor. No smooth gradients or painterly rendering. Exactly ONE character, no extra views, no sprite sheet, no inset, no text, no UI, no ground, no shadows, no weapons. Transparent background, true alpha. Tallish compact school-age girl with short angular purple bob, lilac athletic vest, dark pleated shorts, high white socks, athletic shoes. Raised guarded knee and fists protecting chest, balanced on the other leg. Distinct angular silhouette, not reference hair or uniform.",
+          "runtime_use": "single-frame design draft only; NOT an animated enemy"
+        },
+        {
+          "asset_id": "crossroads_captain",
+          "source_path": "/tmp/miduo-gpt-assets/raw/crossroads_captain.png",
+          "preserved_original": "godot/assets/homeward/source_art/crossroads_captain.png",
+          "original_size": [
+            1199,
+            1312
+          ],
+          "prompt": "Use the attached 80x80 source ONLY as a style and proportion guide: compact chibi 16-bit game sprite, body about 45 source pixels tall, oversized head, short limbs, 1-pixel charcoal outline, flat muted limited colors, warm skin, compact hard-edged pixel shading. Design a genuinely DIFFERENT NEW PERSON, never a recolor or edit of the reference girl. A single full-body enemy cutout, head to boots, facing screen-LEFT in three-quarter low top-down belt-scroll beat-em-up perspective, neutral battle-ready pose. Centered with generous transparent margin. Deliberate chunky pixel-art clusters, as if a roughly 80x80 game sprite enlarged by nearest-neighbor. No smooth gradients or painterly rendering. Exactly ONE character, no extra views, no sprite sheet, no inset, no text, no UI, no ground, no shadows, no weapons. Transparent background, true alpha. Distinctive rival girl boss, long pale silver ponytail tied with red, deep maroon long school coat, cream scarf, black trousers and red-accent boots. Commanding martial-arts ready stance with guarded hands, slightly larger body silhouette than normal enemies. Clearly not a Miduo recolor. Non-graphic cartoon combat character, no weapons.",
+          "runtime_use": "single-frame design draft only; NOT an animated enemy"
+        },
+        {
+          "asset_id": "school_gate",
+          "source_path": "/tmp/miduo-gpt-assets/raw/school_gate.png",
+          "preserved_original": "godot/assets/homeward/source_art/school_gate.png",
+          "original_size": [
+            1672,
+            941
+          ],
+          "prompt": "Create exactly ONE opaque landscape 16:9 pixel-art panorama, about 1280x720, intended for nearest-neighbor display at 640x360 logical resolution. Match the attached sprite ONLY for pixel density, simple outlined forms and muted warm colors; DO NOT include the character. Strict chunky low-resolution pixels, limited palette, 1-pixel-style dark outlines, simple clustered shading, not smooth painting, not ultra-detailed illustration. Side-on low top-down belt-scroll beat-em-up perspective. Storefronts/buildings/walls occupy upper approximately 62 percent. Bottom approximately 38 percent is a broad horizontal unobstructed walkable asphalt combat lane; combat foot positions are logical y=230..320 of 360. No foreground objects or obstacles in that lane, no people, no characters, no text, no labels, no UI, no logos, no writing; all signboards entirely blank. Shared warm late-afternoon peach sunset, muted violet and charcoal shadows, warm cream architecture. Warm Japanese/Chinese neighborhood school entrance, brick pillars and iron gate, cream school building with simple windows behind, school perimeter wall, leafy tree, bicycles parked only against rear wall, utility wires and sunset sky. The gate and recognizable entrance occupy center-left; the unobstructed asphalt lane runs horizontally and continues seamlessly to the right.",
+          "runtime_use": "godot/assets/homeward/backgrounds/school_gate.png",
+          "conversion": "Pillow Image.resize((768, 432), Image.Resampling.NEAREST), no crop; draw at y=-72"
+        },
+        {
+          "asset_id": "shopping_street",
+          "source_path": "/tmp/miduo-gpt-assets/raw/shopping_street.png",
+          "preserved_original": "godot/assets/homeward/source_art/shopping_street.png",
+          "original_size": [
+            1672,
+            941
+          ],
+          "prompt": "Create exactly ONE opaque landscape 16:9 pixel-art panorama, about 1280x720, intended for nearest-neighbor display at 640x360 logical resolution. Match the attached sprite ONLY for pixel density, simple outlined forms and muted warm colors; DO NOT include the character. Strict chunky low-resolution pixels, limited palette, 1-pixel-style dark outlines, simple clustered shading, not smooth painting, not ultra-detailed illustration. Side-on low top-down belt-scroll beat-em-up perspective. Storefronts/buildings/walls occupy upper approximately 62 percent. Bottom approximately 38 percent is a broad horizontal unobstructed walkable asphalt combat lane; combat foot positions are logical y=230..320 of 360. No foreground objects or obstacles in that lane, no people, no characters, no text, no labels, no UI, no logos, no writing; all signboards entirely blank. Shared warm late-afternoon peach sunset, muted violet and charcoal shadows, warm cream architecture. Neighborhood shopping street with bakery, convenience shop, and bicycle-repair storefronts, entirely blank shop signboards, striped awnings, warmly glowing windows, bicycles parked against rear wall, vending machine at rear edge only, utility poles and distant tiled roofs. Everything stays above the broad clear lower 38 percent combat lane; sunset shared palette.",
+          "runtime_use": "godot/assets/homeward/backgrounds/shopping_street.png",
+          "conversion": "Pillow Image.resize((768, 432), Image.Resampling.NEAREST), no crop; draw at y=-72"
+        },
+        {
+          "asset_id": "homeward_alley",
+          "source_path": "/tmp/miduo-gpt-assets/raw/homeward_alley.png",
+          "preserved_original": "godot/assets/homeward/source_art/homeward_alley.png",
+          "original_size": [
+            1672,
+            941
+          ],
+          "prompt": "Create exactly ONE opaque landscape 16:9 pixel-art panorama, about 1280x720, intended for nearest-neighbor display at 640x360 logical resolution. Match the attached sprite ONLY for pixel density, simple outlined forms and muted warm colors; DO NOT include the character. Strict chunky low-resolution pixels, limited palette, 1-pixel-style dark outlines, simple clustered shading, not smooth painting, not ultra-detailed illustration. Side-on low top-down belt-scroll beat-em-up perspective. Storefronts/buildings/walls occupy upper approximately 62 percent. Bottom approximately 38 percent is a broad horizontal unobstructed walkable asphalt combat lane; combat foot positions are logical y=230..320 of 360. No foreground objects or obstacles in that lane, no people, no characters, no text, no labels, no UI, no logos, no writing; all signboards entirely blank. Shared warm late-afternoon peach sunset, muted violet and charcoal shadows, warm cream architecture. Quiet residential crossroads leading home. A small two-story cream house, warm lit open doorway near right-of-center, tiled roof, potted plants against rear wall only, tree silhouettes, overhead wires, evening peach/violet sky. A flat zebra crossing painted on asphalt at the right. Broad clear horizontal combat lane in lower 38 percent, no foreground obstacles.",
+          "runtime_use": "godot/assets/homeward/backgrounds/homeward_alley.png",
+          "conversion": "Pillow Image.resize((768, 432), Image.Resampling.NEAREST), no crop; draw at y=-72"
+        }
+      ]
+    },
+    "batch2": {
+      "source_tool": "Codex native image_gen.imagegen",
+      "actual_image_model": "unknown; tool transport did not expose version",
+      "authorized_attempt_slots": 16,
+      "consumed_attempt_slots": 13,
+      "successful_png_outputs": 13,
+      "unspent_slots": 3,
+      "submission_limit_note": "Batch stopped; integration made zero provider calls. Unspent slots do not authorize automatic submission.",
+      "audit_limitation": "Each of 13 agent final reports declares one native submission; no independent provider billing/tool-event certification.",
+      "source_report": "/tmp/miduo-gpt-assets-batch2/HANDOFF.md",
+      "originals": [
+        {
+          "asset_id": "red_jacket_brawler_core",
+          "preserved_original": "godot/assets/homeward/source_art/batch2/red_jacket_brawler_core.png",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "asset_id": "red_jacket_brawler_extended",
+          "preserved_original": "godot/assets/homeward/source_art/batch2/red_jacket_brawler_extended.png",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "asset_id": "track_sprinter_core",
+          "preserved_original": "godot/assets/homeward/source_art/batch2/track_sprinter_core.png",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "asset_id": "track_sprinter_extended",
+          "preserved_original": "godot/assets/homeward/source_art/batch2/track_sprinter_extended.png",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "asset_id": "violet_kicker_core",
+          "preserved_original": "godot/assets/homeward/source_art/batch2/violet_kicker_core.png",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "asset_id": "violet_kicker_extended",
+          "preserved_original": "godot/assets/homeward/source_art/batch2/violet_kicker_extended.png",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "asset_id": "iron_leg_core",
+          "preserved_original": "godot/assets/homeward/source_art/batch2/iron_leg_core.png",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "asset_id": "iron_leg_extended",
+          "preserved_original": "godot/assets/homeward/source_art/batch2/iron_leg_extended.png",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "asset_id": "crossroads_captain_core",
+          "preserved_original": "godot/assets/homeward/source_art/batch2/crossroads_captain_core.png",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "asset_id": "crossroads_captain_extended",
+          "preserved_original": "godot/assets/homeward/source_art/batch2/crossroads_captain_extended.png",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "asset_id": "red_jacket_brawler",
+          "preserved_original": "godot/assets/homeward/source_art/batch2/red_jacket_brawler.png",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "asset_id": "track_sprinter",
+          "preserved_original": "godot/assets/homeward/source_art/batch2/track_sprinter.png",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "asset_id": "iron_leg",
+          "preserved_original": "godot/assets/homeward/source_art/batch2/iron_leg.png",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        }
+      ],
+      "source_layout": "6 columns x 4 rows, 256px cells. Core: walk6,punch6,kick6,hurt3/fall3. Extended: run6,dash6,idle6,fall3/getup3.",
+      "derived_repairs": [
+        "All ten source sheets have alpha max254 and noise; derived alpha threshold128 becomes strictly0/255, transparent RGB zeroed.",
+        "Captain core row3 col5 crop expanded4px left to retain fallen hand; preceding col4 foreign rightmost4px cleaned. Original PNGs untouched.",
+        "One scale per identity, fixed source x128 stance anchor (132 in expanded crop); grounded poses floor-aligned, run/dash retain authored lift; no per-pose bbox recentering or squash."
+      ]
+    }
+  },
+  "remaining_limits": [
+    "Generated art is curated to original style and scale, not a claim of perfect pixel parity; captain source has finer detail.",
+    "Two enemy facings only; no enemy jumping art or unique heavy-kick/roundhouse/rush special sheets.",
+    "Guard is intentionally static; no breathing animation claim. Source extended idle row is preserved in curated atlas but unused by gameplay.",
+    "No new audio, online generation, campaign or paid integration calls."
+  ],
+  "evidence": "docs/06_testing/evidence/homeward-enemies"
+}
